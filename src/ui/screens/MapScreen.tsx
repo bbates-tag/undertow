@@ -1,7 +1,7 @@
 // The descent map: SVG edges under absolutely-positioned node buttons.
 // You start at the surface (top) and dive toward the act boss (bottom).
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layers, Menu as MenuIcon } from 'lucide-react';
 import type { MapNode } from '../../engine/types';
 import { useGame } from '../../state/store';
@@ -55,18 +55,29 @@ export function MapScreen() {
   const setOverlay = useGame((s) => s.setOverlay);
   const go = useGame((s) => s.go);
   const scroller = useRef<HTMLDivElement>(null);
+  const [scrollerW, setScrollerW] = useState(() => window.innerWidth);
 
   const reachable = useMemo(() => (run ? reachableNodes(run) : []), [run]);
+
+  // fit the fixed-size map into narrow (phone) viewports
+  useEffect(() => {
+    const measure = () => setScrollerW(scroller.current?.clientWidth ?? window.innerWidth);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  const width = PAD_X * 2 + 6 * COL_W;
+  const scale = Math.min(1, (scrollerW - 4) / width);
 
   useEffect(() => {
     if (!run || !scroller.current) return;
     const row = run.pos?.row ?? 0;
-    scroller.current.scrollTo({ top: Math.max(0, row * ROW_H - 140), behavior: 'smooth' });
-  }, [run?.pos?.row, run?.act]); // eslint-disable-line react-hooks/exhaustive-deps
+    scroller.current.scrollTo({ top: Math.max(0, row * ROW_H * scale - 140), behavior: 'smooth' });
+  }, [run?.pos?.row, run?.act, scale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!run) return null;
   const ch = CHARACTERS[run.charId];
-  const width = PAD_X * 2 + 6 * COL_W;
   const height = PAD_Y * 2 + (run.map.rows.length - 1) * ROW_H + 40;
   const isReachable = (n: MapNode) => reachable.some((r) => r.row === n.row && r.col === n.col);
   const current = run.pos;
@@ -96,7 +107,8 @@ export function MapScreen() {
       {/* scrolling map */}
       <div ref={scroller} className="flex-1 overflow-y-auto overflow-x-hidden relative">
         <Bubbles count={10} />
-        <div className="relative mx-auto" style={{ width, height }}>
+        <div className="relative mx-auto" style={{ width: width * scale, height: height * scale }}>
+          <div className="absolute left-0 top-0" style={{ width, height, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
           {/* edges */}
           <svg width={width} height={height} className="absolute inset-0" aria-hidden>
             {run.map.rows.flatMap((row) =>
@@ -185,6 +197,7 @@ export function MapScreen() {
               );
             }),
           )}
+          </div>
         </div>
       </div>
 

@@ -77,7 +77,7 @@ export function DeckOverlay() {
       {picking && pendingPick!.kind === 'upgrade' && (
         <p className="px-4 pb-2 text-xs text-(--color-mist)">Upgrading improves numbers, costs, or effects — permanently for this run.</p>
       )}
-      <div className="flex-1 overflow-y-auto px-3 pb-6">
+      <div className="flex-1 overflow-y-auto px-3 pt-3 pb-6">
         {cards.length === 0 ? (
           <p className="text-center text-(--color-dim) mt-10">Empty.</p>
         ) : (
