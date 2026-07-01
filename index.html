@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#050a14" />
+    <meta name="description" content="UNDERTOW — a deep-sea roguelite deckbuilder. Descend the trench, build your deck, ride the tide." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>UNDERTOW — a deep-sea deckbuilder</title>
+    <style>
+      html, body { margin: 0; padding: 0; background: #050a14; height: 100%; overscroll-behavior: none; }
+      #boot {
+        position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #7fa3b8; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; gap: 14px;
+      }
+      #boot .t { letter-spacing: 0.45em; font-size: 22px; color: #35e0d2; font-weight: 700; text-indent: 0.45em; }
+      #boot .b { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #16344d; border-top-color: #35e0d2; animation: bootspin 0.9s linear infinite; }
+      @keyframes bootspin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div id="root"><div id="boot"><div class="b"></div><div class="t">UNDERTOW</div></div></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

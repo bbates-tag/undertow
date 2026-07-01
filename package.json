@@ -1,0 +1,33 @@
+{
+  "name": "undertow",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "UNDERTOW — a singleplayer deep-sea roguelite deckbuilder that runs entirely in the browser.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "sim": "tsx src/sim/simulate.ts"
+  },
+  "dependencies": {
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.525.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.0"
+  }
+}

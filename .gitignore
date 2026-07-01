@@ -1,0 +1,8 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# local design brief — delete this line if you want it in the public repo
+agent-prompt-singleplayer-browser-game.md
+tsconfig.tsbuildinfo
