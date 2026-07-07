@@ -3,7 +3,7 @@ import { Shield, Swords, ChevronsUp, CloudFog, Users, Moon, HelpCircle } from 'l
 import type { BattleState, EnemyState } from '../../engine/types';
 import { ENEMIES } from '../../content/enemies';
 import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../../engine/battle';
-import { GameIcon } from '../icons';
+import { ArtImage } from './Art';
 import { StatusChips } from './StatusChips';
 import { fxTargetRef } from '../fxRegistry';
 import type { Amount } from '../../engine/types';
@@ -106,7 +106,14 @@ export function EnemyView({ bs, e, targeting, previewAmount, previewTimes = 1, o
           className="w-full h-full flex items-center justify-center"
           style={{ color: def.tier === 'boss' ? 'var(--color-lure)' : def.tier === 'elite' ? 'var(--color-gold)' : 'var(--color-mist)' }}
         >
-          <GameIcon id={def.icon} size="100%" />
+          <ArtImage
+            kind="enemies"
+            id={e.defId}
+            icon={def.icon}
+            className="w-full h-full object-cover rounded-full border border-white/10 shadow-[0_8px_24px_rgba(2,6,14,0.6)]"
+            iconSize="100%"
+            alt={def.name}
+          />
         </motion.div>
         {preview !== null && (
           <div

@@ -1,0 +1,54 @@
+// Optional raster-art layer (§7 "later upgrade" path). Drop PNGs into
+// public/art/{cards,enemies,characters}/<contentId>.png and they render
+// automatically; anything missing falls back to the icon treatment.
+// The icon renders until the image has actually loaded, so there is never
+// a blank art box — not on 404s, not on slow connections.
+
+import { useEffect, useState } from 'react';
+import { GameIcon } from '../icons';
+
+export type ArtKind = 'cards' | 'enemies' | 'characters';
+
+/** session-wide load results so each id is only probed once */
+const missing = new Set<string>();
+const loaded = new Set<string>();
+
+export function artUrl(kind: ArtKind, id: string): string {
+  return `${import.meta.env.BASE_URL}art/${kind}/${id}.png`;
+}
+
+interface ArtImageProps {
+  kind: ArtKind;
+  id: string;
+  /** fallback icon id from the registry */
+  icon: string;
+  className?: string;
+  iconSize?: number | string;
+  iconClassName?: string;
+  alt?: string;
+}
+
+export function ArtImage({ kind, id, icon, className, iconSize, iconClassName, alt }: ArtImageProps) {
+  const key = `${kind}/${id}`;
+  const url = artUrl(kind, id);
+  const [, bump] = useState(0);
+
+  useEffect(() => {
+    if (missing.has(key) || loaded.has(key)) return;
+    const probe = new Image();
+    probe.onload = () => {
+      loaded.add(key);
+      bump((n) => n + 1);
+    };
+    probe.onerror = () => {
+      missing.add(key);
+      bump((n) => n + 1);
+    };
+    probe.src = url;
+  }, [key, url]);
+
+  if (loaded.has(key)) {
+    return <img src={url} alt={alt ?? ''} className={className} draggable={false} />;
+  }
+  return <GameIcon id={icon} size={iconSize} className={iconClassName} />;
+}

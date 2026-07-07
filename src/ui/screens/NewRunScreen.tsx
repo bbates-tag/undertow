@@ -8,6 +8,7 @@ import { CHARACTERS } from '../../content/characters';
 import { ASCENSIONS, DAILY_MODS } from '../../content/meta';
 import { todayKey } from '../../lib/util';
 import { GameIcon } from '../icons';
+import { ArtImage } from '../components/Art';
 import { ConfirmButton } from '../components/Bits';
 
 export function NewRunScreen() {
@@ -64,8 +65,8 @@ export function NewRunScreen() {
               aria-label={locked ? `${ch.name}, locked — defeat the Act 1 boss to unlock` : `select ${ch.name}`}
             >
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-full border flex items-center justify-center shrink-0" style={{ borderColor: ch.color, color: ch.color }}>
-                  {locked ? <Lock size={20} /> : <GameIcon id={ch.icon} size={26} />}
+                <div className="w-16 h-20 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden" style={{ borderColor: ch.color, color: ch.color, background: 'rgba(8,17,32,0.7)' }}>
+                  {locked ? <Lock size={20} /> : <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={30} alt={ch.name} />}
                 </div>
                 <div>
                   <div className="font-display font-bold">{ch.name}</div>

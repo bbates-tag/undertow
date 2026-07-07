@@ -21,7 +21,7 @@ import { TideDial } from '../components/TideDial';
 import { GoldChip, HpChip } from '../components/Bits';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
 import { fxTargetRef } from '../fxRegistry';
-import { GameIcon } from '../icons';
+import { ArtImage } from '../components/Art';
 
 function firstDamageOp(ops: Op[]): { amount: Amount; times: number } | null {
   for (const op of ops) {
@@ -180,11 +180,11 @@ export function BattleScreen() {
       <div className="flex items-center justify-center gap-2 px-3 py-1">
         <div ref={fxTargetRef('player')} className="flex items-center gap-2">
           <div
-            className="w-9 h-9 rounded-full border flex items-center justify-center"
+            className="w-9 h-9 rounded-full border flex items-center justify-center overflow-hidden"
             style={{ borderColor: ch.color, color: ch.color, background: 'rgba(8,17,32,0.8)' }}
             aria-hidden
           >
-            <GameIcon id={ch.icon} size={20} />
+            <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={20} />
           </div>
           {bs.player.block > 0 && (
             <span className="chip !text-sm font-black" style={{ color: 'var(--color-shield)', borderColor: 'rgba(95,185,255,0.5)' }}>

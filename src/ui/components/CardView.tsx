@@ -3,7 +3,7 @@ import type { BattleState, CardInstance, EnemyState } from '../../engine/types';
 import { CARDS } from '../../content/cards';
 import { cardCost } from '../../engine/battle';
 import { describeCard } from '../../engine/describe';
-import { GameIcon } from '../icons';
+import { ArtImage } from './Art';
 import { KEYWORD_PATTERN } from '../../content/keywords';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -72,7 +72,14 @@ export const CardView = memo(function CardView({
       {!def.unplayable && <div className="card-cost">{cost}</div>}
       <div className="card-name">{name}</div>
       <div className="card-art">
-        <GameIcon id={def.icon} className="relative z-[1] opacity-90" size="52%" />
+        <ArtImage
+          kind="cards"
+          id={def.id}
+          icon={def.icon}
+          className="card-art-img"
+          iconClassName="relative z-[1] opacity-90"
+          iconSize="52%"
+        />
       </div>
       <div className="card-text">
         <div style={scale === 'lg' ? { fontSize: '13px', lineHeight: 1.35 } : undefined}>{highlightText(text)}</div>
