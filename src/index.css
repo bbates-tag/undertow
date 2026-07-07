@@ -219,6 +219,7 @@ body {
 .card-art-img {
   position: absolute;
   inset: 0 3px;
+  width: calc(100% - 6px); /* explicit width so the l/r insets center it; object-fit crops from the middle */
   height: 100%;
   object-fit: cover;
   border-radius: 5px;
