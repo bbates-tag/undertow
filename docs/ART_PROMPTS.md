@@ -203,7 +203,8 @@ A fortress wall of mother-of-pearl rising from the seafloor in overlapping opale
 A closed loop of glowing water — an ouroboros current — circling the Tidecaller endlessly, carrying cards, fish, moonlight, and time around and around. Serene engine.
 
 **Depthless Hunger — `depthlessHunger`**
-Below the frame, a mouth wide as the horizon; into it drifts a whale-fall like a snowflake. The Tidecaller watches from a ledge, taking notes. Feed it and it remembers you.
+Vast underwater establishing shot: the entire seafloor is one colossal open mouth — a canyon rim of mountain-sized pale teeth stretching from the far left edge to the far right edge of the image, pure black abyss between them, faint magenta glow rising from the throat. High above, a single tiny whale skeleton drifts down toward the darkness like a falling leaf, dwarfed to insignificance, lit by one beam of moonlight. No other creatures, no people. Extreme scale contrast. Feed it and it remembers you.
+*(Alt, reads great at card size: looking straight down into a perfectly circular maw — concentric rings of curved teeth spiraling into absolute darkness like a whirlpool made of jaws, a tiny glowing whale skeleton spiraling down at its center; symmetrical, cyan rim-light, magenta throat-glow. Negative prompt for this card: fishing rod, boat, human, face, two mouths.)*
 
 ---
 
