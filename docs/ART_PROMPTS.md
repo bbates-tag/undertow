@@ -353,7 +353,7 @@ A beautiful long-haired silhouette perched on a rock ledge, backlit, holding an 
 ### Act I — The Sunlit Shallows (turquoise light, god rays, reef color)
 
 **Snapper Crab — `snapperCrab`**
-A boulder-sized crab in chipped terracotta armor plating, one grotesquely oversized polished claw raised; reef sunlight banding its shell. Pugnacious, dumb, dangerous.
+A massive battle-scarred crab reared up aggressively toward the viewer, BOTH claws raised and open — one grotesquely oversized and chipped like a broken shield, the other smaller — its thick terracotta shell cracked and barnacle-crusted from old fights, small furious eyes on stalks; reef sunlight banding its carapace. Looms large and fills the frame, menacing, dumb and dangerous. (Negative prompt: single claw, one pincer, missing limb.)
 
 **Jelly Drifter — `jellyDrifter`**
 A serene lavender-and-cyan jellyfish the size of an umbrella, bell glowing softly, tendrils hanging in elegant toxic curtains; beauty that stings.
@@ -368,7 +368,7 @@ A single wide-eyed silver sardine, comically fierce, mid-dart with a tiny wake �
 A thick green-bronze moray coiled in a reef hole, only head and cold eye in the light, jaw slightly open showing a second set of teeth waiting behind the first. Coiled patience.
 
 **Tide Sprite — `tideSprite`**
-A small elemental of living seawater in the shape of a leaping child, moonlight caught in its chest like a heart, edges constantly re-forming from foam; mischief and a rising tide behind its grin.
+A small humanoid elemental made entirely of translucent glowing seawater and foam — living water, not flesh — caught mid-leap and dissolving at the edges into bubbles, a bright mote of moonlight glowing in its chest like a heart. Impish and mischievous, a rising swell behind it.
 
 **Anglerfish (elite) — `anglerfish`**
 A nightmare anglerfish half again a diver's size caught at the shadow-line where shallows drop off — hypnotic golden lure bobbing over a cavernous fanged underbite, tiny cruel eyes. The first real fear of the run.
@@ -388,7 +388,7 @@ A pale translucent eel you can half see through — spine and dinner both faintl
 A plum-black squid with a cape of webbed arms lined in red, eyes huge and lambent, drifting like an aristocrat; a faint red glow pulsing brighter as it feeds.
 
 **Hatchetfish — `hatchetfish`**
-A silver hatchetfish with a face like an axe-blade and permanently affronted eyes, catching a stray beam so it flashes like a mirror — signalling its twin to strike.
+A single silver hatchetfish with a razor-thin body like an axe-blade seen edge-on, huge permanently-affronted eyes and an upturned fanged mouth, its mirror-bright flank catching a stray cold beam so it flashes. Deep twilight water, small and weird and unsettling.
 
 **Drifting Mine — `deepMine`**
 An ancient horned naval mine, rust-scabbed and barnacled, drifting with terrible calm in dark water; one horn glows a soft warning red, and a cluster of crude tally scratches is gouged into its rusted face by some previous, luckier diver. Still, patient, wrong.
