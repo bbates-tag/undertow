@@ -341,10 +341,10 @@ A single tiny diver silhouette suspended in open water near the top of the frame
 *(Alt, commit to the watcher instead: far below the diver, a single colossal ancient eye opens in the seafloor — unmistakably a living eye, wet and glistening, pale iris and vast black pupil filling the lower half, faint cyan along its curve. Negative prompt: crater, hole, pit, cave, whirlpool, rocks.)*
 
 **Waterlogged — `waterlogged`**
-A once-fine spellbook swollen to twice its size with seawater, pages fused to pulp, dragging its carrier's satchel down at an exhausted angle. Heavy. Useless. Yours.
+A once-fine leather spellbook alone in dark water, swollen to twice its size and sagging, pages fused to grey pulp and bleeding ink, a rusted clasp-chain trailing off into the murk like an anchor line. Drab and desaturated, no people, single object. Heavy. Useless. Yours.
 
 **Siren's Debt — `sirensDebt`**
-A beautiful silhouette on a rock ledge holding an open ledger of kelp-paper, one elegant finger tapping an entry that glows softly magenta; bubbles rising from the signature. She sang. You listened.
+A beautiful long-haired silhouette perched on a rock ledge, backlit, holding an open ledger of blank kelp-paper that glows softly magenta from a single glowing handprint pressed into the page; bubbles rising past her. Ominous and seductive, unreadable — no legible text or letters. She sang. You listened.
 
 ---
 
@@ -391,7 +391,7 @@ A plum-black squid with a cape of webbed arms lined in red, eyes huge and lamben
 A silver hatchetfish with a face like an axe-blade and permanently affronted eyes, catching a stray beam so it flashes like a mirror — signalling its twin to strike.
 
 **Drifting Mine — `deepMine`**
-An ancient horned naval mine, rust-scabbed and barnacled, drifting with terrible calm; one horn glows a soft warning red, and the number "3" is scratched into its face by some previous, luckier diver.
+An ancient horned naval mine, rust-scabbed and barnacled, drifting with terrible calm in dark water; one horn glows a soft warning red, and a cluster of crude tally scratches is gouged into its rusted face by some previous, luckier diver. Still, patient, wrong.
 
 **Pressure Wraith — `pressureWraith`**
 A humanoid absence in the water — a wraith of compressed dark with a diver's-helmet-shaped head, the sea visibly bending inward around its grip. Where it points, things crack.
@@ -420,10 +420,10 @@ One arm of the boss in close-up — thick as a mast, banded in bruise-purple, su
 An anglerfish grown wrong at depth — lure burning violet-white like a dying star, body mostly invisible except where its own light betrays the teeth. The light is the trap; the dark is the fish.
 
 **Bone Shoal — `boneShoal`**
-A school of fish skeletons swimming in perfect formation, held together by pale ghost-light in the joints; where the school turns, it briefly forms one great skeletal fish. Death didn't stop the schooling instinct.
+A tight school of small fish skeletons swimming in eerie formation, pale ghost-light glowing in every joint, loosely massed into the rough silhouette of one larger fish; near-black water, cyan-green bio-glow. Death didn't stop the schooling instinct.
 
 **Hadal Horror — `hadalHorror`**
-A deep-trench leviathan-larva — pale, eyeless, growing visibly wrong, muscle mass lopsided as if it's being inflated by the pressure itself; each frame of it feels larger than the last. A race you can lose by waiting.
+A deep-trench leviathan-larva — pale, eyeless, unsettlingly swollen, its muscle mass lopsided and asymmetric as if inflated by the pressure itself, translucent skin stretched over dark organs. Wrong, and still growing. Near-black water, faint magenta glow.
 
 **Abyss Idol — `abyssIdol`**
 A stone idol on the trench floor — a single vast carved eye, weeping slow threads of black that curl upward against physics; small dead fish orbit it like moths. It does not move. It doesn't need to.
