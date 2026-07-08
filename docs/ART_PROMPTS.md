@@ -265,7 +265,8 @@ One bolt splitting into five crooked fingers, each finding its own fish in the d
 The Voltaic's chest-light beating triple-time, arcs desynchronizing off their skin, eyes wide with dangerous clarity; clock-like rings of current spinning too fast around their wrists.
 
 **Storm Shell — `stormShell`**
-A spiked nautilus shell worn as a pauldron, wreathed in its own miniature storm system — tiny lightning grounding into its spikes, charging with every strike it turns.
+A single giant spiked nautilus shell centered against dark storm-teal water, small jagged bolts of yellow lightning striking inward from all directions and grounding into its spikes; the shell's spiral glows volt-yellow from within like a charging coil, brightest at the center of the coil. No people, no creatures, radial composition, near-black background.
+*(Alt with the character: the Voltaic braced behind the shell held like a tower shield, arcs striking the spikes and being drawn inward along the glowing spiral. Negative prompt: storm clouds, sky, rain, knight, suit of armor, snail.)*
 
 **Amplify — `amplify`**
 The Voltaic between two coral conductor-pillars, their banked light splitting, mirroring, and doubling — two of every arc, twice the glow, the water itself humming.
