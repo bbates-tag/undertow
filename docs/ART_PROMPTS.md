@@ -128,7 +128,7 @@ A single narwhal-like spiral spine punching clean through a raised shield of she
 Top-down view of a churning whirlpool dragging flotsam and small fish into its throat, spiral banded in white foam and deep shadow; the moon's reflection smeared around its rim.
 
 **Frenzied Bites — `frenziedBites`**
-Three overlapping bite-arcs flash-frozen in one frame — motion-trail jaws snapping in sequence across an armored flank, each strike higher and harder; storm-surge water behind.
+Three crescent bite-wounds stamped in a rising diagonal across a great fish's armored flank, each glowing brighter than the last, blood and foam churning around them; the attacker is only a blurred streak of fins in the middle distance. High-tide moonlight through storm-surge water. (Negative prompt: multiple sharks, three creatures, monster heads.)
 
 **Leech Fangs — `leechFangs`**
 A lamprey-mouthed serpent latched onto a larger creature, a visible ribbon of glowing life-light flowing up its throat toward the Tidecaller's outstretched hand. Stolen vitality.
@@ -238,7 +238,8 @@ One clean colossal bolt descending through the water column like a divine exclam
 A translucent organ like a glass heart in the Voltaic's chest visibly filling with churning yellow light, gauge-lines of bioluminescence climbing their ribs.
 
 **Chain Nip — `chainNip`**
-Two lightning-fast bites in sequence, an arc of current jumping teeth-to-teeth between the wounds; the second bite already landing while the first still glows.
+The Voltaic caught mid-lunge past a large armored fish — two crescent-shaped bite marks glow white-hot on the fish's flank, and a single jagged arc of yellow lightning bridges the two wounds like a spark gap completing a circuit. One attacker, one target, one frozen moment; motion-streak and bubbles trailing the Voltaic.
+*(Alt, reads great at card size: extreme close-up of a barnacled shell with two glowing crescent bite-marks, a bright arc of current jumping between them like a closed circuit; volt-yellow on near-black. Negative prompt: shark, two creatures, explosion, fireworks.)*
 
 **Insulate — `insulate`**
 The Voltaic wrapping into a coat of thick rubbery blubber-armor; an incoming bolt slides around its surface in rivulets and grounds out harmlessly behind them.
