@@ -304,7 +304,8 @@ The Voltaic planting a barbed trident into the seabed as their own discharge det
 A rotating storm cell parked above the battlefield like an underwater thundercloud, discharging automatically on everything below at each turn of its spiral; the Voltaic reading a book beneath it. Keep the storm. Let it keep you.
 
 **Defibrillate — `defibrillate`**
-Twin paddles of pure light pressed to the Voltaic's own chest, the banked storm flooding inward instead of out — heart re-lit like a lantern, arcs of vitality snapping down every limb.
+An anatomical heart formed entirely from coiled golden lightning, suspended alone in dark teal water, mid-pulse — rings of warm light rippling outward from it, tiny bubbles rising; near-black background, single glowing subject, cosmic and reverent.
+*(Alt with the character: the Voltaic floating head tilted back, arms spread, every current-line on their body streaming toward a heart glowing through their chest like a relit lantern, faint gold scars sealing as the glow spreads. Negative prompt: defibrillator, paddles, hospital, medical equipment, doctor, wires.)*
 
 ---
 
