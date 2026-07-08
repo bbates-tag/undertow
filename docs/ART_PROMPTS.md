@@ -337,7 +337,8 @@ A hooked fish thrashing in a storm of its own bubbles, all instinct and no aim �
 Barnacles colonizing the back of a diver's hand and climbing the wrist like slow armor no one asked for; the skin around them pale and waterlogged. It grows on you.
 
 **Dread of the Deep — `dreadOfTheDeep`**
-A tiny swimmer suspended over a blue-black void; below, so large it reads first as landscape, the suggestion of an eye opening. Nothing attacks. That's the horror.
+A single tiny diver silhouette suspended in open water near the top of the frame, dwarfed by an immense bottomless black chasm in the seafloor below that descends into total darkness; pale god-rays from above fade before they reach the bottom, a few bubbles rising from the diver. The horror is scale and emptiness — nothing else in frame. Near-black void at center. (Negative prompt: eye, eyeball, iris, pupil, crater, creature, monster.)
+*(Alt, commit to the watcher instead: far below the diver, a single colossal ancient eye opens in the seafloor — unmistakably a living eye, wet and glistening, pale iris and vast black pupil filling the lower half, faint cyan along its curve. Negative prompt: crater, hole, pit, cave, whirlpool, rocks.)*
 
 **Waterlogged — `waterlogged`**
 A once-fine spellbook swollen to twice its size with seawater, pages fused to pulp, dragging its carrier's satchel down at an exhausted angle. Heavy. Useless. Yours.
