@@ -18,6 +18,7 @@ import {
   doRestHeal, enterNode, generateBattleReward, newRun, scoreRun, type PendingPick,
 } from '../engine/run';
 import { EVENTS } from '../content/events';
+import { RELICS } from '../content/relics';
 import { ACHIEVEMENTS, DAILY_MODS, UNLOCK_PACKS } from '../content/meta';
 import { CHARACTERS } from '../content/characters';
 import { playSfx, playSfxList, setSfxEnabled } from '../audio/sfx';
@@ -378,7 +379,7 @@ export const useGame = create<GameStore>((set, get) => {
         const r2 = deepClone(run);
         for (const relic of r2.reward!.relics) {
           addRelic(r2, relic);
-          get().toast(`Relic — ${relic}`, 'relic');
+          get().toast(`Relic — ${RELICS[relic]?.name ?? relic}`, 'relic');
         }
         r2.reward!.relics = [];
         commit(r2);
