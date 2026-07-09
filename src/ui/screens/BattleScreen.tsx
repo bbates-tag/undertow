@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useIsPresent, type PanInfo } from 'framer-motion';
-import { BookOpen, ChevronRight, Layers, Menu as MenuIcon, Shield, SkipForward, Trash2 } from 'lucide-react';
+import { BookOpen, ChevronRight, Heart, Layers, Menu as MenuIcon, Shield, SkipForward, Trash2 } from 'lucide-react';
 import { useGame, checkFlawless } from '../../state/store';
 import { CARDS } from '../../content/cards';
 import { CHARACTERS } from '../../content/characters';
@@ -19,7 +19,7 @@ import { FxLayer } from '../components/FxLayer';
 import { RelicBar } from '../components/RelicBar';
 import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
-import { GoldChip, HpChip } from '../components/Bits';
+import { GoldChip } from '../components/Bits';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
 import { enemyUidAtPoint, fxTargetRef } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
@@ -187,7 +187,6 @@ export function BattleScreen() {
         <button className="btn !p-2" onClick={() => go('settings')} aria-label="Menu & settings">
           <MenuIcon size={15} />
         </button>
-        <HpChip hp={bs.player.hp} maxHp={bs.player.maxHp} />
         <GoldChip gold={run.gold} />
         <span className="chip text-(--color-dim)">Depth {run.floor}</span>
         <div className="flex-1" />
@@ -293,9 +292,9 @@ export function BattleScreen() {
       {/* hand + controls */}
       <div className="relative shrink-0">
         <div className="flex items-end justify-between px-2 gap-1">
-          {/* hero portrait + energy gem */}
+          {/* hero portrait + energy gem + health */}
           <div className="flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
-            <div ref={fxTargetRef('player')} className="relative">
+            <div ref={fxTargetRef('player')} className="relative mb-2">
               <div
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center"
                 style={{
@@ -321,6 +320,20 @@ export function BattleScreen() {
                 aria-label={`${bs.energy} of ${bs.maxEnergy} energy`}
               >
                 {bs.energy}/{bs.maxEnergy}
+              </div>
+              <div
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full px-2 py-0.5 font-black text-[12px] whitespace-nowrap"
+                style={{
+                  background: 'rgba(8,17,32,0.95)',
+                  border: '1.5px solid rgba(255,111,111,0.55)',
+                  color: bs.player.hp / bs.player.maxHp < 0.3 ? 'var(--color-danger)' : 'var(--color-foam)',
+                  boxShadow: '0 2px 10px rgba(2,6,14,0.6)',
+                }}
+                role="status"
+                aria-label={`${bs.player.hp} of ${bs.player.maxHp} HP`}
+              >
+                <Heart size={11} style={{ color: 'var(--color-danger)' }} fill="currentColor" />
+                {bs.player.hp}/{bs.player.maxHp}
               </div>
             </div>
             <button className="chip" onClick={() => setOverlay('drawPile')} aria-label={`draw pile, ${bs.drawPile.length} cards`}>
