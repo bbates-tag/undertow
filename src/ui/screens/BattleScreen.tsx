@@ -54,7 +54,7 @@ function firstDamageOp(ops: Op[]): { amount: Amount; times: number } | null {
 const TUTORIAL_STEPS = [
   { text: 'This is your hand. Tap a card to select it, then play it — or drag a card out of your hand to play it (drop attacks right onto an enemy).', pos: 'bottom' },
   { text: 'Enemies telegraph their next move above their heads. Red numbers are damage you will take — Block absorbs it.', pos: 'top' },
-  { text: 'Cards cost Energy (the orb). It refills every turn. Spend it, then End Turn.', pos: 'left' },
+  { text: 'Cards cost Energy — the glowing counter beside your portrait. It refills every turn. Spend it, then End Turn.', pos: 'left' },
   { text: 'The Tide cycles Low → Rising → High → Falling each turn. Flood cards surge at High tide; Ebb cards at Low.', pos: 'topright' },
 ];
 
@@ -242,23 +242,14 @@ export function BattleScreen() {
         </AnimatePresence>
       </div>
 
-      {/* player strip */}
+      {/* player strip — block + statuses (the portrait lives bottom-left now) */}
       <div className="flex items-center justify-center gap-2 px-3 py-1">
-        <div ref={fxTargetRef('player')} className="flex items-center gap-2">
-          <div
-            className="w-9 h-9 rounded-full border flex items-center justify-center overflow-hidden"
-            style={{ borderColor: ch.color, color: ch.color, background: 'rgba(8,17,32,0.8)' }}
-            aria-hidden
-          >
-            <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={20} />
-          </div>
-          {bs.player.block > 0 && (
-            <span className="chip !text-sm font-black" style={{ color: 'var(--color-shield)', borderColor: 'rgba(95,185,255,0.5)' }}>
-              <Shield size={13} /> {bs.player.block}
-            </span>
-          )}
-          <StatusChips creature={bs.player} />
-        </div>
+        {bs.player.block > 0 && (
+          <span className="chip !text-sm font-black" style={{ color: 'var(--color-shield)', borderColor: 'rgba(95,185,255,0.5)' }}>
+            <Shield size={13} /> {bs.player.block}
+          </span>
+        )}
+        <StatusChips creature={bs.player} />
       </div>
 
       {/* selected card panel — when targeting it moves aside and lets clicks
@@ -302,20 +293,35 @@ export function BattleScreen() {
       {/* hand + controls */}
       <div className="relative shrink-0">
         <div className="flex items-end justify-between px-2 gap-1">
-          {/* energy orb */}
-          <div className="flex flex-col items-center gap-1 pb-3 shrink-0">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center font-black text-lg relative"
-              style={{
-                color: '#06222a',
-                background: 'radial-gradient(circle at 35% 30%, #b8fff5, var(--color-glow) 60%, #0f8d84)',
-                boxShadow: bs.energy > 0 ? '0 0 22px rgba(56,225,211,0.55)' : 'none',
-                opacity: bs.energy > 0 ? 1 : 0.55,
-              }}
-              role="status"
-              aria-label={`${bs.energy} of ${bs.maxEnergy} energy`}
-            >
-              {bs.energy}/{bs.maxEnergy}
+          {/* hero portrait + energy gem */}
+          <div className="flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
+            <div ref={fxTargetRef('player')} className="relative">
+              <div
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center"
+                style={{
+                  borderColor: ch.color,
+                  color: ch.color,
+                  background: 'rgba(8,17,32,0.85)',
+                  boxShadow: '0 6px 18px rgba(2,6,14,0.6)',
+                }}
+                aria-hidden
+              >
+                <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={34} />
+              </div>
+              <div
+                className="absolute -top-1 -right-2 w-9 h-9 rounded-full flex items-center justify-center font-black text-[13px]"
+                style={{
+                  color: '#06222a',
+                  background: 'radial-gradient(circle at 35% 30%, #b8fff5, var(--color-glow) 60%, #0f8d84)',
+                  border: '2px solid rgba(4,9,19,0.85)',
+                  boxShadow: bs.energy > 0 ? '0 0 16px rgba(56,225,211,0.6)' : 'none',
+                  opacity: bs.energy > 0 ? 1 : 0.55,
+                }}
+                role="status"
+                aria-label={`${bs.energy} of ${bs.maxEnergy} energy`}
+              >
+                {bs.energy}/{bs.maxEnergy}
+              </div>
             </div>
             <button className="chip" onClick={() => setOverlay('drawPile')} aria-label={`draw pile, ${bs.drawPile.length} cards`}>
               <Layers size={11} /> {bs.drawPile.length}
