@@ -420,7 +420,8 @@ One arm of the boss in close-up — thick as a mast, banded in bruise-purple, su
 An anglerfish grown wrong at depth — lure burning violet-white like a dying star, body mostly invisible except where its own light betrays the teeth. The light is the trap; the dark is the fish.
 
 **Bone Shoal — `boneShoal`**
-A tight school of small fish skeletons swimming in eerie formation, pale ghost-light glowing in every joint, loosely massed into the rough silhouette of one larger fish; near-black water, cyan-green bio-glow. Death didn't stop the schooling instinct.
+An underwater murmuration: hundreds of tiny identical fish skeletons swarming tightly together so their collective mass forms the unmistakable silhouette of one enormous fish — the giant fish shape is composed ENTIRELY of the small glowing skeletons with gaps of black water showing between them, NOT a single solid skeleton. Pale ghost-light in every tiny spine, near-black water, cyan-green bio-glow. A school of fish forming the shape of a giant fish; mosaic of many into one. Death didn't stop the schooling instinct.
+*(This gestalt effect is one of the hardest for generators — negative prompt: single large fish, one big fish skeleton, large detailed fish skull, solid creature. If it keeps hybridizing, a plain tight school of skeleton fish reads fine at enemy size, or feed a big-fish silhouette as a ControlNet/structure guide and prompt "made of tiny fish skeletons.")*
 
 **Hadal Horror — `hadalHorror`**
 A deep-trench leviathan-larva — pale, eyeless, unsettlingly swollen, its muscle mass lopsided and asymmetric as if inflated by the pressure itself, translucent skin stretched over dark organs. Wrong, and still growing. Near-black water, faint magenta glow.
