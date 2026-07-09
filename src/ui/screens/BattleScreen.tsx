@@ -304,7 +304,7 @@ export function BattleScreen() {
             style={{ bottom: 'calc(var(--card-h) + 64px)' }}
           >
             <CardView card={selected} battle={bs} scale={needsTarget ? undefined : 'lg'} ariaLabel="selected card preview" />
-            <div className="flex flex-col gap-2 max-w-[180px] pb-1">
+            <div className="panel flex flex-col gap-2 max-w-[180px] p-2.5 mb-1">
               {selectedKeywords.map((k) => (
                 <div key={k.id} className="text-[10px] leading-tight text-(--color-mist)">
                   <span className="kw font-bold">{k.name}</span> — {k.text}
