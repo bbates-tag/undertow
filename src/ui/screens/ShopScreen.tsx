@@ -1,6 +1,6 @@
 // The Barnacle Bazaar — cards, relics, and card removal for gold.
 
-import { ArrowLeft, Scissors } from 'lucide-react';
+import { ArrowLeft, Coins, Scissors } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { RELICS } from '../../content/relics';
 import { CardView } from '../components/CardView';
@@ -45,7 +45,7 @@ export function ShopScreen() {
                 onClick={() => shopBuy(idx)}
                 disabled={sold}
               >
-                {sold ? 'SOLD' : `${item.price}g`}
+                {sold ? 'SOLD' : <><Coins size={13} /> {item.price}</>}
               </button>
             </div>
           );
@@ -73,8 +73,8 @@ export function ShopScreen() {
               <span>
                 <span className="font-bold text-sm block">{def.name}</span>
                 <span className="text-[11px] text-(--color-mist) block mb-1">{def.text}</span>
-                <span className={`font-bold text-sm ${afford ? 'text-(--color-gold)' : 'text-(--color-dim)'}`}>
-                  {sold ? 'SOLD' : `${item.price}g`}
+                <span className={`font-bold text-sm inline-flex items-center gap-1 ${afford ? 'text-(--color-gold)' : 'text-(--color-dim)'}`}>
+                  {sold ? 'SOLD' : <><Coins size={13} /> {item.price}</>}
                 </span>
               </span>
             </button>
@@ -93,7 +93,9 @@ export function ShopScreen() {
           <span>
             <span className="font-bold text-sm block">Fillet Service</span>
             <span className="text-[11px] text-(--color-mist) block mb-1">Remove a card from your deck. Forever. A leaner deck draws its best cards more often.</span>
-            <span className="font-bold text-sm text-(--color-gold)">{shop.removalsLeft <= 0 ? 'USED' : `${shop.removalPrice}g`}</span>
+            <span className="font-bold text-sm text-(--color-gold) inline-flex items-center gap-1">
+              {shop.removalsLeft <= 0 ? 'USED' : <><Coins size={13} /> {shop.removalPrice}</>}
+            </span>
           </span>
         </button>
       </div>
