@@ -580,7 +580,9 @@ function HandCard({
   return (
     <motion.div
       ref={wrapRef}
-      layout={!reduced}
+      /* no `layout` here: framer's measurement-based projection can freeze
+         mid-glide when rAF stalls (backgrounded phones), leaving the fan
+         bunched at intermediate positions. Flex positioning is always true. */
       initial={reduced ? false : { y: 110, opacity: 0, scale: 0.6 }}
       animate={{ y: lift, opacity: 1, scale: 1, rotate: rot }}
       variants={{ played: exitFor }}
