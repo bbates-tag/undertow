@@ -9,11 +9,13 @@ import { fxTargetRef } from '../fxRegistry';
 // (root registers as `hit:e<uid>` so drag-to-play can hit-test drop points)
 import type { Amount } from '../../engine/types';
 
+// min(vw, vh) keeps creatures proportional in landscape phones, where width
+// is plentiful but height is scarce
 const SIZE: Record<string, string> = {
-  sm: 'clamp(44px, 12vw, 72px)',
-  md: 'clamp(58px, 15vw, 92px)',
-  lg: 'clamp(72px, 19vw, 118px)',
-  xl: 'clamp(96px, 24vw, 150px)',
+  sm: 'clamp(40px, min(12vw, 12vh), 72px)',
+  md: 'clamp(50px, min(15vw, 15vh), 92px)',
+  lg: 'clamp(62px, min(19vw, 18vh), 118px)',
+  xl: 'clamp(80px, min(24vw, 21vh), 150px)',
 };
 
 function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {

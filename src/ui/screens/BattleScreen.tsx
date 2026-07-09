@@ -296,7 +296,7 @@ export function BattleScreen() {
           <div className="flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
             <div ref={fxTargetRef('player')} className="relative mb-2">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center"
+                className="hero-portrait w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center"
                 style={{
                   borderColor: ch.color,
                   color: ch.color,

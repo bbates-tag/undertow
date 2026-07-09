@@ -45,6 +45,22 @@
   --card-h: calc(var(--card-w) * 1.42);
 }
 
+/* short viewports (landscape phones): size the battle by height, not width,
+   so the hand can't swallow the enemy zone */
+@media (max-height: 520px) {
+  :root {
+    --card-w: clamp(62px, 21vh, 88px);
+  }
+  .hand-area {
+    min-height: calc(var(--card-h) + 4px);
+    padding-bottom: 2px;
+  }
+  .hero-portrait {
+    width: 52px;
+    height: 52px;
+  }
+}
+
 html, body, #root {
   height: 100%;
 }
