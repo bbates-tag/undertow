@@ -52,6 +52,8 @@ export const ACHIEVEMENTS: Record<string, AchievementDef> = Object.fromEntries(
       { id: 'krakenslayer', name: 'Unclencher', text: 'Defeat the Kraken.', icon: 'GiGiantSquid' },
       { id: 'godDrowner', name: 'Drown the Drowned', text: 'Defeat the Drowned God and win a run.', icon: 'GiSeaDragon' },
       { id: 'voltVictor', name: 'Storm Warning', text: 'Win a run as the Voltaic.', icon: 'GiElectric' },
+      { id: 'drownedVictor', name: 'Twice Drowned', text: 'Win a run as The Drowned.', icon: 'GiDrowning' },
+      { id: 'deepDescent', name: 'Terminal Velocity', text: 'Reach 25 Descent in one battle.', icon: 'GiFalling' },
       { id: 'flawless', name: 'Untouchable', text: 'Win a battle without taking any damage.', icon: 'GiEyeShield' },
       { id: 'toxinMaster', name: 'Apex Toxin', text: 'Have 25+ Toxin on one enemy.', icon: 'GiPoisonBottle' },
       { id: 'fullBattery', name: 'Fully Charged', text: 'Reach 20 Charge in one battle.', icon: 'GiBatteryPack' },

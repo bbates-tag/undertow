@@ -85,6 +85,7 @@ export function resolveAmount(bs: BattleState, a: Amount, target?: EnemyState): 
   let n = a.base;
   if (a.perToxinOnTarget && target) n += a.perToxinOnTarget * getStatus(target, 'toxin');
   if (a.perCharge) n += a.perCharge * getStatus(bs.player, 'charge');
+  if (a.perDescent) n += a.perDescent * getStatus(bs.player, 'descent');
   if (a.perCardPlayed) n += a.perCardPlayed * bs.cardsPlayedThisTurn;
   if (a.perBlock) n += a.perBlock * bs.player.block;
   if (a.flood && bs.tide === 2) n += a.flood;
@@ -165,7 +166,7 @@ function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
 /** All player HP loss funnels through here (attacks, toxin, self-damage). */
 function losePlayerHp(
   run: RunState, bs: BattleState, dmg: number, emit: Emit,
-  opts: { ignoreBlock?: boolean; source?: string } = {},
+  opts: { ignoreBlock?: boolean; source?: string; nonLethal?: boolean } = {},
 ): number {
   const p = bs.player;
   const blocked = opts.ignoreBlock ? 0 : Math.min(p.block, dmg);
@@ -178,6 +179,8 @@ function losePlayerHp(
     fx(emit, { kind: 'burst', target: 'player', color: 'pearl', n: 16, shape: 'ring' });
     sfx(emit, 'shield');
   }
+  // passive drains (powers, boss relics) bleed you to the brink, never past it
+  if (opts.nonLethal) hpLoss = Math.max(0, Math.min(hpLoss, p.hp - 1));
   if (hpLoss > 0) {
     p.hp = Math.max(0, p.hp - hpLoss);
     bs.battleDamageTaken += hpLoss;
@@ -188,9 +191,41 @@ function losePlayerHp(
       bs.phase = 'lost';
       run.killedBy = opts.source;
       sfx(emit, 'defeat');
+    } else if (bs.phase === 'player' && run.charId === 'drowned') {
+      // The Drowned: pain taken on your own turn becomes Descent
+      let gain = hpLoss;
+      if (run.relics.includes('barnacledHeart') && bs.counters.bHeartTurn !== bs.turn) {
+        bs.counters.bHeartTurn = bs.turn;
+        gain += 1;
+      }
+      gainDescent(run, bs, gain, emit);
     }
   }
   return hpLoss;
+}
+
+/** Descent only grows (Surface cards reset it). Feeds the Drowned's engines. */
+export function gainDescent(run: RunState, bs: BattleState, n: number, emit: Emit) {
+  if (n <= 0) return;
+  addStatus(bs.player, 'descent', n);
+  run.stats.maxDescent = Math.max(run.stats.maxDescent ?? 0, getStatus(bs.player, 'descent'));
+  fx(emit, { kind: 'status', target: 'player', status: 'descent', amount: n });
+  for (const p of bs.powers) {
+    if (p === 'marrowBloom2' || p === 'marrowBloom3') {
+      gainPlayerBlock(run, bs, p === 'marrowBloom2' ? 2 : 3, emit, false);
+    }
+    if (p === 'echoPain') {
+      const pool = living(bs);
+      if (pool.length) {
+        const { r, done } = battleRng(bs);
+        const v = r.pick(pool);
+        done();
+        damageEnemy(run, bs, v, n, emit);
+        sfx(emit, 'hit');
+        checkVictory(run, bs, emit);
+      }
+    }
+  }
 }
 
 export function healPlayer(run: RunState, bs: BattleState | null, n: number, emit: Emit): number {
@@ -288,6 +323,7 @@ function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
   if (cond === 'ebb') return bs.tide === 0;
   if (cond === 'targetToxined') return !!target && getStatus(target, 'toxin') > 0;
   if (cond === 'targetBelowHalf') return !!target && target.hp <= target.maxHp / 2;
+  if ('descentAtLeast' in cond) return getStatus(bs.player, 'descent') >= cond.descentAtLeast;
   return getStatus(bs.player, 'charge') >= cond.chargeAtLeast;
 }
 
@@ -351,6 +387,10 @@ export function runOps(
         }
         break;
       }
+      case 'loseHp':
+        losePlayerHp(run, bs, op.amount, emit, { ignoreBlock: true, source: 'the deep' });
+        if (phaseNow(bs) === 'lost') return;
+        break;
       case 'block':
         gainPlayerBlock(run, bs, resolveAmount(bs, op.amount), emit);
         break;
@@ -448,6 +488,8 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
       case 'sharktoothCharm': addStatus(bs.player, 'might', 1); break;
       case 'rustedHelm': losePlayerHp(run, bs, 3, emit, { ignoreBlock: true, source: 'Rusted Diving Helm' }); break;
       case 'moonChart': bs.tide = 2; onTideHigh(run, bs, emit); break;
+      case 'saltVein': gainDescent(run, bs, 3, emit); break;
+      case 'graveBallast': losePlayerHp(run, bs, 4, emit, { ignoreBlock: true, nonLethal: true, source: 'Grave Ballast' }); break;
     }
   }
   if (run.daily?.mods.includes('hardShell')) gainPlayerBlock(run, bs, 10, emit, false);
@@ -492,6 +534,17 @@ function powersTurnStart(run: RunState, bs: BattleState, emit: Emit) {
         shiftTide(run, bs, 1, emit);
         drawCards(run, bs, 1, emit);
         break;
+      case 'weepingHull4': case 'weepingHull6':
+        losePlayerHp(run, bs, 1, emit, { ignoreBlock: true, nonLethal: true, source: 'Weeping Hull' });
+        gainPlayerBlock(run, bs, p === 'weepingHull4' ? 4 : 6, emit, false);
+        break;
+      case 'communion2': case 'communion3': {
+        losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Abyssal Communion' });
+        const m = p === 'communion2' ? 2 : 3;
+        addStatus(bs.player, 'might', m);
+        fx(emit, { kind: 'status', target: 'player', status: 'might', amount: m });
+        break;
+      }
       default: break;
     }
   }
@@ -510,7 +563,7 @@ function powersTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
 export function maxEnergyFor(run: RunState): number {
   let e = 3;
   for (const r of run.relics) {
-    if (r === 'rustedHelm' || r === 'blackPearl' || r === 'pressureCrown') e += 1;
+    if (r === 'rustedHelm' || r === 'blackPearl' || r === 'pressureCrown' || r === 'graveBallast') e += 1;
   }
   if (run.daily?.mods.includes('glassCannon')) e += 1;
   return e;
@@ -659,7 +712,14 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   run.stats.turnsPlayed += 1;
 }
 
-export type PlayError = 'notFound' | 'energy' | 'unplayable' | 'needsTarget' | 'phase';
+export type PlayError = 'notFound' | 'energy' | 'unplayable' | 'needsTarget' | 'phase' | 'hp';
+
+/** Total flat HP a card demands up front (loseHp ops, unconditional only). */
+function hpCostOf(ops: Op[]): number {
+  let n = 0;
+  for (const op of ops) if (op.op === 'loseHp') n += op.amount;
+  return n;
+}
 
 export function canPlay(bs: BattleState, uid: number): PlayError | null {
   if (bs.phase !== 'player') return 'phase';
@@ -668,6 +728,8 @@ export function canPlay(bs: BattleState, uid: number): PlayError | null {
   const def = cardDef(c);
   if (def.unplayable) return 'unplayable';
   if (cardCost(c) > bs.energy) return 'energy';
+  // blood costs never let you kill yourself — the sea decides when you're done
+  if (hpCostOf(cardOps(c)) >= bs.player.hp) return 'hp';
   return null;
 }
 
@@ -733,6 +795,8 @@ export function playCard(run: RunState, uid: number, targetUid: number | undefin
       if (p === 'lightningRod4') gainCharge(run, bs, 4, emit);
     }
   }
+  // Surface: all Descent is exhaled
+  if (def.surface) setStatus(bs.player, 'descent', 0);
 
   bs.cardsPlayedThisTurn += 1;
   if (def.type === 'attack') bs.attacksPlayedThisTurn += 1;
@@ -918,6 +982,9 @@ function checkVictory(run: RunState, bs: BattleState, emit: Emit) {
   if (living(bs).length === 0) {
     bs.phase = 'won';
     run.hp = bs.player.hp;
+    // after-battle mending from starter relics
+    if (run.relics.includes('livingCoral')) run.hp = Math.min(run.maxHp, run.hp + 5);
+    if (run.relics.includes('barnacledHeart')) run.hp = Math.min(run.maxHp, run.hp + 4);
     if (bs.battleDamageTaken === 0) run.stats.battlesFlawless += 1;
     sfx(emit, 'victory');
   }

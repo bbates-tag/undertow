@@ -5,7 +5,7 @@
 // a page refresh. Content defs (cards/enemies/relics) are looked up by id.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CharacterId = 'tidecaller' | 'voltaic';
+export type CharacterId = 'tidecaller' | 'voltaic' | 'drowned';
 export type CardType = 'attack' | 'skill' | 'power' | 'curse';
 export type Rarity = 'starter' | 'common' | 'uncommon' | 'rare' | 'special';
 
@@ -23,7 +23,8 @@ export type StatusId =
   | 'spines' // melee attackers take N (battle)
   | 'regen' // heal N at end of turn, then reduce by 1
   | 'anchor' // block is not removed at the start of your next turn (consumed)
-  | 'charge'; // Voltaic resource; spent by Discharge cards
+  | 'charge' // Voltaic resource; spent by Discharge cards
+  | 'descent'; // Drowned resource; grows when the player loses HP on their own turn
 
 export const DEBUFFS: StatusId[] = ['toxin', 'weakened', 'exposed', 'brittle'];
 
@@ -36,6 +37,8 @@ export interface Amount {
   perToxinOnTarget?: number;
   /** + n × player Charge (does not spend it) */
   perCharge?: number;
+  /** + n × player Descent (does not spend it) */
+  perDescent?: number;
   /** + n × other cards played this turn */
   perCardPlayed?: number;
   /** + n × current player block */
@@ -53,10 +56,12 @@ export type Cond =
   | 'ebb' // tide is Low
   | 'targetToxined'
   | 'targetBelowHalf'
-  | { chargeAtLeast: number };
+  | { chargeAtLeast: number }
+  | { descentAtLeast: number };
 
 export type Op =
   | { op: 'damage'; amount: Amount; times?: number | 'charge'; target?: 'target' | 'all' | 'random'; pierce?: boolean }
+  | { op: 'loseHp'; amount: number } // self-damage cost; ignores Block
   | { op: 'block'; amount: Amount }
   | { op: 'status'; status: StatusId; amount: Amount; target: OpTarget }
   | { op: 'draw'; amount: number }
@@ -88,6 +93,8 @@ export interface CardDef {
   exhaustUp?: boolean; // defaults to exhaust
   /** Discharge: after resolving, all Charge is spent */
   discharge?: boolean;
+  /** Surface: after resolving, ALL Descent is lost */
+  surface?: boolean;
   unplayable?: boolean;
   /** curse hooks: ops run if this is in hand when the turn ends */
   endTurnInHand?: Op[];
@@ -114,7 +121,11 @@ export type PowerHookId =
   | 'teslaScales1' | 'teslaScales2' // on conduct: N dmg to all enemies
   | 'dynamo2' | 'dynamo3' // turn start: Conduct N (rare version)
   | 'lightningRod3' | 'lightningRod4' // after a Discharge card: Conduct N
-  | 'supercell'; // turn start: dmg = Charge to all enemies
+  | 'supercell' // turn start: dmg = Charge to all enemies
+  | 'weepingHull4' | 'weepingHull6' // turn start: lose 1 HP, gain N block
+  | 'marrowBloom2' | 'marrowBloom3' // on Descent gain: gain N block
+  | 'communion2' | 'communion3' // turn start: lose 2 HP, gain N Might
+  | 'echoPain'; // on Descent gain: deal that much dmg to a random enemy
 
 export interface CardInstance {
   uid: number;
@@ -270,6 +281,8 @@ export interface RunStats {
   cardsPlayed: number;
   maxToxinApplied: number;
   maxCharge: number;
+  /** optional: absent on saves from before The Drowned existed */
+  maxDescent?: number;
   maxBlock: number;
   maxMight: number;
   restsUsed: number;
@@ -379,4 +392,6 @@ export interface CharacterDef {
   starterDeck: { card: string; count: number }[];
   blurb: string;
   mechanic: string;
+  /** shown on the character-select card while this character is locked */
+  lockText?: string;
 }

@@ -12,7 +12,7 @@ export interface DescribeCtx {
 const STATUS_NAMES: Record<StatusId, string> = {
   toxin: 'Toxin', weakened: 'Weakened', exposed: 'Exposed', brittle: 'Brittle',
   might: 'Might', finesse: 'Finesse', spines: 'Spines', regen: 'Regen',
-  anchor: 'Anchor', charge: 'Charge',
+  anchor: 'Anchor', charge: 'Charge', descent: 'Descent',
 };
 
 const HOOK_TEXT: Record<PowerHookId, string> = {
@@ -40,12 +40,20 @@ const HOOK_TEXT: Record<PowerHookId, string> = {
   lightningRod3: 'After you play a Discharge card, Conduct 3.',
   lightningRod4: 'After you play a Discharge card, Conduct 4.',
   supercell: 'At the start of your turn, deal damage equal to your Charge to ALL enemies.',
+  weepingHull4: 'At the start of your turn, lose 1 HP and gain 4 Block.',
+  weepingHull6: 'At the start of your turn, lose 1 HP and gain 6 Block.',
+  marrowBloom2: 'Whenever you gain Descent, gain 2 Block.',
+  marrowBloom3: 'Whenever you gain Descent, gain 3 Block.',
+  communion2: 'At the start of your turn, lose 2 HP and gain 2 Might.',
+  communion3: 'At the start of your turn, lose 2 HP and gain 3 Might.',
+  echoPain: 'Whenever you gain Descent, deal that much damage to a random enemy.',
 };
 
 function amountClauses(a: Amount): string[] {
   const parts: string[] = [];
   if (a.perToxinOnTarget) parts.push(`+${a.perToxinOnTarget} per Toxin on the target`);
   if (a.perCharge) parts.push(`+${a.perCharge} per Charge`);
+  if (a.perDescent) parts.push(`+${a.perDescent} per Descent`);
   if (a.perCardPlayed) parts.push(`+${a.perCardPlayed} for each card played before it this turn`);
   return parts;
 }
@@ -85,6 +93,8 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       if (a.ebb) s += ` Ebb: +${a.ebb} damage.`;
       return s;
     }
+    case 'loseHp':
+      return `Lose ${op.amount} HP.`;
     case 'block': {
       const n = blockNumber(op.amount, ctx);
       let s = `Gain ${n} Block.`;
@@ -114,6 +124,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       const clauses = amountClauses(op.amount);
       const n = ctx ? resolveAmount(ctx.bs, op.amount) : op.amount.base;
       if (op.amount.perCharge && op.amount.base === 0 && !ctx) return `Heal ${op.amount.perCharge} HP per Charge.`;
+      if (op.amount.perDescent && op.amount.base === 0 && !ctx) return `Heal ${op.amount.perDescent} HP per Descent.`;
       let s = `Heal ${n} HP.`;
       if (clauses.length && ctx) s += ` (${clauses.join(', ')}.)`;
       return s;
@@ -139,6 +150,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       if (op.cond === 'ebb') return `Ebb: ${inner}${alt}`;
       if (op.cond === 'targetToxined') return `If the target has Toxin: ${inner}${alt}`;
       if (op.cond === 'targetBelowHalf') return `If the target is at half HP or less: ${inner}${alt}`;
+      if ('descentAtLeast' in op.cond) return `If you have ${op.cond.descentAtLeast}+ Descent: ${inner}${alt}`;
       return `If you have ${op.cond.chargeAtLeast}+ Charge: ${inner}${alt}`;
     }
   }
@@ -155,6 +167,7 @@ export function describeCard(def: CardDef, upgraded: boolean, ctx?: DescribeCtx)
   const hook = upgraded ? (def.powerHookUp ?? def.powerHook) : def.powerHook;
   if (hook) parts.push(HOOK_TEXT[hook]);
   if (def.discharge) parts.push('Discharge.');
+  if (def.surface) parts.push('Surface.');
   if (def.endTurnInHand) {
     for (const op of def.endTurnInHand) {
       if (op.op === 'damage') parts.push(`At the end of your turn, if this is in your hand, lose ${op.amount.base} HP.`);

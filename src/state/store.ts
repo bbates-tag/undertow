@@ -171,6 +171,7 @@ export const useGame = create<GameStore>((set, get) => {
     if (s.kills > 0) award('firstBlood');
     if (s.maxToxinApplied >= 25) award('toxinMaster');
     if (s.maxCharge >= 20) award('fullBattery');
+    if ((s.maxDescent ?? 0) >= 25) award('deepDescent');
     if (s.maxBlock >= 40) award('wallOfNacre');
     if (s.maxMight >= 10) award('mightyOne');
     if (run.gold >= 250) award('hoarder');
@@ -191,11 +192,15 @@ export const useGame = create<GameStore>((set, get) => {
       const cur = meta.ascension[run.charId] ?? 0;
       meta.ascension[run.charId] = Math.min(10, Math.max(cur, run.ascension + 1));
     }
-    // character unlock: beat the Act 1 boss (in any run)
+    // character unlocks: Voltaic after any boss kill, the Drowned after a full win
     const unlocked: string[] = [];
     if (run.stats.bossesKilled >= 1 && !meta.unlockedChars.includes('voltaic')) {
       meta.unlockedChars.push('voltaic');
       unlocked.push('New character — The Voltaic');
+    }
+    if (result === 'win' && !meta.unlockedChars.includes('drowned')) {
+      meta.unlockedChars.push('drowned');
+      unlocked.push('New character — The Drowned');
     }
     for (const pack of UNLOCK_PACKS) {
       if (meta.fathoms >= pack.atFathoms && !meta.unlockedPacks.includes(pack.id)) {
@@ -226,6 +231,7 @@ export const useGame = create<GameStore>((set, get) => {
     // result achievements
     if (result === 'win') {
       if (run.charId === 'voltaic') award('voltVictor');
+      if (run.charId === 'drowned') award('drownedVictor');
       award('godDrowner');
       if (run.deck.length <= 15) award('minimalist');
       if (run.ascension >= 5) award('depth5');
@@ -406,6 +412,11 @@ export const useGame = create<GameStore>((set, get) => {
           playSfx('error');
           return;
         }
+        if (err === 'hp') {
+          get().toast('Not enough HP — the cost would kill you');
+          playSfx('error');
+          return;
+        }
         playSfx('click');
       }
       set({ selectedCard: uid });
@@ -429,6 +440,7 @@ export const useGame = create<GameStore>((set, get) => {
       const err = playCard(clone, uid, targetUid, emit);
       if (err) {
         if (err === 'energy') get().toast('Not enough Energy');
+        if (err === 'hp') get().toast('Not enough HP — the cost would kill you');
         playSfx('error');
         return;
       }

@@ -21,6 +21,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       // ── Starters ──
       { id: 'livingCoral', name: 'Living Coral', icon: 'GiCoral', tier: 'starter', char: 'tidecaller', text: 'Heal 5 HP after each battle.', flavor: 'It grew into the wound and stayed.' },
       { id: 'stormCore', name: 'Storm Core', icon: 'GiEnergyTank', tier: 'starter', char: 'voltaic', text: 'Start each battle with 3 Charge.', flavor: 'A heart, if a heart were weather.' },
+      { id: 'barnacledHeart', name: 'Barnacled Heart', icon: 'GiChainedHeart', tier: 'starter', char: 'drowned', text: 'The first time you gain Descent each turn, gain 1 more. Heal 4 HP after each battle.', flavor: "It beats. That's not the worrying part." },
       // ── Common ──
       { id: 'sharktoothCharm', name: 'Sharktooth Charm', icon: 'GiFangsCircle', tier: 'common', text: 'Start each battle with 1 Might.' },
       { id: 'deepstoneIdol', name: 'Deepstone Idol', icon: 'GiDolmen', tier: 'common', text: 'On pickup: gain 8 Max HP.' },
@@ -36,6 +37,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'whetstoneCoral', name: 'Whetstone Coral', icon: 'GiAnvil', tier: 'common', text: 'Attacks that hit more than once deal +1 damage per hit.' },
       { id: 'glassFloat', name: 'Glass Float', icon: 'GiFloatingCrystal', tier: 'common', text: 'Draw 2 extra cards on your first turn each battle.' },
       { id: 'whaleOilFlask', name: 'Whale-Oil Flask', icon: 'GiSpermWhale', tier: 'common', text: 'Resting heals 15 extra HP.' },
+      { id: 'saltVein', name: 'Salt Vein', icon: 'GiHeartDrop', tier: 'common', char: 'drowned', text: 'Start each battle with 3 Descent.' },
       // ── Uncommon / Rare ──
       { id: 'chumBucket', name: 'Chum Bucket', icon: 'GiCauldron', tier: 'uncommon', text: 'Enemies start each battle with 3 Toxin.' },
       { id: 'sirenScale', name: 'Siren Scale', icon: 'GiMusicalNotes', tier: 'uncommon', text: 'Whenever you play a Power, draw 2 cards.' },
@@ -51,6 +53,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'pressureCrown', name: 'Pressure Crown', icon: 'GiCrown', tier: 'boss', text: '+1 Energy each turn. Draw 1 fewer card each turn.' },
       { id: 'heartOfMaelstrom', name: 'Heart of the Maelstrom', icon: 'GiTentacleHeart', tier: 'boss', text: 'Whenever the tide changes, gain 3 Block.', flavor: 'The churn shields those who ride it.' },
       { id: 'grimoireOfBrine', name: 'Grimoire of Brine', icon: 'GiSpellBook', tier: 'boss', text: 'Draw 1 extra card each turn.' },
+      { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: '+1 Energy each turn. At the start of each battle, lose 4 HP.', flavor: 'Sink faster. Arrive first.' },
     ] as RelicDef[]
   ).map((r) => [r.id, r]),
 );

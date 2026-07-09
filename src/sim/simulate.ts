@@ -66,16 +66,23 @@ function playBattle(run: RunState, rng: () => number): void {
       for (const op of ops) {
         if (op.op === 'damage') {
           const times = op.times === 'charge' ? (bs.player.statuses.charge ?? 0) : (op.times ?? 1);
-          let dmg = op.amount.base + (op.amount.perCharge ?? 0) * (bs.player.statuses.charge ?? 0);
+          let dmg = op.amount.base + (op.amount.perCharge ?? 0) * (bs.player.statuses.charge ?? 0)
+            + (op.amount.perDescent ?? 0) * (bs.player.statuses.descent ?? 0);
           if (op.amount.perBlock) dmg += bs.player.block;
           s += dmg * times * (op.target === 'all' ? living(bs).length : 1);
         }
-        if (op.op === 'block') s += (op.amount.base + (op.amount.perCharge ?? 0) * (bs.player.statuses.charge ?? 0)) * (needBlock ? 2.2 : 0.55);
+        if (op.op === 'block') s += (op.amount.base + (op.amount.perCharge ?? 0) * (bs.player.statuses.charge ?? 0)
+          + (op.amount.perDescent ?? 0) * (bs.player.statuses.descent ?? 0)) * (needBlock ? 2.2 : 0.55);
+        // blood costs: cheap while healthy, prohibitive when low
+        if (op.op === 'loseHp') s -= op.amount * (bs.player.hp < bs.player.maxHp * 0.3 ? 6 : bs.player.hp < bs.player.maxHp * 0.55 ? 1.2 : 0.35);
         if (op.op === 'status' && op.target !== 'self') s += op.amount.base * 1.6;
         if (op.op === 'status' && op.target === 'self') s += op.amount.base * 1.2;
         if (op.op === 'draw') s += op.amount * 1.5;
         if (op.op === 'energy') s += op.amount * 2;
-        if (op.op === 'heal') s += bs.player.hp < bs.player.maxHp * 0.6 ? op.amount.base * 1.5 : 1;
+        if (op.op === 'heal') {
+          const amt = op.amount.base + (op.amount.perDescent ?? 0) * (bs.player.statuses.descent ?? 0);
+          s += bs.player.hp < bs.player.maxHp * 0.6 ? amt * 1.5 : 1;
+        }
       }
       if (def.powerHook) s += 9; // engines early
       if (def.type === 'curse') s = -1;
@@ -230,7 +237,7 @@ declare const process: { argv: string[] } | undefined;
 const isMain = typeof process !== 'undefined' && process.argv[1]?.includes('simulate');
 if (isMain) {
   const N = Number(process!.argv[2]) || 60;
-  for (const charId of ['tidecaller', 'voltaic'] as CharacterId[]) {
+  for (const charId of ['tidecaller', 'voltaic', 'drowned'] as CharacterId[]) {
     const results: SimResult[] = [];
     const deaths: Record<string, number> = {};
     for (let i = 0; i < N; i++) {

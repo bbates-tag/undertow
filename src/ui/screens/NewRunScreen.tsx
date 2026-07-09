@@ -64,7 +64,7 @@ export function NewRunScreen() {
               onClick={() => !locked && setCharId(ch.id)}
               disabled={locked}
               aria-pressed={active}
-              aria-label={locked ? `${ch.name}, locked — defeat the Act 1 boss to unlock` : `select ${ch.name}`}
+              aria-label={locked ? `${ch.name}, locked — ${ch.lockText ?? 'keep diving to unlock'}` : `select ${ch.name}`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-16 h-20 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden" style={{ borderColor: ch.color, color: ch.color, background: 'rgba(8,17,32,0.7)' }}>
@@ -76,7 +76,7 @@ export function NewRunScreen() {
                 </div>
               </div>
               {locked ? (
-                <p className="text-xs text-(--color-mist)">Defeat the Act I boss to recruit the eel-blooded.</p>
+                <p className="text-xs text-(--color-mist)">{ch.lockText ?? 'Keep diving to unlock.'}</p>
               ) : (
                 <>
                   <p className="text-xs text-(--color-mist) mb-1">{ch.blurb}</p>

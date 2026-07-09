@@ -30,6 +30,11 @@ import {
   GiThornyVine, GiThunderStruck, GiThunderball, GiTreasureMap, GiTrident, GiUnlitBomb,
   GiVikingHelmet, GiVortex, GiWaterSplash, GiWaveCrest, GiWaveStrike, GiWaveSurfer, GiWaves,
   GiWhirlpoolShuriken, GiWhirlwind, GiCampfire, GiOctopus,
+  // The Drowned
+  GiSkeletalHand, GiRibcage, GiOpenWound, GiBleedingWound, GiFalling, GiSaltShaker, GiWeight,
+  GiInnerSelf, GiLungs, GiBoneGnawer, GiSeaStar, GiCandleSkull, GiOldLantern, GiGraveyard,
+  GiCoffin, GiHeartOrgan, GiSpectre, GiKrakenTentacle, GiHeavyFall, GiSinkingShip, GiHighTide,
+  GiBrokenHeart, GiChainedHeart, GiHeartDrop,
 } from 'react-icons/gi';
 
 const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number | string }>> = {
@@ -59,6 +64,10 @@ const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number
   GiThornyVine, GiThunderStruck, GiThunderball, GiTreasureMap, GiTrident, GiUnlitBomb,
   GiVikingHelmet, GiVortex, GiWaterSplash, GiWaveCrest, GiWaveStrike, GiWaveSurfer, GiWaves,
   GiWhirlpoolShuriken, GiWhirlwind, GiCampfire, GiOctopus,
+  GiSkeletalHand, GiRibcage, GiOpenWound, GiBleedingWound, GiFalling, GiSaltShaker, GiWeight,
+  GiInnerSelf, GiLungs, GiBoneGnawer, GiSeaStar, GiCandleSkull, GiOldLantern, GiGraveyard,
+  GiCoffin, GiHeartOrgan, GiSpectre, GiKrakenTentacle, GiHeavyFall, GiSinkingShip, GiHighTide,
+  GiBrokenHeart, GiChainedHeart, GiHeartDrop,
 };
 
 export function GameIcon({ id, className, size }: { id: string; className?: string; size?: number | string }) {
@@ -78,4 +87,5 @@ export const STATUS_META: Record<string, { icon: string; color: string; name: st
   regen: { icon: 'GiHeartPlus', color: 'var(--color-toxin)', name: 'Regen' },
   anchor: { icon: 'GiAnchor', color: 'var(--color-shield)', name: 'Anchor' },
   charge: { icon: 'GiElectric', color: 'var(--color-volt)', name: 'Charge' },
+  descent: { icon: 'GiDrowning', color: 'var(--color-drowned)', name: 'Descent' },
 };

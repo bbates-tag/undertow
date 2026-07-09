@@ -20,6 +20,8 @@ export const KEYWORDS: Record<string, KeywordDef> = {
   charge: { id: 'charge', name: 'Charge', text: 'Stored voltage. It does not fade between turns. Discharge cards consume all of it.' },
   conduct: { id: 'conduct', name: 'Conduct', text: 'Conduct X: gain X Charge.' },
   discharge: { id: 'discharge', name: 'Discharge', text: 'The effect scales with your Charge — then ALL Charge is spent.' },
+  descent: { id: 'descent', name: 'Descent', text: 'When you lose HP during your own turn, gain that much Descent. Lasts the battle; some cards grow stronger per Descent.' },
+  surface: { id: 'surface', name: 'Surface', text: 'After this card resolves, ALL your Descent is lost.' },
   flood: { id: 'flood', name: 'Flood', text: 'Bonus applies while the tide is High.' },
   ebb: { id: 'ebb', name: 'Ebb', text: 'Bonus applies while the tide is Low.' },
   shift: { id: 'shift', name: 'Shift', text: 'Advance the tide: Low → Rising → High → Falling → Low. The tide also advances on its own each turn.' },
@@ -32,7 +34,7 @@ export const KEYWORDS: Record<string, KeywordDef> = {
 
 /** Order matters: longer names first so e.g. "Weakened" matches before "Weak". */
 export const KEYWORD_PATTERN = new RegExp(
-  `\\b(${['Discharge', 'Unplayable', 'Weakened', 'Conduct', 'Exhaust', 'Brittle', 'Exposed', 'Finesse', 'Anchor', 'Charge', 'Spines', 'Toxin', 'Might', 'Regen', 'Block', 'Flood', 'Pierce', 'Shift', 'Ebb'].join('|')})\\b`,
+  `\\b(${['Discharge', 'Unplayable', 'Weakened', 'Conduct', 'Descent', 'Exhaust', 'Surface', 'Brittle', 'Exposed', 'Finesse', 'Anchor', 'Charge', 'Spines', 'Toxin', 'Might', 'Regen', 'Block', 'Flood', 'Pierce', 'Shift', 'Ebb'].join('|')})\\b`,
   'g',
 );
 

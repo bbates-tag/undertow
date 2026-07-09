@@ -4,18 +4,18 @@ import {
 } from './battle';
 import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun } from './run';
 import { makeRng, hashSeed } from '../lib/rng';
-import type { CreatureState, RunState } from './types';
+import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
 import { CARDS } from '../content/cards';
 import { EVENTS } from '../content/events';
 
 const ALL_PACKS = UNLOCK_PACKS.map((p) => p.id);
 
-function testRun(seed = 'test-seed', charId: 'tidecaller' | 'voltaic' = 'tidecaller'): RunState {
+function testRun(seed = 'test-seed', charId: CharacterId = 'tidecaller'): RunState {
   return newRun({ charId, ascension: 0, seed, unlockedPacks: ALL_PACKS });
 }
 
-function battleRun(groupId = 'a1_crab', charId: 'tidecaller' | 'voltaic' = 'tidecaller'): RunState {
+function battleRun(groupId = 'a1_crab', charId: CharacterId = 'tidecaller'): RunState {
   const run = testRun(`battle-${groupId}`, charId);
   startBattle(run, groupId, newEmit());
   return run;
@@ -361,5 +361,69 @@ describe('run layer', () => {
     run.stats.floorsClimbed = 10;
     run.stats.kills = 8;
     expect(scoreRun(run)).toBeGreaterThan(80);
+  });
+});
+
+describe('the Drowned — Descent', () => {
+  it('HP lost on your own turn becomes Descent (starter relic adds 1, once per turn)', () => {
+    const run = battleRun('a1_crab', 'drowned');
+    const bs = run.battle!;
+    giveHand(run, ['openVein', 'openVein']);
+    const hpBefore = bs.player.hp;
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    // lose 2 → +2 Descent, +1 Barnacled Heart (first gain this turn)
+    expect(bs.player.hp).toBe(hpBefore - 2);
+    expect(getStatus(bs.player, 'descent')).toBe(3);
+    playCard(run, 9001, bs.enemies[0].uid, newEmit());
+    expect(getStatus(bs.player, 'descent')).toBe(5); // heart bonus doesn't repeat
+  });
+
+  it('other characters never gain Descent', () => {
+    const run = battleRun('a1_crab', 'tidecaller');
+    const bs = run.battle!;
+    giveHand(run, ['tideStrike']);
+    bs.player.statuses.spines = 0;
+    // force a self-loss during the player phase
+    bs.enemies[0].statuses.spines = 3;
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    expect(getStatus(bs.player, 'descent')).toBe(0);
+  });
+
+  it('perDescent scaling and Surface reset', () => {
+    const run = battleRun('a1_crab', 'drowned');
+    const bs = run.battle!;
+    bs.player.statuses.descent = 10;
+    giveHand(run, ['sunkenFury', 'breakSurface']);
+    const e = bs.enemies[0];
+    const hpBefore = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hpBefore - e.hp).toBe(12); // 2 base + 1×10 Descent
+    bs.player.hp = 40;
+    playCard(run, 9001, undefined, newEmit());
+    expect(bs.player.hp).toBe(50); // healed 10 (1 per Descent)
+    expect(getStatus(bs.player, 'descent')).toBe(0); // Surface
+  });
+
+  it('descentAtLeast conditions gate bonus ops', () => {
+    const run = battleRun('a1_crab', 'drowned');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    giveHand(run, ['saltInTheWound', 'saltInTheWound']);
+    let hpBefore = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hpBefore - e.hp).toBe(4); // below 5 Descent: single hit
+    bs.player.statuses.descent = 5;
+    hpBefore = e.hp;
+    playCard(run, 9001, e.uid, newEmit());
+    expect(hpBefore - e.hp).toBe(8); // 4 + conditional 4
+  });
+
+  it('spines retaliation feeds Descent for the Drowned', () => {
+    const run = battleRun('a1_crab', 'drowned');
+    const bs = run.battle!;
+    bs.enemies[0].statuses.spines = 2;
+    giveHand(run, ['drownedGrip']);
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    expect(getStatus(bs.player, 'descent')).toBe(3); // 2 spines + 1 heart
   });
 });
