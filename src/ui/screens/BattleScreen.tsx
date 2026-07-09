@@ -2,9 +2,9 @@
 // tide dial, targeting flow (tap-to-play AND Hearthstone-style drag-to-play),
 // damage previews, victory/defeat, and tutorial.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, usePresence, type PanInfo, type TargetAndTransition } from 'framer-motion';
-import { BookOpen, ChevronRight, Heart, Layers, Menu as MenuIcon, Shield, SkipForward, Trash2 } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useAnimationControls, usePresence, type PanInfo, type TargetAndTransition } from 'framer-motion';
+import { BookOpen, ChevronRight, Heart, Menu as MenuIcon, Shield, SkipForward } from 'lucide-react';
 import { useGame, checkFlawless, type LastPlay } from '../../state/store';
 import { CARDS } from '../../content/cards';
 import { CHARACTERS } from '../../content/characters';
@@ -20,6 +20,7 @@ import { RelicBar } from '../components/RelicBar';
 import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip } from '../components/Bits';
+import { CardBack, PileWidget } from '../components/CardBack';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
 import { enemyUidAtPoint, fxTargetCenter, fxTargetRef, nearestEnemyUid } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
@@ -377,9 +378,12 @@ export function BattleScreen() {
                 {bs.player.hp}/{bs.player.maxHp}
               </div>
             </div>
-            <button className="chip" onClick={() => setOverlay('drawPile')} aria-label={`draw pile, ${bs.drawPile.length} cards`}>
-              <Layers size={11} /> {bs.drawPile.length}
-            </button>
+            <PileWidget
+              kind="drawPile"
+              count={bs.drawPile.length}
+              onClick={() => setOverlay('drawPile')}
+              label={`draw pile, ${bs.drawPile.length} cards`}
+            />
           </div>
 
           {/* hand — keyed per battle+turn: the whole hand redraws each turn
@@ -431,10 +435,13 @@ export function BattleScreen() {
             >
               {enemyTurnRunning || bs.phase === 'enemy' ? '· · ·' : <>End<br />Turn</>}
             </button>
-            <div className="flex gap-1">
-              <button className="chip" onClick={() => setOverlay('discardPile')} aria-label={`discard pile, ${bs.discardPile.length} cards`}>
-                <Trash2 size={11} /> {bs.discardPile.length}
-              </button>
+            <div className="flex items-end gap-1.5">
+              <PileWidget
+                kind="discardPile"
+                count={bs.discardPile.length}
+                onClick={() => setOverlay('discardPile')}
+                label={`discard pile, ${bs.discardPile.length} cards`}
+              />
               {bs.exhaustPile.length > 0 && (
                 <button className="chip" onClick={() => setOverlay('exhaustPile')} aria-label={`exhausted, ${bs.exhaustPile.length} cards`}>
                   <SkipForward size={11} /> {bs.exhaustPile.length}
@@ -567,6 +574,8 @@ function HandCard({
   // aimed at the live cards reflowing underneath it
   const [isPresent, safeToRemove] = usePresence();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimationControls();
+  const firstUpdate = useRef(true);
 
   // removal watchdog: framer's exit-complete callback can stall (StrictMode +
   // popLayout), which would pile up invisible ghosts — force removal once the
@@ -580,16 +589,64 @@ function HandCard({
   const rot = reduced || dragging ? 0 : (i - (n - 1) / 2) * Math.min(4, 26 / n);
   const lift = reduced ? 0 : Math.abs(i - (n - 1) / 2) * Math.min(3.4, 18 / n);
 
+  // entrance: fly face-down out of the draw pile, then flip face-up
+  useLayoutEffect(() => {
+    if (reduced) {
+      controls.set({ x: 0, y: lift, scale: 1, rotate: rot, rotateY: 0, opacity: 1 });
+      return;
+    }
+    const rect = wrapRef.current?.getBoundingClientRect();
+    const pile = fxTargetCenter('drawPile');
+    const delay = Math.min(i * 0.07, 0.5);
+    if (rect && pile) {
+      controls.set({
+        x: pile.x - (rect.left + rect.width / 2),
+        y: pile.y - (rect.top + rect.height / 2),
+        scale: 0.3,
+        rotate: 0,
+        rotateY: 180,
+        opacity: 1,
+      });
+    } else {
+      controls.set({ x: 0, y: 110, scale: 0.6, rotate: 0, rotateY: 0, opacity: 0 });
+    }
+    void controls.start({
+      x: 0, y: lift, scale: 1, rotate: rot, rotateY: 0, opacity: 1,
+      transition: {
+        delay, type: 'spring', stiffness: 300, damping: 27,
+        rotateY: { delay: delay + 0.1, duration: 0.3, ease: 'easeOut' },
+        opacity: { delay, duration: 0.2 },
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // keep the fan pose current when the hand re-spaces or a drag starts/ends
+  useEffect(() => {
+    if (firstUpdate.current) {
+      firstUpdate.current = false;
+      return;
+    }
+    void controls.start({ y: lift, rotate: rot, transition: { type: 'spring', stiffness: 320, damping: 26 } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lift, rot, dragging]);
+
   // where a played card flies depends on what it was: attacks lunge into
   // their target, skills absorb into the hero, powers rise and install,
-  // exhausts burn away in place. Everything else (end-turn discard) drifts.
+  // exhausts burn away in place. Everything else cascades into the discard pile.
   const exitFor = (custom: LastPlay | null): TargetAndTransition => {
     if (reduced) return { opacity: 0 };
-    const generic: TargetAndTransition = { y: -70, x: 120, opacity: 0, scale: 0.5, rotate: 0, transition: { duration: 0.28 } };
-    if (!custom || custom.uid !== c.uid) return generic;
     const rect = wrapRef.current?.getBoundingClientRect();
     const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
     const cy = rect ? rect.top + rect.height / 2 : window.innerHeight - 120;
+    const pile = fxTargetCenter('discardPile');
+    const generic: TargetAndTransition = pile
+      ? {
+          x: pile.x - cx, y: pile.y - cy, scale: 0.24, rotate: 14, opacity: 0,
+          transition: { duration: 0.38, ease: 'easeIn', delay: Math.min(i * 0.05, 0.35) },
+        }
+      : { y: -70, x: 120, opacity: 0, scale: 0.5, rotate: 0, transition: { duration: 0.28 } };
+    if (!custom || custom.uid !== c.uid) return generic;
     if (custom.exhaust) {
       return { opacity: 0, scale: 0.86, y: -34, rotate: 0, filter: 'blur(9px)', transition: { duration: 0.5, ease: 'easeOut' } };
     }
@@ -617,9 +674,10 @@ function HandCard({
       ref={wrapRef}
       /* no `layout` here: framer's measurement-based projection can freeze
          mid-glide when rAF stalls (backgrounded phones), leaving the fan
-         bunched at intermediate positions. Flex positioning is always true. */
-      initial={reduced ? false : { y: 110, opacity: 0, scale: 0.6 }}
-      animate={{ y: lift, opacity: 1, scale: 1, rotate: rot }}
+         bunched at intermediate positions. Flex positioning is always true.
+         Entrance runs via controls (fly from the draw pile + flip). */
+      initial={false}
+      animate={controls}
       variants={{ played: exitFor }}
       exit="played"
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
@@ -653,21 +711,27 @@ function HandCard({
         zIndex: dragging ? 60 : isSelected ? 45 : undefined,
         touchAction: 'none',
         pointerEvents: isPresent ? undefined : 'none',
+        transformStyle: 'preserve-3d',
       }}
     >
-      <CardView
-        card={c}
-        battle={bs}
-        inHand
-        selected={isSelected}
-        armed={armed}
-        affordable={affordable}
-        onClick={() => {
-          if (suppressClick.current) return;
-          onSelect();
-        }}
-        ariaLabel={`hand card ${i + 1}: ${CARDS[c.defId].name}`}
-      />
+      <div className="card3d-back">
+        <CardBack />
+      </div>
+      <div className="card3d-front">
+        <CardView
+          card={c}
+          battle={bs}
+          inHand
+          selected={isSelected}
+          armed={armed}
+          affordable={affordable}
+          onClick={() => {
+            if (suppressClick.current) return;
+            onSelect();
+          }}
+          ariaLabel={`hand card ${i + 1}: ${CARDS[c.defId].name}`}
+        />
+      </div>
     </motion.div>
   );
 }

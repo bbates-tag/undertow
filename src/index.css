@@ -310,6 +310,94 @@ body {
   padding-bottom: 5px;
 }
 
+/* ── Card back & piles ────────────────────────────────────────────────────── */
+.card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  border: 1.5px solid rgba(56, 225, 211, 0.35);
+  background:
+    repeating-linear-gradient(-35deg, transparent 0 7px, rgba(95, 185, 255, 0.05) 7px 8px),
+    radial-gradient(85% 70% at 50% 42%, rgba(56, 225, 211, 0.14), transparent 65%),
+    linear-gradient(180deg, #0e2038 0%, #081120 100%);
+  box-shadow: inset 0 0 0 4px rgba(6, 12, 24, 0.9), inset 0 0 0 5px rgba(56, 225, 211, 0.18), 0 6px 18px rgba(2, 6, 14, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(56, 225, 211, 0.75);
+}
+.card-back-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid rgba(56, 225, 211, 0.3);
+  filter: drop-shadow(0 0 8px rgba(56, 225, 211, 0.35));
+}
+
+.pile {
+  position: relative;
+  width: 46px;
+  height: 62px;
+  cursor: pointer;
+}
+.pile-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 225, 211, 0.4);
+  background:
+    repeating-linear-gradient(-35deg, transparent 0 5px, rgba(95, 185, 255, 0.06) 5px 6px),
+    linear-gradient(180deg, #0e2038 0%, #081120 100%);
+  box-shadow: inset 0 0 0 2px rgba(6, 12, 24, 0.9), 0 3px 8px rgba(2, 6, 14, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(56, 225, 211, 0.7);
+}
+.pile-discard .pile-layer {
+  border-color: rgba(255, 111, 111, 0.35);
+  color: rgba(255, 111, 111, 0.55);
+  filter: saturate(0.75);
+}
+.pile-empty {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  border: 1.5px dashed rgba(95, 185, 255, 0.25);
+}
+.pile-count {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  z-index: 5;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(8, 17, 32, 0.95);
+  border: 1px solid rgba(95, 185, 255, 0.35);
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* draw-flip 3D faces */
+.card3d-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  z-index: 2;
+}
+.card3d-front {
+  backface-visibility: hidden;
+}
+
 /* ── Hand fan ─────────────────────────────────────────────────────────────── */
 .hand-area {
   display: flex;
@@ -317,6 +405,7 @@ body {
   align-items: flex-end;
   min-height: calc(var(--card-h) + 10px);
   padding-bottom: max(6px, env(safe-area-inset-bottom));
+  perspective: 1100px;
 }
 .hand-card {
   margin: 0 calc(var(--hand-overlap, -14px));
