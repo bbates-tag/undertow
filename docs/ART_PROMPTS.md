@@ -128,7 +128,7 @@ A single narwhal-like spiral spine punching clean through a raised shield of she
 Top-down view of a churning whirlpool dragging flotsam and small fish into its throat, spiral banded in white foam and deep shadow; the moon's reflection smeared around its rim.
 
 **Frenzied Bites — `frenziedBites`**
-Three overlapping bite-arcs flash-frozen in one frame — motion-trail jaws snapping in sequence across an armored flank, each strike higher and harder; storm-surge water behind.
+Three crescent bite-wounds stamped in a rising diagonal across a great fish's armored flank, each glowing brighter than the last, blood and foam churning around them; the attacker is only a blurred streak of fins in the middle distance. High-tide moonlight through storm-surge water. (Negative prompt: multiple sharks, three creatures, monster heads.)
 
 **Leech Fangs — `leechFangs`**
 A lamprey-mouthed serpent latched onto a larger creature, a visible ribbon of glowing life-light flowing up its throat toward the Tidecaller's outstretched hand. Stolen vitality.
@@ -203,7 +203,8 @@ A fortress wall of mother-of-pearl rising from the seafloor in overlapping opale
 A closed loop of glowing water — an ouroboros current — circling the Tidecaller endlessly, carrying cards, fish, moonlight, and time around and around. Serene engine.
 
 **Depthless Hunger — `depthlessHunger`**
-Below the frame, a mouth wide as the horizon; into it drifts a whale-fall like a snowflake. The Tidecaller watches from a ledge, taking notes. Feed it and it remembers you.
+Vast underwater establishing shot: the entire seafloor is one colossal open mouth — a canyon rim of mountain-sized pale teeth stretching from the far left edge to the far right edge of the image, pure black abyss between them, faint magenta glow rising from the throat. High above, a single tiny whale skeleton drifts down toward the darkness like a falling leaf, dwarfed to insignificance, lit by one beam of moonlight. No other creatures, no people. Extreme scale contrast. Feed it and it remembers you.
+*(Alt, reads great at card size: looking straight down into a perfectly circular maw — concentric rings of curved teeth spiraling into absolute darkness like a whirlpool made of jaws, a tiny glowing whale skeleton spiraling down at its center; symmetrical, cyan rim-light, magenta throat-glow. Negative prompt for this card: fishing rod, boat, human, face, two mouths.)*
 
 ---
 
@@ -237,7 +238,8 @@ One clean colossal bolt descending through the water column like a divine exclam
 A translucent organ like a glass heart in the Voltaic's chest visibly filling with churning yellow light, gauge-lines of bioluminescence climbing their ribs.
 
 **Chain Nip — `chainNip`**
-Two lightning-fast bites in sequence, an arc of current jumping teeth-to-teeth between the wounds; the second bite already landing while the first still glows.
+The Voltaic caught mid-lunge past a large armored fish — two crescent-shaped bite marks glow white-hot on the fish's flank, and a single jagged arc of yellow lightning bridges the two wounds like a spark gap completing a circuit. One attacker, one target, one frozen moment; motion-streak and bubbles trailing the Voltaic.
+*(Alt, reads great at card size: extreme close-up of a barnacled shell with two glowing crescent bite-marks, a bright arc of current jumping between them like a closed circuit; volt-yellow on near-black. Negative prompt: shark, two creatures, explosion, fireworks.)*
 
 **Insulate — `insulate`**
 The Voltaic wrapping into a coat of thick rubbery blubber-armor; an incoming bolt slides around its surface in rivulets and grounds out harmlessly behind them.
@@ -263,7 +265,8 @@ One bolt splitting into five crooked fingers, each finding its own fish in the d
 The Voltaic's chest-light beating triple-time, arcs desynchronizing off their skin, eyes wide with dangerous clarity; clock-like rings of current spinning too fast around their wrists.
 
 **Storm Shell — `stormShell`**
-A spiked nautilus shell worn as a pauldron, wreathed in its own miniature storm system — tiny lightning grounding into its spikes, charging with every strike it turns.
+A single giant spiked nautilus shell centered against dark storm-teal water, small jagged bolts of yellow lightning striking inward from all directions and grounding into its spikes; the shell's spiral glows volt-yellow from within like a charging coil, brightest at the center of the coil. No people, no creatures, radial composition, near-black background.
+*(Alt with the character: the Voltaic braced behind the shell held like a tower shield, arcs striking the spikes and being drawn inward along the glowing spiral. Negative prompt: storm clouds, sky, rain, knight, suit of armor, snail.)*
 
 **Amplify — `amplify`**
 The Voltaic between two coral conductor-pillars, their banked light splitting, mirroring, and doubling — two of every arc, twice the glow, the water itself humming.
@@ -301,7 +304,8 @@ The Voltaic planting a barbed trident into the seabed as their own discharge det
 A rotating storm cell parked above the battlefield like an underwater thundercloud, discharging automatically on everything below at each turn of its spiral; the Voltaic reading a book beneath it. Keep the storm. Let it keep you.
 
 **Defibrillate — `defibrillate`**
-Twin paddles of pure light pressed to the Voltaic's own chest, the banked storm flooding inward instead of out — heart re-lit like a lantern, arcs of vitality snapping down every limb.
+An anatomical heart formed entirely from coiled golden lightning, suspended alone in dark teal water, mid-pulse — rings of warm light rippling outward from it, tiny bubbles rising; near-black background, single glowing subject, cosmic and reverent.
+*(Alt with the character: the Voltaic floating head tilted back, arms spread, every current-line on their body streaming toward a heart glowing through their chest like a relit lantern, faint gold scars sealing as the glow spreads. Negative prompt: defibrillator, paddles, hospital, medical equipment, doctor, wires.)*
 
 ---
 
@@ -333,13 +337,14 @@ A hooked fish thrashing in a storm of its own bubbles, all instinct and no aim �
 Barnacles colonizing the back of a diver's hand and climbing the wrist like slow armor no one asked for; the skin around them pale and waterlogged. It grows on you.
 
 **Dread of the Deep — `dreadOfTheDeep`**
-A tiny swimmer suspended over a blue-black void; below, so large it reads first as landscape, the suggestion of an eye opening. Nothing attacks. That's the horror.
+A single tiny diver silhouette suspended in open water near the top of the frame, dwarfed by an immense bottomless black chasm in the seafloor below that descends into total darkness; pale god-rays from above fade before they reach the bottom, a few bubbles rising from the diver. The horror is scale and emptiness — nothing else in frame. Near-black void at center. (Negative prompt: eye, eyeball, iris, pupil, crater, creature, monster.)
+*(Alt, commit to the watcher instead: far below the diver, a single colossal ancient eye opens in the seafloor — unmistakably a living eye, wet and glistening, pale iris and vast black pupil filling the lower half, faint cyan along its curve. Negative prompt: crater, hole, pit, cave, whirlpool, rocks.)*
 
 **Waterlogged — `waterlogged`**
-A once-fine spellbook swollen to twice its size with seawater, pages fused to pulp, dragging its carrier's satchel down at an exhausted angle. Heavy. Useless. Yours.
+A once-fine leather spellbook alone in dark water, swollen to twice its size and sagging, pages fused to grey pulp and bleeding ink, a rusted clasp-chain trailing off into the murk like an anchor line. Drab and desaturated, no people, single object. Heavy. Useless. Yours.
 
 **Siren's Debt — `sirensDebt`**
-A beautiful silhouette on a rock ledge holding an open ledger of kelp-paper, one elegant finger tapping an entry that glows softly magenta; bubbles rising from the signature. She sang. You listened.
+A beautiful long-haired silhouette perched on a rock ledge, backlit, holding an open ledger of blank kelp-paper that glows softly magenta from a single glowing handprint pressed into the page; bubbles rising past her. Ominous and seductive, unreadable — no legible text or letters. She sang. You listened.
 
 ---
 
@@ -348,7 +353,7 @@ A beautiful silhouette on a rock ledge holding an open ledger of kelp-paper, one
 ### Act I — The Sunlit Shallows (turquoise light, god rays, reef color)
 
 **Snapper Crab — `snapperCrab`**
-A boulder-sized crab in chipped terracotta armor plating, one grotesquely oversized polished claw raised; reef sunlight banding its shell. Pugnacious, dumb, dangerous.
+A massive battle-scarred crab reared up aggressively toward the viewer, BOTH claws raised and open — one grotesquely oversized and chipped like a broken shield, the other smaller — its thick terracotta shell cracked and barnacle-crusted from old fights, small furious eyes on stalks; reef sunlight banding its carapace. Looms large and fills the frame, menacing, dumb and dangerous. (Negative prompt: single claw, one pincer, missing limb.)
 
 **Jelly Drifter — `jellyDrifter`**
 A serene lavender-and-cyan jellyfish the size of an umbrella, bell glowing softly, tendrils hanging in elegant toxic curtains; beauty that stings.
@@ -363,7 +368,7 @@ A single wide-eyed silver sardine, comically fierce, mid-dart with a tiny wake �
 A thick green-bronze moray coiled in a reef hole, only head and cold eye in the light, jaw slightly open showing a second set of teeth waiting behind the first. Coiled patience.
 
 **Tide Sprite — `tideSprite`**
-A small elemental of living seawater in the shape of a leaping child, moonlight caught in its chest like a heart, edges constantly re-forming from foam; mischief and a rising tide behind its grin.
+A small humanoid elemental made entirely of translucent glowing seawater and foam — living water, not flesh — caught mid-leap and dissolving at the edges into bubbles, a bright mote of moonlight glowing in its chest like a heart. Impish and mischievous, a rising swell behind it.
 
 **Anglerfish (elite) — `anglerfish`**
 A nightmare anglerfish half again a diver's size caught at the shadow-line where shallows drop off — hypnotic golden lure bobbing over a cavernous fanged underbite, tiny cruel eyes. The first real fear of the run.
@@ -383,10 +388,10 @@ A pale translucent eel you can half see through — spine and dinner both faintl
 A plum-black squid with a cape of webbed arms lined in red, eyes huge and lambent, drifting like an aristocrat; a faint red glow pulsing brighter as it feeds.
 
 **Hatchetfish — `hatchetfish`**
-A silver hatchetfish with a face like an axe-blade and permanently affronted eyes, catching a stray beam so it flashes like a mirror — signalling its twin to strike.
+A single silver hatchetfish with a razor-thin body like an axe-blade seen edge-on, huge permanently-affronted eyes and an upturned fanged mouth, its mirror-bright flank catching a stray cold beam so it flashes. Deep twilight water, small and weird and unsettling.
 
 **Drifting Mine — `deepMine`**
-An ancient horned naval mine, rust-scabbed and barnacled, drifting with terrible calm; one horn glows a soft warning red, and the number "3" is scratched into its face by some previous, luckier diver.
+An ancient horned naval mine, rust-scabbed and barnacled, drifting with terrible calm in dark water; one horn glows a soft warning red, and a cluster of crude tally scratches is gouged into its rusted face by some previous, luckier diver. Still, patient, wrong.
 
 **Pressure Wraith — `pressureWraith`**
 A humanoid absence in the water — a wraith of compressed dark with a diver's-helmet-shaped head, the sea visibly bending inward around its grip. Where it points, things crack.
@@ -415,10 +420,11 @@ One arm of the boss in close-up — thick as a mast, banded in bruise-purple, su
 An anglerfish grown wrong at depth — lure burning violet-white like a dying star, body mostly invisible except where its own light betrays the teeth. The light is the trap; the dark is the fish.
 
 **Bone Shoal — `boneShoal`**
-A school of fish skeletons swimming in perfect formation, held together by pale ghost-light in the joints; where the school turns, it briefly forms one great skeletal fish. Death didn't stop the schooling instinct.
+An underwater murmuration: hundreds of tiny identical fish skeletons swarming tightly together so their collective mass forms the unmistakable silhouette of one enormous fish — the giant fish shape is composed ENTIRELY of the small glowing skeletons with gaps of black water showing between them, NOT a single solid skeleton. Pale ghost-light in every tiny spine, near-black water, cyan-green bio-glow. A school of fish forming the shape of a giant fish; mosaic of many into one. Death didn't stop the schooling instinct.
+*(This gestalt effect is one of the hardest for generators — negative prompt: single large fish, one big fish skeleton, large detailed fish skull, solid creature. If it keeps hybridizing, a plain tight school of skeleton fish reads fine at enemy size, or feed a big-fish silhouette as a ControlNet/structure guide and prompt "made of tiny fish skeletons.")*
 
 **Hadal Horror — `hadalHorror`**
-A deep-trench leviathan-larva — pale, eyeless, growing visibly wrong, muscle mass lopsided as if it's being inflated by the pressure itself; each frame of it feels larger than the last. A race you can lose by waiting.
+A deep-trench leviathan-larva — pale, eyeless, unsettlingly swollen, its muscle mass lopsided and asymmetric as if inflated by the pressure itself, translucent skin stretched over dark organs. Wrong, and still growing. Near-black water, faint magenta glow.
 
 **Abyss Idol — `abyssIdol`**
 A stone idol on the trench floor — a single vast carved eye, weeping slow threads of black that curl upward against physics; small dead fish orbit it like moths. It does not move. It doesn't need to.
