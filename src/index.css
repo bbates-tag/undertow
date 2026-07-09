@@ -221,13 +221,12 @@ body {
   transition: box-shadow 90ms ease;
 }
 
-/* while a card is being dragged, kill the desktop hover-zoom so it tracks the pointer 1:1 */
-.hand-card.dragging .card-frame:hover {
-  transform: none;
-}
-
+/* desktop hover-zoom — scoped to non-dragging cards: while a drag is live the
+   cursor sits on the card the whole time, and this rule's box-shadow would
+   out-specificity .armed and mask the gold glow (transform would also fight
+   the 1:1 pointer tracking) */
 @media (hover: hover) {
-  .card-frame.hand-card:hover:not(.selected) {
+  .hand-card:not(.dragging) .card-frame.hand-card:hover:not(.selected):not(.armed) {
     transform: translateY(-20px) scale(1.35);
     box-shadow: 0 16px 34px rgba(2, 6, 14, 0.8);
   }
