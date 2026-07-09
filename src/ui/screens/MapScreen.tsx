@@ -107,7 +107,10 @@ export function MapScreen() {
       {/* scrolling map */}
       <div ref={scroller} className="flex-1 overflow-y-auto overflow-x-hidden relative">
         <Bubbles count={10} />
-        <div className="relative mx-auto" style={{ width: width * scale, height: height * scale }}>
+        {/* overflow-hidden: the inner map keeps its full-size layout box and only
+            shrinks via transform — Safari counts the pre-transform box as scroll
+            overflow, so clip it here or the map pokes past the right edge */}
+        <div className="relative mx-auto overflow-hidden" style={{ width: width * scale, height: height * scale }}>
           <div className="absolute left-0 top-0" style={{ width, height, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
           {/* edges */}
           <svg width={width} height={height} className="absolute inset-0" aria-hidden>
