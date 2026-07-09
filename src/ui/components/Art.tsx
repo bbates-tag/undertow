@@ -1,5 +1,6 @@
-// Optional raster-art layer (§7 "later upgrade" path). Drop PNGs into
-// public/art/{cards,enemies,characters}/<contentId>.png and they render
+// Optional raster-art layer (§7 "later upgrade" path). Drop full-res masters
+// into public/art/{cards,enemies,characters}/<contentId>.png, run
+// scripts/optimize-art.sh, and the resulting <contentId>.webp renders
 // automatically; anything missing falls back to the icon treatment.
 // The icon renders until the image has actually loaded, so there is never
 // a blank art box — not on 404s, not on slow connections.
@@ -14,7 +15,7 @@ const missing = new Set<string>();
 const loaded = new Set<string>();
 
 export function artUrl(kind: ArtKind, id: string): string {
-  return `${import.meta.env.BASE_URL}art/${kind}/${id}.png`;
+  return `${import.meta.env.BASE_URL}art/${kind}/${id}.webp`;
 }
 
 interface ArtImageProps {

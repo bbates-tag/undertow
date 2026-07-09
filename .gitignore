@@ -3,6 +3,9 @@ dist
 *.local
 .DS_Store
 
+# full-res art masters — kept locally, optimized to webp via scripts/optimize-art.sh
+art-originals
+
 # local design brief — delete this line if you want it in the public repo
 agent-prompt-singleplayer-browser-game.md
 tsconfig.tsbuildinfo
