@@ -6,6 +6,7 @@ import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../.
 import { ArtImage } from './Art';
 import { StatusChips } from './StatusChips';
 import { fxTargetRef } from '../fxRegistry';
+// (root registers as `hit:e<uid>` so drag-to-play can hit-test drop points)
 import type { Amount } from '../../engine/types';
 
 const SIZE: Record<string, string> = {
@@ -61,19 +62,22 @@ interface EnemyViewProps {
   bs: BattleState;
   e: EnemyState;
   targeting: boolean;
+  /** a dragged card is currently hovering this enemy */
+  hovered?: boolean;
   previewAmount?: Amount | null;
   previewTimes?: number;
   onPick: () => void;
   reduced: boolean;
 }
 
-export function EnemyView({ bs, e, targeting, previewAmount, previewTimes = 1, onPick, reduced }: EnemyViewProps) {
+export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTimes = 1, onPick, reduced }: EnemyViewProps) {
   const def = ENEMIES[e.defId];
   const hpFrac = e.hp / e.maxHp;
   const preview = previewAmount ? previewPlayerAttack(bs, previewAmount, e) : null;
 
   return (
     <motion.div
+      ref={fxTargetRef(`hit:e${e.uid}`)}
       layout={!reduced}
       initial={reduced ? false : { opacity: 0, scale: 0.7, y: 12 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -88,16 +92,32 @@ export function EnemyView({ bs, e, targeting, previewAmount, previewTimes = 1, o
       aria-label={`${def.name}, ${e.hp} of ${e.maxHp} HP${targeting ? ', tap to target' : ''}`}
       data-testid={`enemy-${e.uid}`}
     >
+      {targeting && (
+        <motion.div
+          className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none z-20"
+          animate={reduced ? undefined : { y: [0, 7, 0] }}
+          transition={{ repeat: Infinity, duration: 0.8, ease: 'easeInOut' }}
+          aria-hidden
+        >
+          <svg width="24" height="17" viewBox="0 0 24 17" style={{ filter: `drop-shadow(0 0 6px ${hovered ? 'rgba(255,206,92,0.9)' : 'rgba(255,111,111,0.8)'})` }}>
+            <path d="M2 1 L22 1 L12 16 Z" fill={hovered ? 'var(--color-gold)' : 'var(--color-danger)'} stroke="#fff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
+      )}
       <IntentBadge bs={bs} e={e} />
       <div
         ref={fxTargetRef(enemyKey(e))}
         className="relative flex items-center justify-center"
         style={{ width: SIZE[def.size ?? 'md'], height: SIZE[def.size ?? 'md'] }}
       >
-        {targeting && (
+        {(targeting || hovered) && (
           <div
-            className="absolute inset-[-10px] rounded-full border-2 animate-pulse pointer-events-none"
-            style={{ borderColor: 'var(--color-danger)', boxShadow: '0 0 22px rgba(255,111,111,0.4)' }}
+            className={`absolute inset-[-10px] rounded-full border-2 pointer-events-none ${hovered ? '' : 'animate-pulse'}`}
+            style={
+              hovered
+                ? { borderColor: 'var(--color-gold)', boxShadow: '0 0 30px rgba(255,206,92,0.65)', background: 'rgba(255,206,92,0.08)' }
+                : { borderColor: 'var(--color-danger)', boxShadow: '0 0 22px rgba(255,111,111,0.4)' }
+            }
           />
         )}
         <motion.div

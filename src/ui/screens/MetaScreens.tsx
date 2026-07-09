@@ -188,7 +188,7 @@ export function HowToPlayScreen() {
           defeat the boss at the bottom of Act III to win.
         </p>
         <p>
-          <b className="text-(--color-foam)">Battles.</b> {highlightText('Each turn you draw 5 cards and get 3 Energy. Attacks hit; skills Block or bend the fight; Powers install permanent engines. Enemies telegraph their next move — the number over their head is exactly what you will take. Block absorbs it but washes away at the start of your next turn.')}
+          <b className="text-(--color-foam)">Battles.</b> {highlightText('Each turn you draw 5 cards and get 3 Energy. Attacks hit; skills Block or bend the fight; Powers install permanent engines. Play a card by tapping it, or drag it out of your hand Hearthstone-style — drop attacks straight onto your target. Enemies telegraph their next move — the number over their head is exactly what you will take. Block absorbs it but washes away at the start of your next turn.')}
         </p>
         <p>
           <b className="text-(--color-foam)">The tide.</b> {highlightText('A four-phase cycle (Low → Rising → High → Falling) that advances every turn. Flood cards hit harder at High tide; Ebb cards guard better at Low. Shift cards move the cycle on your schedule — time your haymakers.')}

@@ -1,8 +1,9 @@
 // The battle screen: enemies with telegraphed intents, the hand fan, energy,
-// tide dial, targeting flow, damage previews, victory/defeat, and tutorial.
+// tide dial, targeting flow (tap-to-play AND Hearthstone-style drag-to-play),
+// damage previews, victory/defeat, and tutorial.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useIsPresent, type PanInfo } from 'framer-motion';
 import { BookOpen, ChevronRight, Layers, Menu as MenuIcon, Shield, SkipForward, Trash2 } from 'lucide-react';
 import { useGame, checkFlawless } from '../../state/store';
 import { CARDS } from '../../content/cards';
@@ -11,7 +12,7 @@ import { ENEMIES } from '../../content/enemies';
 import { KEYWORDS, KEYWORD_PATTERN } from '../../content/keywords';
 import { cardCost, cardDef, living } from '../../engine/battle';
 import { describeCard } from '../../engine/describe';
-import type { Amount, Op } from '../../engine/types';
+import type { Amount, BattleState, CardInstance, Op } from '../../engine/types';
 import { CardView, highlightText } from '../components/CardView';
 import { EnemyView } from '../components/EnemyView';
 import { FxLayer } from '../components/FxLayer';
@@ -20,8 +21,22 @@ import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip, HpChip } from '../components/Bits';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
-import { fxTargetRef } from '../fxRegistry';
+import { enemyUidAtPoint, fxTargetRef } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
+
+/** minimum drag displacement (px, mostly upward) before releasing plays an untargeted card */
+const DRAG_PLAY_DIST = 120;
+
+function dragPastThreshold(info: PanInfo): boolean {
+  return Math.hypot(info.offset.x, info.offset.y) > DRAG_PLAY_DIST && info.offset.y < -40;
+}
+
+interface DragState {
+  uid: number;
+  needsTarget: boolean;
+  armed: boolean;
+  hoverUid: number | null;
+}
 
 function firstDamageOp(ops: Op[]): { amount: Amount; times: number } | null {
   for (const op of ops) {
@@ -37,7 +52,7 @@ function firstDamageOp(ops: Op[]): { amount: Amount; times: number } | null {
 }
 
 const TUTORIAL_STEPS = [
-  { text: 'This is your hand. Tap a card to select it, then play it — attacks need a target.', pos: 'bottom' },
+  { text: 'This is your hand. Tap a card to select it, then play it — or drag a card out of your hand to play it (drop attacks right onto an enemy).', pos: 'bottom' },
   { text: 'Enemies telegraph their next move above their heads. Red numbers are damage you will take — Block absorbs it.', pos: 'top' },
   { text: 'Cards cost Energy (the orb). It refills every turn. Spend it, then End Turn.', pos: 'left' },
   { text: 'The Tide cycles Low → Rising → High → Falling each turn. Flood cards surge at High tide; Ebb cards at Low.', pos: 'topright' },
@@ -48,6 +63,7 @@ export function BattleScreen() {
   const selectedCard = useGame((s) => s.selectedCard);
   const selectCard = useGame((s) => s.selectCard);
   const playSelected = useGame((s) => s.playSelected);
+  const playCardAt = useGame((s) => s.playCardAt);
   const endTurn = useGame((s) => s.endTurn);
   const proceedAfterBattle = useGame((s) => s.proceedAfterBattle);
   const enemyTurnRunning = useGame((s) => s.enemyTurnRunning);
@@ -58,6 +74,7 @@ export function BattleScreen() {
   const reduced = useReducedMotion();
   const shakeRef = useRef<HTMLDivElement>(null);
   const [kbTarget, setKbTarget] = useState(0);
+  const [drag, setDrag] = useState<DragState | null>(null);
 
   const bs = run?.battle;
 
@@ -68,7 +85,55 @@ export function BattleScreen() {
   const selectedDef = selected ? CARDS[selected.defId] : null;
   const needsTarget = selectedDef?.target === 'enemy';
   const enemies = bs ? living(bs) : [];
-  const previewDmg = selected && needsTarget ? firstDamageOp(selected.upgraded ? (selectedDef!.opsUp ?? selectedDef!.ops) : selectedDef!.ops) : null;
+
+  // damage preview follows whichever card is active — tap-selected or mid-drag
+  const previewCard = selected ?? (drag && bs ? bs.hand.find((c) => c.uid === drag.uid) ?? null : null);
+  const previewDef = previewCard ? CARDS[previewCard.defId] : null;
+  const previewNeedsTarget = previewDef?.target === 'enemy';
+  const previewDmg = previewCard && previewNeedsTarget
+    ? firstDamageOp(previewCard.upgraded ? (previewDef!.opsUp ?? previewDef!.ops) : previewDef!.ops)
+    : null;
+  const targetingActive = (!!selected && needsTarget) || (drag?.needsTarget ?? false);
+
+  // ── drag-to-play handlers ──
+  const onDragStartCard = (c: CardInstance, needs: boolean) => {
+    if (selectedCard != null) selectCard(null);
+    setDrag({ uid: c.uid, needsTarget: needs, armed: false, hoverUid: null });
+  };
+  const onDragMoveCard = (needs: boolean, info: PanInfo) => {
+    setDrag((d) => {
+      if (!d) return d;
+      if (needs) {
+        const hover = enemyUidAtPoint(info.point.x - window.scrollX, info.point.y - window.scrollY);
+        if (hover === d.hoverUid && d.armed === (hover != null)) return d;
+        return { ...d, hoverUid: hover, armed: hover != null };
+      }
+      const armed = dragPastThreshold(info);
+      return armed === d.armed ? d : { ...d, armed };
+    });
+  };
+  const onDragEndCard = (c: CardInstance, needs: boolean, info: PanInfo) => {
+    setDrag(null);
+    if (needs) {
+      const hover = enemyUidAtPoint(info.point.x - window.scrollX, info.point.y - window.scrollY);
+      if (hover != null) playCardAt(c.uid, hover);
+    } else if (dragPastThreshold(info)) {
+      playCardAt(c.uid);
+    }
+  };
+
+  // watchdog: any pointer release ends the drag interaction — if framer's
+  // onDragEnd was lost (edge cases), the armed glow / targeting UI must not
+  // stay stuck. Runs after framer has had its chance to resolve the play.
+  useEffect(() => {
+    const clear = () => window.setTimeout(() => setDrag(null), 120);
+    window.addEventListener('pointerup', clear, true);
+    window.addEventListener('pointercancel', clear, true);
+    return () => {
+      window.removeEventListener('pointerup', clear, true);
+      window.removeEventListener('pointercancel', clear, true);
+    };
+  }, []);
 
   // flawless achievement check on win
   const phase = bs?.phase;
@@ -161,13 +226,14 @@ export function BattleScreen() {
         }}
       >
         <AnimatePresence mode="popLayout">
-          {enemies.map((e, i) => (
+          {enemies.map((e) => (
             <EnemyView
               key={e.uid}
               bs={bs}
               e={e}
-              targeting={!!selected && needsTarget}
-              previewAmount={selected && needsTarget ? previewDmg?.amount ?? null : null}
+              targeting={targetingActive}
+              hovered={drag?.hoverUid === e.uid}
+              previewAmount={targetingActive ? previewDmg?.amount ?? null : null}
               previewTimes={previewDmg?.times ?? 1}
               onPick={() => playSelected(e.uid)}
               reduced={reduced}
@@ -195,24 +261,25 @@ export function BattleScreen() {
         </div>
       </div>
 
-      {/* selected card panel */}
+      {/* selected card panel — when targeting it moves aside and lets clicks
+          pass through so no enemy is ever blocked by the preview */}
       <AnimatePresence>
         {selected && (
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
-            className="absolute left-1/2 -translate-x-1/2 z-40 flex items-end gap-3"
+            className={`absolute z-40 flex items-end ${needsTarget ? 'left-2 gap-2 pointer-events-none' : 'left-1/2 -translate-x-1/2 gap-3'}`}
             style={{ bottom: 'calc(var(--card-h) + 64px)' }}
           >
-            <CardView card={selected} battle={bs} scale="lg" ariaLabel="selected card preview" />
+            <CardView card={selected} battle={bs} scale={needsTarget ? undefined : 'lg'} ariaLabel="selected card preview" />
             <div className="flex flex-col gap-2 max-w-[180px] pb-1">
               {selectedKeywords.map((k) => (
                 <div key={k.id} className="text-[10px] leading-tight text-(--color-mist)">
                   <span className="kw font-bold">{k.name}</span> — {k.text}
                 </div>
               ))}
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-2 mt-1 pointer-events-auto">
                 <button className="btn !py-1.5 !px-3 text-xs" onClick={() => selectCard(null)}>
                   Cancel
                 </button>
@@ -260,30 +327,24 @@ export function BattleScreen() {
             <AnimatePresence mode="popLayout">
               {bs.hand.map((c, i) => {
                 const affordable = cardCost(c) <= bs.energy && !cardDef(c).unplayable;
-                const n = bs.hand.length;
-                const rot = reduced ? 0 : (i - (n - 1) / 2) * Math.min(4, 26 / n);
-                const lift = reduced ? 0 : Math.abs(i - (n - 1) / 2) * Math.min(3.4, 18 / n);
                 return (
-                  <motion.div
+                  <HandCard
                     key={c.uid}
-                    layout={!reduced}
-                    initial={reduced ? false : { y: 110, opacity: 0, scale: 0.6 }}
-                    animate={{ y: lift, opacity: 1, scale: 1, rotate: rot }}
-                    exit={reduced ? { opacity: 0 } : { y: -70, x: 120, opacity: 0, scale: 0.5, transition: { duration: 0.28 } }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-                    className="hand-card"
-                    style={{ ['--z' as string]: 10 + i, zIndex: selectedCard === c.uid ? 45 : undefined }}
-                  >
-                    <CardView
-                      card={c}
-                      battle={bs}
-                      inHand
-                      selected={selectedCard === c.uid}
-                      affordable={affordable}
-                      onClick={() => selectCard(selectedCard === c.uid ? null : c.uid)}
-                      ariaLabel={`hand card ${i + 1}: ${CARDS[c.defId].name}`}
-                    />
-                  </motion.div>
+                    c={c}
+                    i={i}
+                    n={bs.hand.length}
+                    bs={bs}
+                    reduced={reduced}
+                    isSelected={selectedCard === c.uid}
+                    affordable={affordable}
+                    canDrag={affordable && bs.phase === 'player' && !enemyTurnRunning}
+                    dragging={drag?.uid === c.uid}
+                    armed={drag?.uid === c.uid && drag.armed}
+                    onSelect={() => selectCard(selectedCard === c.uid ? null : c.uid)}
+                    onDragStartCard={onDragStartCard}
+                    onDragMoveCard={onDragMoveCard}
+                    onDragEndCard={onDragEndCard}
+                  />
                 );
               })}
             </AnimatePresence>
@@ -378,5 +439,98 @@ export function BattleScreen() {
 
       <StatusChipsGlossary />
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// One card in the hand fan. Handles both play methods: tap-to-select (click)
+// and Hearthstone-style drag-to-play (drag past a threshold for skills, or
+// drop directly onto an enemy for targeted cards; snaps back otherwise).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface HandCardProps {
+  c: CardInstance;
+  i: number;
+  n: number;
+  bs: BattleState;
+  reduced: boolean;
+  isSelected: boolean;
+  affordable: boolean;
+  canDrag: boolean;
+  dragging: boolean;
+  armed: boolean;
+  onSelect: () => void;
+  onDragStartCard: (c: CardInstance, needsTarget: boolean) => void;
+  onDragMoveCard: (needsTarget: boolean, info: PanInfo) => void;
+  onDragEndCard: (c: CardInstance, needsTarget: boolean, info: PanInfo) => void;
+}
+
+function HandCard({
+  c, i, n, bs, reduced, isSelected, affordable, canDrag, dragging, armed,
+  onSelect, onDragStartCard, onDragMoveCard, onDragEndCard,
+}: HandCardProps) {
+  // a completed drag fires a click on release — swallow it so the card
+  // doesn't also get tap-selected
+  const suppressClick = useRef(false);
+  // a played card's exit "ghost" lingers ~300ms — it must not eat taps/drags
+  // aimed at the live cards reflowing underneath it
+  const isPresent = useIsPresent();
+  const needsTarget = CARDS[c.defId].target === 'enemy';
+  const rot = reduced || dragging ? 0 : (i - (n - 1) / 2) * Math.min(4, 26 / n);
+  const lift = reduced ? 0 : Math.abs(i - (n - 1) / 2) * Math.min(3.4, 18 / n);
+
+  return (
+    <motion.div
+      layout={!reduced}
+      initial={reduced ? false : { y: 110, opacity: 0, scale: 0.6 }}
+      animate={{ y: lift, opacity: 1, scale: 1, rotate: rot }}
+      exit={reduced ? { opacity: 0 } : { y: -70, x: 120, opacity: 0, scale: 0.5, transition: { duration: 0.28 } }}
+      transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+      drag={canDrag}
+      dragSnapToOrigin
+      dragMomentum={false}
+      dragElastic={1}
+      /* no nested draggables here, so skip framer's global drag lock — a lost
+         end event must never be able to wedge all future drags */
+      dragPropagation
+      whileDrag={reduced ? undefined : { scale: 1.06 }}
+      onPointerDown={() => {
+        // every new press starts clean — a stale suppress flag (e.g. from a
+        // drag whose end event got lost) must never eat future taps
+        suppressClick.current = false;
+      }}
+      onDragStart={() => {
+        suppressClick.current = true;
+        onDragStartCard(c, needsTarget);
+      }}
+      onDrag={(_, info) => onDragMoveCard(needsTarget, info)}
+      onDragEnd={(_, info) => {
+        onDragEndCard(c, needsTarget, info);
+        window.setTimeout(() => {
+          suppressClick.current = false;
+        }, 150);
+      }}
+      className={`hand-card ${dragging ? 'dragging' : ''}`}
+      style={{
+        ['--z' as string]: 10 + i,
+        zIndex: dragging ? 60 : isSelected ? 45 : undefined,
+        touchAction: 'none',
+        pointerEvents: isPresent ? undefined : 'none',
+      }}
+    >
+      <CardView
+        card={c}
+        battle={bs}
+        inHand
+        selected={isSelected}
+        armed={armed}
+        affordable={affordable}
+        onClick={() => {
+          if (suppressClick.current) return;
+          onSelect();
+        }}
+        ariaLabel={`hand card ${i + 1}: ${CARDS[c.defId].name}`}
+      />
+    </motion.div>
   );
 }

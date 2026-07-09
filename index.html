@@ -21,6 +21,15 @@
   </head>
   <body>
     <div id="root"><div id="boot"><div class="b"></div><div class="t">UNDERTOW</div></div></div>
+    <script>
+      // Test hook: ?rafshim=1 drives requestAnimationFrame from timers so
+      // animations and drag gestures run in hidden/headless tabs (automated
+      // testing only — must load BEFORE the app bundle captures native rAF).
+      if (new URLSearchParams(location.search).has('rafshim')) {
+        window.requestAnimationFrame = function (cb) { return window.setTimeout(function () { cb(performance.now()); }, 16); };
+        window.cancelAnimationFrame = function (id) { window.clearTimeout(id); };
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

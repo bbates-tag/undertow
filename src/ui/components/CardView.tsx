@@ -29,6 +29,8 @@ interface CardViewProps {
   battle?: BattleState;
   target?: EnemyState;
   selected?: boolean;
+  /** drag-to-play: card is past the release threshold / over a target */
+  armed?: boolean;
   affordable?: boolean;
   inHand?: boolean;
   scale?: 'hand' | 'lg';
@@ -38,7 +40,7 @@ interface CardViewProps {
 }
 
 export const CardView = memo(function CardView({
-  card, battle, target, selected, affordable = true, inHand, scale, onClick, tabIndex, ariaLabel,
+  card, battle, target, selected, armed, affordable = true, inHand, scale, onClick, tabIndex, ariaLabel,
 }: CardViewProps) {
   const def = CARDS[card.defId];
   if (!def) return null;
@@ -52,6 +54,7 @@ export const CardView = memo(function CardView({
         'card-frame',
         inHand ? 'hand-card' : '',
         selected ? 'selected' : '',
+        armed ? 'armed' : '',
         !affordable ? 'unaffordable' : '',
       ].join(' ')}
       style={scale === 'lg' ? { width: 'calc(var(--card-w) * 1.5)', height: 'calc(var(--card-h) * 1.5)' } : undefined}

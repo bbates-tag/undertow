@@ -164,6 +164,17 @@ body {
 .card-frame.unaffordable { filter: grayscale(0.45) brightness(0.75); }
 .card-frame:focus-visible { outline-offset: 0; }
 
+/* drag-to-play: past the release threshold / hovering a valid target */
+.card-frame.armed {
+  box-shadow: 0 0 0 2px var(--color-gold), 0 0 34px rgba(255, 206, 92, 0.55), 0 14px 30px rgba(2, 6, 14, 0.7);
+  transition: box-shadow 90ms ease;
+}
+
+/* while a card is being dragged, kill the desktop hover-zoom so it tracks the pointer 1:1 */
+.hand-card.dragging .card-frame:hover {
+  transform: none;
+}
+
 @media (hover: hover) {
   .card-frame.hand-card:hover:not(.selected) {
     transform: translateY(-20px) scale(1.35);

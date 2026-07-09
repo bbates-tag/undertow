@@ -88,6 +88,8 @@ interface GameStore {
   pickNode(row: number, col: number): void;
   selectCard(uid: number | null): void;
   playSelected(targetUid?: number): void;
+  /** play a specific card directly (drag-to-play path) */
+  playCardAt(uid: number, targetUid?: number): void;
   endTurn(): void;
   proceedAfterBattle(): void;
 
@@ -396,10 +398,14 @@ export const useGame = create<GameStore>((set, get) => {
     },
 
     playSelected(targetUid) {
-      const st = get();
-      const uid = st.selectedCard;
-      const run = st.run;
-      if (uid == null || !run?.battle) return;
+      const uid = get().selectedCard;
+      if (uid == null) return;
+      get().playCardAt(uid, targetUid);
+    },
+
+    playCardAt(uid, targetUid) {
+      const run = get().run;
+      if (!run?.battle) return;
       const clone = deepClone(run);
       const emit = newEmit();
       const err = playCard(clone, uid, targetUid, emit);
