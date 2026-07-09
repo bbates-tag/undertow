@@ -627,7 +627,19 @@ function HandCard({
       firstUpdate.current = false;
       return;
     }
-    void controls.start({ y: lift, rotate: rot, transition: { type: 'spring', stiffness: 320, damping: 26 } });
+    if (dragging) {
+      // the pointer owns x/y for the whole drag — any spring on those values
+      // fights it (the card walls near the hand, then teleports to the cursor
+      // when the spring ends). Stop in-flight pose/entrance springs and only
+      // straighten + pop the card.
+      controls.stop();
+      void controls.start({
+        rotate: 0, rotateY: 0, scale: reduced ? 1 : 1.06, opacity: 1,
+        transition: { type: 'spring', stiffness: 320, damping: 26 },
+      });
+      return;
+    }
+    void controls.start({ x: 0, y: lift, rotate: rot, scale: 1, transition: { type: 'spring', stiffness: 320, damping: 26 } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lift, rot, dragging]);
 
@@ -688,7 +700,8 @@ function HandCard({
       /* no nested draggables here, so skip framer's global drag lock — a lost
          end event must never be able to wedge all future drags */
       dragPropagation
-      whileDrag={reduced ? undefined : { scale: 1.06 }}
+      /* drag pose (straighten + 1.06 pop) is owned by the dragging branch of
+         the pose effect — a whileDrag here would be a second writer on scale */
       onPointerDown={() => {
         // every new press starts clean — a stale suppress flag (e.g. from a
         // drag whose end event got lost) must never eat future taps
