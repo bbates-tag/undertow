@@ -239,6 +239,8 @@ export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit,
   if (bs.tide !== before) {
     fx(emit, { kind: 'tide', tide: bs.tide });
     if (!silent) sfx(emit, 'tide');
+    // Heart of the Maelstrom: the churn shields you
+    if (run.relics.includes('heartOfMaelstrom')) gainPlayerBlock(run, bs, 3, emit, false);
     if (bs.tide === 2) onTideHigh(run, bs, emit);
   }
 }
@@ -453,10 +455,6 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
 
 function relicsTurnStart(run: RunState, bs: BattleState, emit: Emit) {
   if (run.relics.includes('glassFloat') && bs.turn === 1) drawCards(run, bs, 2, emit);
-  if (run.relics.includes('heartOfMaelstrom')) {
-    shiftTide(run, bs, 1, emit, true);
-    gainPlayerBlock(run, bs, 3, emit, false);
-  }
 }
 
 function relicsTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
@@ -632,16 +630,17 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   bs.cardsPlayedThisTurn = 0;
   bs.attacksPlayedThisTurn = 0;
 
+  // block falls off unless anchored — BEFORE the tide advances, so block
+  // granted by tide-change effects (Heart of the Maelstrom) survives the turn
+  if (getStatus(bs.player, 'anchor') > 0) addStatus(bs.player, 'anchor', -1);
+  else bs.player.block = 0;
+
   // tide advances (after turn 1)
   if (bs.turn > 1) {
     let steps = bs.powers.includes('lunarPull') ? 2 : 1;
     if (run.daily?.mods.includes('springTide')) steps += 1;
     shiftTide(run, bs, steps, emit, true);
   }
-
-  // block falls off unless anchored
-  if (getStatus(bs.player, 'anchor') > 0) addStatus(bs.player, 'anchor', -1);
-  else bs.player.block = 0;
 
   // toxin ticks on the player
   const tox = getStatus(bs.player, 'toxin');

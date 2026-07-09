@@ -49,7 +49,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'rustedHelm', name: 'Rusted Diving Helm', icon: 'GiDivingHelmet', tier: 'boss', text: '+1 Energy each turn. Take 3 damage at the start of each battle.' },
       { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: '+1 Energy each turn. You can no longer heal at rest sites.' },
       { id: 'pressureCrown', name: 'Pressure Crown', icon: 'GiCrown', tier: 'boss', text: '+1 Energy each turn. Draw 1 fewer card each turn.' },
-      { id: 'heartOfMaelstrom', name: 'Heart of the Maelstrom', icon: 'GiTentacleHeart', tier: 'boss', text: 'At the start of your turn, Shift +1 and gain 3 Block.' },
+      { id: 'heartOfMaelstrom', name: 'Heart of the Maelstrom', icon: 'GiTentacleHeart', tier: 'boss', text: 'Whenever the tide changes, gain 3 Block.', flavor: 'The churn shields those who ride it.' },
       { id: 'grimoireOfBrine', name: 'Grimoire of Brine', icon: 'GiSpellBook', tier: 'boss', text: 'Draw 1 extra card each turn.' },
     ] as RelicDef[]
   ).map((r) => [r.id, r]),

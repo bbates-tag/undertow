@@ -123,6 +123,25 @@ describe('tide', () => {
     expect(bs.tide).toBe(2); // no natural advance either
   });
 
+  it('Heart of the Maelstrom: block on every tide change, natural cadence untouched', () => {
+    const run = battleRun();
+    run.relics.push('heartOfMaelstrom');
+    const bs = run.battle!;
+    expect(bs.tide).toBe(1); // Rising
+
+    // card-driven shift grants block
+    giveHand(run, ['riptide']);
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    expect(bs.tide).toBe(2);
+    expect(bs.player.block).toBe(3);
+
+    // next turn: tide advances exactly one step (no extra relic shift)…
+    runEnemyPhase(run);
+    expect(bs.tide).toBe(3); // Falling — natural +1 only
+    // …and the natural change's block survives the start-of-turn reset
+    expect(bs.player.block).toBe(3);
+  });
+
   it('Ebb bonus applies at Low tide', () => {
     const run = battleRun();
     const bs = run.battle!;
