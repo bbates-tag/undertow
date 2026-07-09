@@ -40,10 +40,10 @@ export function EventScreen() {
         {!resolved ? (
           <div className="flex flex-col gap-2">
             {ev.choices.map((c) => (
-              <button key={c.id} className="btn justify-start text-left !py-2.5" onClick={() => eventChoose(c.id)}>
+              <button key={c.id} className="btn !justify-start text-left !py-2.5" onClick={() => eventChoose(c.id)}>
                 <span>
                   <span className="font-bold block text-sm">{c.label}</span>
-                  <span className="text-[11px] text-(--color-mist) font-normal">{c.detail}</span>
+                  <span className="text-[11px] text-(--color-mist) font-normal block">{c.detail}</span>
                 </span>
               </button>
             ))}
