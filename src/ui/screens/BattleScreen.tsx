@@ -21,7 +21,7 @@ import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip } from '../components/Bits';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
-import { enemyUidAtPoint, fxTargetCenter, fxTargetRef } from '../fxRegistry';
+import { enemyUidAtPoint, fxTargetCenter, fxTargetRef, nearestEnemyUid } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
 
 /** minimum drag displacement (px, mostly upward) before releasing plays an untargeted card */
@@ -107,13 +107,23 @@ export function BattleScreen() {
     if (selectedCard != null) selectCard(null);
     setDrag({ uid: c.uid, needsTarget: needs, armed: false, hoverUid: null });
   };
+  /** attacks: the enemy under the pointer wins; past the drag threshold,
+      snap to the nearest enemy so the armed glow appears as early as skills */
+  const attackTargetFor = (info: PanInfo): number | null => {
+    const px = info.point.x - window.scrollX;
+    const py = info.point.y - window.scrollY;
+    const hover = enemyUidAtPoint(px, py);
+    if (hover != null) return hover;
+    return dragPastThreshold(info) ? nearestEnemyUid(px, py) : null;
+  };
+
   const onDragMoveCard = (needs: boolean, info: PanInfo) => {
     setDrag((d) => {
       if (!d) return d;
       if (needs) {
-        const hover = enemyUidAtPoint(info.point.x - window.scrollX, info.point.y - window.scrollY);
-        if (hover === d.hoverUid && d.armed === (hover != null)) return d;
-        return { ...d, hoverUid: hover, armed: hover != null };
+        const target = attackTargetFor(info);
+        if (target === d.hoverUid && d.armed === (target != null)) return d;
+        return { ...d, hoverUid: target, armed: target != null };
       }
       const armed = dragPastThreshold(info);
       return armed === d.armed ? d : { ...d, armed };
@@ -122,8 +132,8 @@ export function BattleScreen() {
   const onDragEndCard = (c: CardInstance, needs: boolean, info: PanInfo) => {
     setDrag(null);
     if (needs) {
-      const hover = enemyUidAtPoint(info.point.x - window.scrollX, info.point.y - window.scrollY);
-      if (hover != null) playCardAt(c.uid, hover);
+      const target = attackTargetFor(info);
+      if (target != null) playCardAt(c.uid, target);
     } else if (dragPastThreshold(info)) {
       playCardAt(c.uid);
     }

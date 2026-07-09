@@ -39,3 +39,20 @@ export function enemyUidAtPoint(x: number, y: number): number | null {
   }
   return null;
 }
+
+/** the enemy whose center is closest to a point — drag-to-attack snap targeting */
+export function nearestEnemyUid(x: number, y: number): number | null {
+  let best: number | null = null;
+  let bestDist = Infinity;
+  for (const [key, el] of els) {
+    if (!key.startsWith('hit:e')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+    if (d < bestDist) {
+      bestDist = d;
+      best = Number(key.slice(5));
+    }
+  }
+  return best;
+}
