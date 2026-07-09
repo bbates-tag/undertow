@@ -365,7 +365,8 @@ export type Fx =
   | { id: number; kind: 'shake'; strength: number }
   | { id: number; kind: 'burst'; target: FxTargetKey; color: string; n?: number; shape?: 'spark' | 'bubble' | 'ring' }
   | { id: number; kind: 'gold'; target: FxTargetKey; amount: number }
-  | { id: number; kind: 'tide'; tide: Tide };
+  | { id: number; kind: 'tide'; tide: Tide; sweep?: boolean }
+  | { id: number; kind: 'bolt'; from: FxTargetKey; to: FxTargetKey };
 
 export interface CharacterDef {
   id: CharacterId;

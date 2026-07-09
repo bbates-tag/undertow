@@ -3,9 +3,9 @@
 // damage previews, victory/defeat, and tutorial.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useIsPresent, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, usePresence, type PanInfo, type TargetAndTransition } from 'framer-motion';
 import { BookOpen, ChevronRight, Heart, Layers, Menu as MenuIcon, Shield, SkipForward, Trash2 } from 'lucide-react';
-import { useGame, checkFlawless } from '../../state/store';
+import { useGame, checkFlawless, type LastPlay } from '../../state/store';
 import { CARDS } from '../../content/cards';
 import { CHARACTERS } from '../../content/characters';
 import { ENEMIES } from '../../content/enemies';
@@ -21,7 +21,7 @@ import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip } from '../components/Bits';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
-import { enemyUidAtPoint, fxTargetRef } from '../fxRegistry';
+import { enemyUidAtPoint, fxTargetCenter, fxTargetRef } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
 
 /** minimum drag displacement (px, mostly upward) before releasing plays an untargeted card */
@@ -75,6 +75,13 @@ export function BattleScreen() {
   const shakeRef = useRef<HTMLDivElement>(null);
   const [kbTarget, setKbTarget] = useState(0);
   const [drag, setDrag] = useState<DragState | null>(null);
+  const lastPlay = useGame((s) => s.lastPlay);
+  const [ceremony, setCeremony] = useState(0);
+
+  // power cards get an install ceremony: expanding ring at their arrival point
+  useEffect(() => {
+    if (lastPlay?.kind === 'power' && !reduced) setCeremony(lastPlay.seq);
+  }, [lastPlay?.seq, lastPlay?.kind, reduced]);
 
   const bs = run?.battle;
 
@@ -343,7 +350,7 @@ export function BattleScreen() {
 
           {/* hand */}
           <div className="hand-area flex-1 overflow-visible" style={{ ['--hand-overlap' as string]: `${handOverlap}px` }}>
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="popLayout" custom={lastPlay}>
               {bs.hand.map((c, i) => {
                 const affordable = cardCost(c) <= bs.energy && !cardDef(c).unplayable;
                 return (
@@ -395,6 +402,29 @@ export function BattleScreen() {
           </div>
         </div>
       </div>
+
+      {/* power install ceremony ring */}
+      <AnimatePresence>
+        {ceremony > 0 && (
+          <motion.div
+            key={`ceremony-${ceremony}`}
+            className="fixed left-1/2 top-[38%] pointer-events-none z-[62] rounded-full border-2"
+            style={{
+              width: 90,
+              height: 90,
+              marginLeft: -45,
+              marginTop: -45,
+              borderColor: 'var(--color-power)',
+              boxShadow: '0 0 42px rgba(180,143,255,0.55), inset 0 0 24px rgba(180,143,255,0.3)',
+            }}
+            initial={{ scale: 0.25, opacity: 0.95 }}
+            animate={{ scale: 3.1, opacity: 0 }}
+            transition={{ duration: 0.9, ease: 'easeOut' }}
+            onAnimationComplete={() => setCeremony(0)}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
 
       {/* victory overlay */}
       <AnimatePresence>
@@ -493,17 +523,61 @@ function HandCard({
   const suppressClick = useRef(false);
   // a played card's exit "ghost" lingers ~300ms — it must not eat taps/drags
   // aimed at the live cards reflowing underneath it
-  const isPresent = useIsPresent();
+  const [isPresent, safeToRemove] = usePresence();
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // removal watchdog: framer's exit-complete callback can stall (StrictMode +
+  // popLayout), which would pile up invisible ghosts — force removal once the
+  // longest exit animation has definitely finished
+  useEffect(() => {
+    if (isPresent) return;
+    const t = window.setTimeout(() => safeToRemove?.(), 900);
+    return () => window.clearTimeout(t);
+  }, [isPresent, safeToRemove]);
   const needsTarget = CARDS[c.defId].target === 'enemy';
   const rot = reduced || dragging ? 0 : (i - (n - 1) / 2) * Math.min(4, 26 / n);
   const lift = reduced ? 0 : Math.abs(i - (n - 1) / 2) * Math.min(3.4, 18 / n);
 
+  // where a played card flies depends on what it was: attacks lunge into
+  // their target, skills absorb into the hero, powers rise and install,
+  // exhausts burn away in place. Everything else (end-turn discard) drifts.
+  const exitFor = (custom: LastPlay | null): TargetAndTransition => {
+    if (reduced) return { opacity: 0 };
+    const generic: TargetAndTransition = { y: -70, x: 120, opacity: 0, scale: 0.5, rotate: 0, transition: { duration: 0.28 } };
+    if (!custom || custom.uid !== c.uid) return generic;
+    const rect = wrapRef.current?.getBoundingClientRect();
+    const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const cy = rect ? rect.top + rect.height / 2 : window.innerHeight - 120;
+    if (custom.exhaust) {
+      return { opacity: 0, scale: 0.86, y: -34, rotate: 0, filter: 'blur(9px)', transition: { duration: 0.5, ease: 'easeOut' } };
+    }
+    if (custom.kind === 'power') {
+      const dx = window.innerWidth / 2 - cx;
+      const dy = window.innerHeight * 0.38 - cy;
+      return { x: dx, y: dy, scale: 1.16, opacity: 0, rotate: 0, transition: { duration: 0.7, ease: 'easeInOut' } };
+    }
+    if (custom.kind === 'attack') {
+      const t = custom.targetKey ? fxTargetCenter(custom.targetKey) : null;
+      const tx = t ? t.x : window.innerWidth / 2;
+      const ty = t ? t.y : window.innerHeight * 0.3;
+      return { x: tx - cx, y: ty - cy, scale: 0.22, opacity: 0, rotate: 0, transition: { duration: 0.3, ease: 'easeIn' } };
+    }
+    // skill: absorbed by the hero portrait
+    const p = fxTargetCenter('player');
+    return {
+      x: (p?.x ?? 60) - cx, y: (p?.y ?? cy) - cy, scale: 0.28, opacity: 0, rotate: 0,
+      transition: { duration: 0.34, ease: 'easeIn' },
+    };
+  };
+
   return (
     <motion.div
+      ref={wrapRef}
       layout={!reduced}
       initial={reduced ? false : { y: 110, opacity: 0, scale: 0.6 }}
       animate={{ y: lift, opacity: 1, scale: 1, rotate: rot }}
-      exit={reduced ? { opacity: 0 } : { y: -70, x: 120, opacity: 0, scale: 0.5, transition: { duration: 0.28 } }}
+      variants={{ played: exitFor }}
+      exit="played"
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
       drag={canDrag}
       dragSnapToOrigin

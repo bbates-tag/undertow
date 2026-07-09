@@ -5,12 +5,13 @@
 
 import { create } from 'zustand';
 import type {
-  CharacterId, Fx, MetaState, RunState, Settings,
+  CardType, CharacterId, Fx, MetaState, RunState, Settings,
 } from '../engine/types';
+import { CARDS } from '../content/cards';
 import { deepClone, sleep, todayKey } from '../lib/util';
 import { hashSeed, makeRng } from '../lib/rng';
 import {
-  canPlay, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
+  canPlay, cardExhausts, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
 } from '../engine/battle';
 import {
   addCardToDeck, addRelic, applyEventEffect, buyRemoval, buyShopItem, completePick, descend,
@@ -34,6 +35,15 @@ export interface Toast {
   id: number;
   text: string;
   kind: 'info' | 'achievement' | 'unlock' | 'relic';
+}
+
+/** what was just played — drives the per-category card exit animation */
+export interface LastPlay {
+  seq: number;
+  uid: number;
+  kind: CardType;
+  exhaust: boolean;
+  targetKey: string | null;
 }
 
 export const defaultMeta = (): MetaState => ({
@@ -72,6 +82,7 @@ interface GameStore {
   enemyTurnRunning: boolean;
   /** uid of card selected in hand (targeting mode) */
   selectedCard: number | null;
+  lastPlay: LastPlay | null;
   tutorialStep: number; // -1 = off
   newlyUnlocked: string[]; // labels shown on run-end screens
 
@@ -117,6 +128,7 @@ interface GameStore {
 }
 
 let toastId = 1;
+let playSeq = 1;
 
 function applyAudioSettings(s: Settings) {
   setMasterVolume(s.volume);
@@ -262,6 +274,7 @@ export const useGame = create<GameStore>((set, get) => {
     pendingPick: null,
     enemyTurnRunning: false,
     selectedCard: null,
+    lastPlay: null,
     tutorialStep: -1,
     newlyUnlocked: [],
 
@@ -406,6 +419,10 @@ export const useGame = create<GameStore>((set, get) => {
     playCardAt(uid, targetUid) {
       const run = get().run;
       if (!run?.battle) return;
+      // snapshot the card's identity before the engine consumes it, so the
+      // exit animation knows what kind of play this was
+      const inst = run.battle.hand.find((c) => c.uid === uid);
+      const def = inst ? CARDS[inst.defId] : null;
       const clone = deepClone(run);
       const emit = newEmit();
       const err = playCard(clone, uid, targetUid, emit);
@@ -413,6 +430,17 @@ export const useGame = create<GameStore>((set, get) => {
         if (err === 'energy') get().toast('Not enough Energy');
         playSfx('error');
         return;
+      }
+      if (inst && def) {
+        set({
+          lastPlay: {
+            seq: ++playSeq,
+            uid,
+            kind: def.type,
+            exhaust: cardExhausts(inst),
+            targetKey: def.target === 'enemy' && targetUid != null ? `e${targetUid}` : null,
+          },
+        });
       }
       set({ selectedCard: null });
       commit(clone, emit);

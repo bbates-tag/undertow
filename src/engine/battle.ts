@@ -237,7 +237,8 @@ export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit,
   const before = bs.tide;
   bs.tide = (((bs.tide + n) % 4) + 4) % 4 as Tide;
   if (bs.tide !== before) {
-    fx(emit, { kind: 'tide', tide: bs.tide });
+    // card-driven shifts get the water-sweep visual; the quiet natural advance doesn't
+    fx(emit, { kind: 'tide', tide: bs.tide, sweep: !silent });
     if (!silent) sfx(emit, 'tide');
     // Heart of the Maelstrom: the churn shields you
     if (run.relics.includes('heartOfMaelstrom')) gainPlayerBlock(run, bs, 3, emit, false);
@@ -683,6 +684,20 @@ export function playCard(run: RunState, uid: number, targetUid: number | undefin
 
   sfx(emit, def.type === 'attack' ? 'playAttack' : def.type === 'power' ? 'playPower' : 'playSkill');
 
+  // Discharge spectacle: lightning leaps from the player to the victims.
+  // Emitted before ops resolve so lethal discharges still show their bolts.
+  if (def.discharge && getStatus(bs.player, 'charge') > 0) {
+    const hasDamage = (ops: Op[]): boolean =>
+      ops.some((op) => op.op === 'damage' || (op.op === 'if' && (hasDamage(op.then) || hasDamage(op.else ?? []))));
+    if (hasDamage(cardOps(c))) {
+      const victims = def.target === 'enemy' ? living(bs).filter((e) => e.uid === targetUid) : living(bs);
+      for (const v of victims.slice(0, 5)) fx(emit, { kind: 'bolt', from: 'player', to: enemyKey(v) });
+    } else {
+      // self-directed discharge (Ground Out, Defibrillate): surge ring instead
+      fx(emit, { kind: 'burst', target: 'player', color: 'volt', n: 14, shape: 'ring' });
+    }
+  }
+
   runOps(run, bs, cardOps(c), emit, { targetUid, isAttackCard: def.type === 'attack' });
 
   // relic: Venom Gland — first attack each battle poisons
@@ -730,7 +745,7 @@ export function playCard(run: RunState, uid: number, targetUid: number | undefin
       if (hook) bs.powers.push(hook);
       if (hook === 'kingTide' && bs.tide !== 2) {
         bs.tide = 2;
-        fx(emit, { kind: 'tide', tide: 2 });
+        fx(emit, { kind: 'tide', tide: 2, sweep: true });
         onTideHigh(run, bs, emit);
       }
       // power cards are consumed entirely

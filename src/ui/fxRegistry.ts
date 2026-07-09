@@ -10,6 +10,10 @@ export function fxTargetRef(key: string) {
   };
 }
 
+export function fxTargetEl(key: string): HTMLElement | null {
+  return els.get(key) ?? null;
+}
+
 export function fxTargetCenter(key: string): { x: number; y: number } | null {
   const el = els.get(key);
   if (!el) return null;
