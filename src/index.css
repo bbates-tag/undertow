@@ -45,6 +45,29 @@
   --card-h: calc(var(--card-w) * 1.42);
 }
 
+/* narrow (portrait phone) viewports: the hero cluster floats above the left
+   end of the hand instead of sitting beside it, freeing its width for cards */
+@media (max-width: 640px) {
+  .hero-cluster {
+    position: absolute;
+    left: 8px;
+    bottom: calc(var(--card-h) + 44px);
+    padding-bottom: 0;
+    z-index: 30;
+  }
+  .endturn-cluster {
+    position: absolute;
+    right: 8px;
+    bottom: calc(var(--card-h) + 44px);
+    padding-bottom: 0;
+    z-index: 30;
+  }
+  /* the floating clusters live where the panel used to sit — lift it clear */
+  .sel-panel {
+    bottom: calc(var(--card-h) + 185px) !important;
+  }
+}
+
 /* short viewports (landscape phones): size the battle by height, not width,
    so the hand can't swallow the enemy zone */
 @media (max-height: 520px) {

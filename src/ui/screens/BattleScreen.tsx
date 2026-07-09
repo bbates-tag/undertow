@@ -77,6 +77,23 @@ export function BattleScreen() {
   const [drag, setDrag] = useState<DragState | null>(null);
   const lastPlay = useGame((s) => s.lastPlay);
   const [ceremony, setCeremony] = useState(0);
+  const handAreaRef = useRef<HTMLDivElement>(null);
+  const [handMetrics, setHandMetrics] = useState({ avail: 0, cardW: 0 });
+
+  // measure the hand's real estate so the fan only overlaps as much as the
+  // available width actually requires
+  const handSize = run?.battle?.hand.length ?? 0;
+  useEffect(() => {
+    const measure = () => {
+      const el = handAreaRef.current;
+      if (!el) return;
+      const card = el.querySelector('.card-frame') as HTMLElement | null;
+      setHandMetrics({ avail: el.clientWidth, cardW: card?.offsetWidth ?? 0 });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [handSize]);
 
   // power cards get an install ceremony: expanding ring at their arrival point
   useEffect(() => {
@@ -186,7 +203,13 @@ export function BattleScreen() {
 
   if (!run || !bs) return null;
   const ch = CHARACTERS[run.charId];
-  const handOverlap = bs.hand.length > 7 ? -30 : bs.hand.length > 5 ? -22 : bs.hand.length > 3 ? -12 : -4;
+  // adaptive fan: overlap only as much as the available width requires,
+  // with a slight minimum so it still reads as a hand of cards
+  const n = bs.hand.length;
+  const cardW = handMetrics.cardW || 110;
+  const avail = (handMetrics.avail || window.innerWidth * 0.7) - 8;
+  const fitMargin = n > 1 ? (avail - n * cardW) / (2 * (n - 1)) : -8;
+  const handOverlap = Math.min(-8, fitMargin);
 
   const selectedKeywords = selected
     ? [...new Set(Array.from(describeCard(selectedDef!, selected.upgraded).matchAll(KEYWORD_PATTERN)).map((m) => m[1].toLowerCase()))]
@@ -276,7 +299,7 @@ export function BattleScreen() {
             initial={{ opacity: 0, y: 16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
-            className={`absolute z-40 flex items-end ${needsTarget ? 'left-2 gap-2 pointer-events-none' : 'left-1/2 -translate-x-1/2 gap-3'}`}
+            className={`sel-panel absolute z-40 flex items-end ${needsTarget ? 'left-2 gap-2 pointer-events-none' : 'left-1/2 -translate-x-1/2 gap-3'}`}
             style={{ bottom: 'calc(var(--card-h) + 64px)' }}
           >
             <CardView card={selected} battle={bs} scale={needsTarget ? undefined : 'lg'} ariaLabel="selected card preview" />
@@ -309,8 +332,9 @@ export function BattleScreen() {
       {/* hand + controls */}
       <div className="relative shrink-0">
         <div className="flex items-end justify-between px-2 gap-1">
-          {/* hero portrait + energy gem + health */}
-          <div className="flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
+          {/* hero portrait + energy gem + health — floats up-left on phones
+              (see .hero-cluster media query) so the hand gets the full width */}
+          <div className="hero-cluster flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
             <div ref={fxTargetRef('player')} className="relative mb-2">
               <div
                 className="hero-portrait w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 overflow-hidden flex items-center justify-center"
@@ -364,6 +388,7 @@ export function BattleScreen() {
               parked on top of the fan) */}
           <div
             key={`hand-${bs.groupId}-${bs.turn}`}
+            ref={handAreaRef}
             className="hand-area flex-1 overflow-visible"
             style={{ ['--hand-overlap' as string]: `${handOverlap}px` }}
           >
@@ -396,8 +421,8 @@ export function BattleScreen() {
             )}
           </div>
 
-          {/* end turn + discard */}
-          <div className="flex flex-col items-center gap-1 pb-3 shrink-0">
+          {/* end turn + discard — floats bottom-right on phones (mirrors hero) */}
+          <div className="endturn-cluster flex flex-col items-center gap-1 pb-3 shrink-0 z-20">
             <button
               className={`btn ${bs.phase === 'player' && !enemyTurnRunning ? 'btn-primary' : ''} !px-3 !py-2 text-xs font-bold`}
               disabled={bs.phase !== 'player' || enemyTurnRunning}
