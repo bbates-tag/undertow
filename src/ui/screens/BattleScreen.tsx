@@ -348,8 +348,15 @@ export function BattleScreen() {
             </button>
           </div>
 
-          {/* hand */}
-          <div className="hand-area flex-1 overflow-visible" style={{ ['--hand-overlap' as string]: `${handOverlap}px` }}>
+          {/* hand — keyed per battle+turn: the whole hand redraws each turn
+              anyway, and remounting wipes any exit ghost whose animation froze
+              (rAF pauses mid-play on backgrounded phones leave opaque ghosts
+              parked on top of the fan) */}
+          <div
+            key={`hand-${bs.groupId}-${bs.turn}`}
+            className="hand-area flex-1 overflow-visible"
+            style={{ ['--hand-overlap' as string]: `${handOverlap}px` }}
+          >
             <AnimatePresence mode="popLayout" custom={lastPlay}>
               {bs.hand.map((c, i) => {
                 const affordable = cardCost(c) <= bs.energy && !cardDef(c).unplayable;
