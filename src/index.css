@@ -106,6 +106,18 @@ body {
   backdrop-filter: blur(6px);
 }
 
+/* character-select: the chosen one glows in their signature color */
+.char-selected {
+  --sel: var(--color-glow);
+  border-color: color-mix(in srgb, var(--sel) 80%, transparent);
+  box-shadow: 0 0 0 2px var(--sel), 0 0 26px color-mix(in srgb, var(--sel) 45%, transparent), var(--shadow-panel);
+  animation: charGlow 2.4s ease-in-out infinite;
+}
+@keyframes charGlow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--sel), 0 0 18px color-mix(in srgb, var(--sel) 35%, transparent), var(--shadow-panel); }
+  50% { box-shadow: 0 0 0 2px var(--sel), 0 0 40px color-mix(in srgb, var(--sel) 65%, transparent), var(--shadow-panel); }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

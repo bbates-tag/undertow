@@ -59,9 +59,11 @@ export function NewRunScreen() {
           return (
             <button
               key={ch.id}
-              className={`panel p-4 text-left transition-all ${active ? 'ring-2 ring-(--color-glow)' : ''} ${locked ? 'opacity-55' : 'hover:scale-[1.015]'}`}
+              className={`panel p-4 text-left transition-all ${active ? 'char-selected' : ''} ${locked ? 'opacity-55' : active ? '' : 'opacity-75 hover:opacity-100 hover:scale-[1.015]'}`}
+              style={active ? ({ ['--sel' as string]: ch.color } as React.CSSProperties) : undefined}
               onClick={() => !locked && setCharId(ch.id)}
               disabled={locked}
+              aria-pressed={active}
               aria-label={locked ? `${ch.name}, locked — defeat the Act 1 boss to unlock` : `select ${ch.name}`}
             >
               <div className="flex items-center gap-3 mb-2">
