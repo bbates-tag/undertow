@@ -211,7 +211,7 @@ function gainPlayerBlock(run: RunState, bs: BattleState, base: number, emit: Emi
   bs.player.block += amt;
   run.stats.maxBlock = Math.max(run.stats.maxBlock, bs.player.block);
   fx(emit, { kind: 'block', target: 'player', amount: amt });
-  sfx(emit, 'block');
+  sfx(emit, amt >= 12 ? 'blockBig' : 'block');
 }
 
 // ── Charge / tide ────────────────────────────────────────────────────────────

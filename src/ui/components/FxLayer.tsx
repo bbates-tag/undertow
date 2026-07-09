@@ -161,9 +161,42 @@ export function FxLayer({ shakeTarget, reduced }: { shakeTarget: RefObject<HTMLE
         case 'blocked':
           spawn(f.target, `${f.amount}`, '#5fb9ff', 17, 'shield');
           break;
-        case 'block':
+        case 'block': {
           spawn(f.target, `+${f.amount}`, '#5fb9ff', 18, 'shield');
+          // bubble-shield ripple on the hero portrait
+          if (f.target === 'player' && !reduced) {
+            const portrait = fxTargetEl('player')?.querySelector('.hero-portrait') as HTMLElement | null;
+            if (portrait) {
+              const cls = f.amount >= 12 ? 'shield-pulse-big' : 'shield-pulse';
+              portrait.classList.remove('shield-pulse', 'shield-pulse-big');
+              void portrait.offsetWidth;
+              portrait.classList.add(cls);
+              setTimeout(() => portrait.classList.remove(cls), 800);
+            }
+            const pos = fxTargetCenter('player');
+            if (pos) {
+              const rings = f.amount >= 12 ? 3 : 2;
+              for (let i = 0; i < rings; i++) {
+                particles.current.push({
+                  x: pos.x, y: pos.y, vx: 0, vy: -0.15,
+                  life: 30 + i * 8, maxLife: 30 + i * 8,
+                  r: 10 + i * 6, color: '#5fb9ff', shape: 'ring',
+                });
+              }
+              const bubbles = Math.min(4 + Math.floor(f.amount / 3), 12);
+              for (let i = 0; i < bubbles; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                particles.current.push({
+                  x: pos.x + Math.cos(ang) * 26, y: pos.y + Math.sin(ang) * 22,
+                  vx: (Math.random() - 0.5) * 0.8, vy: -(0.8 + Math.random() * 1.4),
+                  life: 40 + Math.random() * 25, maxLife: 65,
+                  r: 1.6 + Math.random() * 2.8, color: '#8fd0ff', shape: 'bubble',
+                });
+              }
+            }
+          }
           break;
+        }
         case 'heal':
           spawn(f.target, `+${f.amount}`, '#7ef29a', 20);
           break;
