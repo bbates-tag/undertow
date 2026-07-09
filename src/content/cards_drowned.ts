@@ -1,4 +1,4 @@
-// The Drowned — what the sea gave back. Unlocked by winning a full run.
+// The Drowned — what the sea gave back. Unlocked by defeating two act bosses in one run.
 // Archetypes: blood economy (pay HP, gain Descent, hit harder per Descent),
 // pain engines (Weeping Hull, Echo of Pain), and Surface cash-outs.
 // Ebb-leaning: the Drowned is strongest when the water is Low.

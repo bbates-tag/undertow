@@ -52,6 +52,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     ],
     blurb: 'Came back from the deep wrong. Pays in blood — and the sea pays it back with interest.',
     mechanic: 'Descent — HP lost on your turn becomes Descent. Cards grow with it; Surface cards cash it in.',
-    lockText: 'Defeat all three acts. The sea returns what it takes.',
+    lockText: 'Defeat two act bosses in one dive. The sea returns what it takes.',
   },
 };

@@ -192,13 +192,13 @@ export const useGame = create<GameStore>((set, get) => {
       const cur = meta.ascension[run.charId] ?? 0;
       meta.ascension[run.charId] = Math.min(10, Math.max(cur, run.ascension + 1));
     }
-    // character unlocks: Voltaic after any boss kill, the Drowned after a full win
+    // character unlocks: Voltaic after any boss kill, the Drowned after two in one run
     const unlocked: string[] = [];
     if (run.stats.bossesKilled >= 1 && !meta.unlockedChars.includes('voltaic')) {
       meta.unlockedChars.push('voltaic');
       unlocked.push('New character — The Voltaic');
     }
-    if (result === 'win' && !meta.unlockedChars.includes('drowned')) {
+    if (run.stats.bossesKilled >= 2 && !meta.unlockedChars.includes('drowned')) {
       meta.unlockedChars.push('drowned');
       unlocked.push('New character — The Drowned');
     }
