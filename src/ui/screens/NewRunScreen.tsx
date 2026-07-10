@@ -59,31 +59,33 @@ export function NewRunScreen() {
           return (
             <button
               key={ch.id}
-              className={`panel p-4 text-left transition-all ${active ? 'char-selected' : ''} ${locked ? 'opacity-55' : active ? '' : 'opacity-75 hover:opacity-100 hover:scale-[1.015]'}`}
+              className={`panel overflow-hidden text-left transition-all flex items-stretch ${active ? 'char-selected' : ''} ${locked ? 'opacity-55' : active ? '' : 'opacity-75 hover:opacity-100 hover:scale-[1.015]'}`}
               style={active ? ({ ['--sel' as string]: ch.color } as React.CSSProperties) : undefined}
               onClick={() => !locked && setCharId(ch.id)}
               disabled={locked}
               aria-pressed={active}
               aria-label={locked ? `${ch.name}, locked — ${ch.lockText ?? 'keep diving to unlock'}` : `select ${ch.name}`}
             >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-16 h-20 rounded-xl border flex items-center justify-center shrink-0 overflow-hidden" style={{ borderColor: ch.color, color: ch.color, background: 'rgba(8,17,32,0.7)' }}>
-                  {locked ? <Lock size={20} /> : <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={30} alt={ch.name} />}
-                </div>
-                <div>
-                  <div className="font-display font-bold">{ch.name}</div>
-                  <div className="text-[11px] italic text-(--color-dim)">{ch.title}</div>
-                </div>
+              {/* full-height portrait column — let the art breathe */}
+              <div
+                className="w-28 sm:w-32 shrink-0 self-stretch flex items-center justify-center min-h-36"
+                style={{ color: ch.color, background: 'rgba(8,17,32,0.7)', borderRight: `1px solid ${ch.color}44` }}
+              >
+                {locked ? <Lock size={26} /> : <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full h-full object-cover object-top" iconSize={44} alt={ch.name} />}
               </div>
-              {locked ? (
-                <p className="text-xs text-(--color-mist)">{ch.lockText ?? 'Keep diving to unlock.'}</p>
-              ) : (
-                <>
-                  <p className="text-xs text-(--color-mist) mb-1">{ch.blurb}</p>
-                  <p className="text-[11px] text-(--color-glow)">{ch.mechanic}</p>
-                  <p className="text-[11px] text-(--color-dim) mt-1">{ch.maxHp} HP · {meta.wins[ch.id] ?? 0} wins</p>
-                </>
-              )}
+              <div className="p-4 flex-1 min-w-0">
+                <div className="font-display font-bold">{ch.name}</div>
+                <div className="text-[11px] italic text-(--color-dim) mb-2">{ch.title}</div>
+                {locked ? (
+                  <p className="text-xs text-(--color-mist)">{ch.lockText ?? 'Keep diving to unlock.'}</p>
+                ) : (
+                  <>
+                    <p className="text-xs text-(--color-mist) mb-1">{ch.blurb}</p>
+                    <p className="text-[11px] text-(--color-glow)">{ch.mechanic}</p>
+                    <p className="text-[11px] text-(--color-dim) mt-1">{ch.maxHp} HP · {meta.wins[ch.id] ?? 0} wins</p>
+                  </>
+                )}
+              </div>
             </button>
           );
         })}
