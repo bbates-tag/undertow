@@ -204,13 +204,15 @@ export function BattleScreen() {
 
   if (!run || !bs) return null;
   const ch = CHARACTERS[run.charId];
-  // adaptive fan: overlap only as much as the available width requires,
-  // with a slight minimum so it still reads as a hand of cards
+  // deterministic fan: place every card at a computed x from the hand's
+  // center. Negative-margin flex layouts collapse unpredictably (exit ghosts
+  // sit in the flow and eat space), so spacing is arithmetic, not layout:
+  // spread across the full measured width, overlapping only when it's needed.
   const n = bs.hand.length;
   const cardW = handMetrics.cardW || 110;
-  const avail = (handMetrics.avail || window.innerWidth * 0.7) - 8;
-  const fitMargin = n > 1 ? (avail - n * cardW) / (2 * (n - 1)) : -8;
-  const handOverlap = Math.min(-8, fitMargin);
+  const avail = (handMetrics.avail || window.innerWidth) - 8;
+  const advance = n > 1 ? Math.min(cardW - 16, (avail - cardW) / (n - 1)) : 0;
+  const fanLeft = (i: number) => (i - (n - 1) / 2) * advance - cardW / 2;
 
   const selectedKeywords = selected
     ? [...new Set(Array.from(describeCard(selectedDef!, selected.upgraded).matchAll(KEYWORD_PATTERN)).map((m) => m[1].toLowerCase()))]
@@ -394,7 +396,6 @@ export function BattleScreen() {
             key={`hand-${bs.groupId}-${bs.turn}`}
             ref={handAreaRef}
             className="hand-area flex-1 overflow-visible"
-            style={{ ['--hand-overlap' as string]: `${handOverlap}px` }}
           >
             <AnimatePresence mode="popLayout" custom={lastPlay}>
               {bs.hand.map((c, i) => {
@@ -405,6 +406,7 @@ export function BattleScreen() {
                     c={c}
                     i={i}
                     n={bs.hand.length}
+                    leftPx={fanLeft(i)}
                     bs={bs}
                     reduced={reduced}
                     isSelected={selectedCard === c.uid}
@@ -550,6 +552,8 @@ interface HandCardProps {
   c: CardInstance;
   i: number;
   n: number;
+  /** computed fan offset of the card's left edge from the hand's center */
+  leftPx: number;
   bs: BattleState;
   reduced: boolean;
   isSelected: boolean;
@@ -564,7 +568,7 @@ interface HandCardProps {
 }
 
 function HandCard({
-  c, i, n, bs, reduced, isSelected, affordable, canDrag, dragging, armed,
+  c, i, n, leftPx, bs, reduced, isSelected, affordable, canDrag, dragging, armed,
   onSelect, onDragStartCard, onDragMoveCard, onDragEndCard,
 }: HandCardProps) {
   // a completed drag fires a click on release — swallow it so the card
@@ -720,6 +724,7 @@ function HandCard({
       }}
       className={`hand-card ${dragging ? 'dragging' : ''}`}
       style={{
+        left: `calc(50% + ${leftPx}px)`,
         ['--z' as string]: 10 + i,
         zIndex: dragging ? 60 : isSelected ? 45 : undefined,
         touchAction: 'none',

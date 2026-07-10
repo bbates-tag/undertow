@@ -400,6 +400,7 @@ body {
 
 /* ── Hand fan ─────────────────────────────────────────────────────────────── */
 .hand-area {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -408,8 +409,14 @@ body {
   perspective: 1100px;
 }
 .hand-card {
-  margin: 0 calc(var(--hand-overlap, -14px));
   transform-origin: bottom center;
+}
+/* cards are positioned by arithmetic (inline `left`), not flex flow — exit
+   ghosts and negative-margin quirks can never squeeze the live fan. Scoped
+   to the wrapper: CardView's frame also carries .hand-card */
+.hand-area > .hand-card {
+  position: absolute;
+  bottom: max(6px, env(safe-area-inset-bottom));
 }
 /* fan stacking lives in --z so :hover can outrank neighboring cards */
 .hand-area > .hand-card {
