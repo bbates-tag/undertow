@@ -6,6 +6,8 @@ import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../.
 import { useGame } from '../../state/store';
 import { ArtImage } from './Art';
 import { StatusChips } from './StatusChips';
+import { AFFIXES } from '../../content/affixes';
+import { GameIcon } from '../icons';
 import { fxTargetRef } from '../fxRegistry';
 // (root registers as `hit:e<uid>` so drag-to-play can hit-test drop points)
 import type { Amount } from '../../engine/types';
@@ -20,10 +22,11 @@ const SIZE: Record<string, string> = {
 };
 
 function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
+  const run = useGame((s) => s.run);
   const def = ENEMIES[e.defId];
   const mv = def.moves[e.moveId];
-  if (!mv) return null;
-  const atk = previewEnemyMove(bs, e);
+  if (!mv || !run) return null;
+  const atk = previewEnemyMove(run, bs, e);
   const label = mv.name;
   const icons: Record<string, React.ReactNode> = {
     attack: <Swords size={13} />,
@@ -196,6 +199,23 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
         </div>
       </div>
       <StatusChips creature={e} />
+      {e.affixes && e.affixes.length > 0 && (
+        <div className="flex gap-1" aria-label={`affixes: ${e.affixes.map((a) => AFFIXES[a]?.name).filter(Boolean).join(', ')}`}>
+          {e.affixes.map((a) => {
+            const d = AFFIXES[a];
+            return d ? (
+              <span
+                key={a}
+                className="chip !px-1.5"
+                style={{ color: 'var(--color-lure)', borderColor: 'rgba(255,93,162,0.4)' }}
+                title={`${d.name} — ${d.text}`}
+              >
+                <GameIcon id={d.icon} size={10} />
+              </span>
+            ) : null;
+          })}
+        </div>
+      )}
       <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-dim) font-semibold">{def.name}</div>
     </motion.div>
   );

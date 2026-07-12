@@ -5,8 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type {
-  Amount, BattlePhase, BattleState, CardDef, CardInstance, Cond, CreatureState, EnemyState,
-  Fx, Op, PowerHookId, RunState, StatusId, Tide,
+  Amount, BattlePhase, BattleState, CardDef, CardInstance, Cond, CreatureState, EncounterSpec,
+  EnemyState, Fx, Op, PowerHookId, RunState, StatusId, Tide,
 } from './types';
 import { DEBUFFS } from './types';
 import { makeRng } from '../lib/rng';
@@ -109,10 +109,11 @@ export function previewPlayerAttack(run: RunState, bs: BattleState, amount: Amou
   return d;
 }
 
-export function previewEnemyMove(bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
+export function previewEnemyMove(run: RunState, bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
   const mv = ENEMIES[e.defId].moves[e.moveId];
   if (!mv?.attack) return null;
-  return { dmg: calcAttack(mv.attack.amount, e, bs.player), times: mv.attack.times ?? 1 };
+  // include the ascension/endless damage bonus — telegraphs must not undersell
+  return { dmg: calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player), times: mv.attack.times ?? 1 };
 }
 
 export function blockGain(c: CreatureState, base: number): number {
@@ -143,7 +144,7 @@ function damageEnemy(
 
 function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
   const def = ENEMIES[e.defId];
-  if (def.reanimates && !e.reanimated) {
+  if ((def.reanimates || e.affixes?.includes('relentless')) && !e.reanimated) {
     e.reanimated = true;
     e.hp = Math.floor(e.maxHp / 2);
     e.statuses = {};
@@ -302,7 +303,7 @@ function onTideHigh(run: RunState, bs: BattleState, emit: Emit) {
     drawCards(run, bs, 1, emit);
   }
   for (const e of living(bs)) {
-    const t = ENEMIES[e.defId].tideTouched;
+    const t = (ENEMIES[e.defId].tideTouched ?? 0) + (e.affixes?.includes('tidetouched') ? 2 : 0);
     if (t) {
       addStatus(e, 'might', t);
       fx(emit, { kind: 'status', target: enemyKey(e), status: 'might', amount: t });
@@ -630,14 +631,18 @@ function drawCountFor(run: RunState, bs: BattleState): number {
   return n;
 }
 
-export function startBattle(run: RunState, groupId: string, emit: Emit) {
-  const group = ENCOUNTERS[groupId];
+export function startBattle(run: RunState, encounter: string | EncounterSpec, emit: Emit) {
+  const spec = typeof encounter === 'string' ? null : encounter;
+  const group = spec ?? ENCOUNTERS[encounter as string];
+  const groupId = spec ? spec.id : (encounter as string);
+  // authored encounters list plain def ids; endless specs carry affixes too
+  const entries = group.enemies.map((e) => (typeof e === 'string' ? { defId: e, affixes: undefined } : e));
   const r = makeRng(run.rng);
-  const enemies: EnemyState[] = group.enemies.map((defId, i) => {
+  const enemies: EnemyState[] = entries.map(({ defId, affixes }, i) => {
     const def = ENEMIES[defId];
     let hp = r.int(def.hp[0], def.hp[1]);
     hp = Math.round(hp * ascHpScale(run));
-    return {
+    const st: EnemyState = {
       uid: i + 1,
       defId,
       hp,
@@ -646,7 +651,16 @@ export function startBattle(run: RunState, groupId: string, emit: Emit) {
       statuses: { ...(def.startStatuses ?? {}) },
       moveId: '',
       history: [],
+      ...(affixes?.length ? { affixes } : {}),
     };
+    // spawn-time affixes; relentless/tidetouched/venomous act at their hook sites
+    for (const a of affixes ?? []) {
+      if (a === 'hulking') { st.hp = st.maxHp = Math.round(st.hp * 1.35); }
+      else if (a === 'raging') addStatus(st, 'might', 2);
+      else if (a === 'spined') addStatus(st, 'spines', 3);
+      else if (a === 'shielded') st.block = 12;
+    }
+    return st;
   });
   const battleSeed = r.int(0, 2 ** 31);
   run.rng = r.state();
@@ -972,6 +986,10 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
       const spines = getStatus(bs.player, 'spines');
       if (spines > 0) damageEnemy(run, bs, e, spines, emit);
       if (bs.phase !== 'enemy' || e.dead) break;
+    }
+    // Venomous affix: the strike leaves poison behind (once per move, not per hit)
+    if (bs.phase === 'enemy' && !e.dead && e.affixes?.includes('venomous')) {
+      applyStatusTo(run, bs, bs.player, 'toxin', 2, emit, 'player');
     }
   }
   if (bs.phase !== 'enemy') return;

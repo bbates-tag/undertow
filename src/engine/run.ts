@@ -8,6 +8,7 @@ import { hashSeed, makeRng, type Rng } from '../lib/rng';
 import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
 import { CHARACTERS } from '../content/characters';
 import { RELICS, relicPool } from '../content/relics';
+import { generateBattleSpec, generateBossSpec, generateEliteSpec } from './endless';
 import { EVENTS } from '../content/events';
 import { encounterPool } from '../content/enemies';
 import { lockedContent } from '../content/meta';
@@ -18,7 +19,7 @@ export const MAP_COLS = 6;
 
 // ── Map generation ───────────────────────────────────────────────────────────
 
-export function generateMap(rng: Rng, act: 1 | 2 | 3): GameMap {
+export function generateMap(rng: Rng, act: 1 | 2 | 3, loop = 0): GameMap {
   const rows: MapNode[][] = [];
 
   for (let r = 0; r < ACT_ROWS; r++) {
@@ -117,7 +118,14 @@ export function generateMap(rng: Rng, act: 1 | 2 | 3): GameMap {
   let eventCursor = 0;
   for (let r = 0; r < ACT_ROWS; r++) {
     for (const n of rows[r]) {
-      if (n.type === 'battle') n.payload = pickEnc(r <= 2 ? easy : hard);
+      // endless loops: battles and elites are procedural (bosses stay authored)
+      if (n.type === 'battle' && loop > 0) {
+        n.encounter = generateBattleSpec(rng, act, r <= 2 ? 'easy' : 'hard', loop, `endless-L${loop}-a${act}-${r}.${n.col}`);
+      } else if (n.type === 'elite' && loop > 0) {
+        n.encounter = generateEliteSpec(rng, act, loop, `endless-L${loop}-a${act}-${r}.${n.col}e`);
+      } else if (n.type === 'boss' && loop > 0) {
+        n.encounter = generateBossSpec(rng, act, loop, `endless-L${loop}-a${act}-boss`);
+      } else if (n.type === 'battle') n.payload = pickEnc(r <= 2 ? easy : hard);
       else if (n.type === 'elite') n.payload = rng.pick(elitePool).id;
       else if (n.type === 'boss') n.payload = encounterPool(act, 'boss')[0].id;
       else if (n.type === 'event') {
@@ -225,7 +233,7 @@ export function enterNode(run: RunState, row: number, col: number, emit: Emit): 
     case 'battle':
     case 'elite':
     case 'boss':
-      startBattle(run, node.payload!, emit);
+      startBattle(run, node.encounter ?? node.payload!, emit);
       return 'battle';
     case 'shop':
       run.shop = generateShop(run);
@@ -578,7 +586,7 @@ export function descend(run: RunState, emit: Emit): 'nextAct' | 'victory' {
   }
   run.act = (run.act + 1) as 2 | 3;
   const { r, done } = runRng(run);
-  run.map = generateMap(r, run.act);
+  run.map = generateMap(r, run.act, run.loop);
   done();
   run.pos = null;
   healPlayer(run, null, Math.round(run.maxHp * 0.25), emit);
@@ -591,7 +599,7 @@ export function beginLoop(run: RunState, emit: Emit) {
   run.act = 1;
   run.result = null;
   const { r, done } = runRng(run);
-  run.map = generateMap(r, 1);
+  run.map = generateMap(r, 1, run.loop);
   done();
   run.pos = null;
   healPlayer(run, null, Math.round(run.maxHp * 0.25), emit);
