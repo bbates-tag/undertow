@@ -5,8 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type {
-  Amount, BattlePhase, BattleState, CardDef, CardInstance, Cond, CreatureState, EnemyState,
-  Fx, Op, PowerHookId, RunState, StatusId, Tide,
+  Amount, BattlePhase, BattleState, CardDef, CardInstance, Cond, CreatureState, EncounterSpec,
+  EnemyState, Fx, Op, PowerHookId, RunState, StatusId, Tide,
 } from './types';
 import { DEBUFFS } from './types';
 import { makeRng } from '../lib/rng';
@@ -630,10 +630,14 @@ function drawCountFor(run: RunState, bs: BattleState): number {
   return n;
 }
 
-export function startBattle(run: RunState, groupId: string, emit: Emit) {
-  const group = ENCOUNTERS[groupId];
+export function startBattle(run: RunState, encounter: string | EncounterSpec, emit: Emit) {
+  const spec = typeof encounter === 'string' ? null : encounter;
+  const group = spec ?? ENCOUNTERS[encounter as string];
+  const groupId = spec ? spec.id : (encounter as string);
+  // authored encounters list plain def ids; endless specs carry affixes too
+  const entries = group.enemies.map((e) => (typeof e === 'string' ? { defId: e, affixes: undefined } : e));
   const r = makeRng(run.rng);
-  const enemies: EnemyState[] = group.enemies.map((defId, i) => {
+  const enemies: EnemyState[] = entries.map(({ defId, affixes }, i) => {
     const def = ENEMIES[defId];
     let hp = r.int(def.hp[0], def.hp[1]);
     hp = Math.round(hp * ascHpScale(run));
@@ -646,6 +650,7 @@ export function startBattle(run: RunState, groupId: string, emit: Emit) {
       statuses: { ...(def.startStatuses ?? {}) },
       moveId: '',
       history: [],
+      ...(affixes?.length ? { affixes } : {}),
     };
   });
   const battleSeed = r.int(0, 2 ** 31);

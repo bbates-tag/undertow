@@ -198,6 +198,8 @@ export interface EnemyState extends CreatureState {
   defId: string;
   moveId: string; // current telegraphed intent
   history: string[];
+  /** endless affixes on this instance (see content/affixes.ts) */
+  affixes?: string[];
   reanimated?: boolean;
   dead?: boolean; // kept in array for stable layout; filtered for logic
 }
@@ -236,6 +238,13 @@ export interface BattleState {
 
 export type NodeType = 'battle' | 'elite' | 'shop' | 'rest' | 'event' | 'treasure' | 'boss';
 
+/** procedurally generated encounter — endless loops only, attached at map-gen time */
+export interface EncounterSpec {
+  id: string;
+  enemies: { defId: string; affixes?: string[] }[];
+  pool: 'easy' | 'hard' | 'elite' | 'boss';
+}
+
 export interface MapNode {
   row: number;
   col: number;
@@ -244,6 +253,8 @@ export interface MapNode {
   next: number[];
   /** battle nodes: encounter group id; event nodes: event id */
   payload?: string;
+  /** endless loops: procedural encounter (takes precedence over payload) */
+  encounter?: EncounterSpec;
   visited?: boolean;
 }
 

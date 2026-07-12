@@ -5,6 +5,8 @@ import {
 import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
 import { relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
+import { threatCost } from './endless';
+import { ENEMIES } from '../content/enemies';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -173,6 +175,59 @@ describe('tide', () => {
     const s1 = scoreRun(run);
     run.loop = 2;
     expect(scoreRun(run) - s1).toBe(100);
+  });
+
+  it('endless: every enemy has a sane derived threat cost', () => {
+    for (const def of Object.values(ENEMIES)) {
+      const c = threatCost(def);
+      expect(Number.isFinite(c)).toBe(true);
+      expect(c).toBeGreaterThan(0);
+    }
+    // elites must out-cost the average act-1 normal
+    const normalsAvg =
+      Object.values(ENEMIES).filter((e) => e.tier === 'normal' && e.act === 1)
+        .reduce((a, e) => a + threatCost(e), 0) /
+      Object.values(ENEMIES).filter((e) => e.tier === 'normal' && e.act === 1).length;
+    expect(threatCost(ENEMIES.anglerfish)).toBeGreaterThan(normalsAvg);
+  });
+
+  it('endless: loop maps carry deterministic procedural specs; loop 0 has none', () => {
+    const run0 = testRun('proc');
+    expect(run0.map.rows.flat().every((n) => !n.encounter)).toBe(true);
+
+    const run = testRun('proc');
+    run.act = 3;
+    run.result = 'win';
+    beginLoop(run, newEmit());
+    const nodes = run.map.rows.flat();
+    const fights = nodes.filter((n) => n.type === 'battle' || n.type === 'elite');
+    expect(fights.length).toBeGreaterThan(0);
+    expect(fights.every((n) => !!n.encounter)).toBe(true);
+    expect(nodes.find((n) => n.type === 'boss')!.encounter).toBeUndefined(); // bosses stay authored
+
+    const MINIONS = ['tentacleSpawn', 'krakenArm', 'boneShoalMinion'];
+    for (const n of fights) {
+      const spec = n.encounter!;
+      expect(spec.enemies.length).toBeGreaterThanOrEqual(1);
+      expect(spec.enemies.length).toBeLessThanOrEqual(4);
+      expect(spec.enemies.every((e) => !MINIONS.includes(e.defId))).toBe(true);
+      if (n.type === 'elite') {
+        expect(spec.enemies.some((e) => ENEMIES[e.defId].tier === 'elite')).toBe(true);
+      }
+    }
+
+    // same seed, same path → identical procedural maps
+    const run2 = testRun('proc');
+    run2.act = 3;
+    run2.result = 'win';
+    beginLoop(run2, newEmit());
+    expect(JSON.stringify(run2.map)).toBe(JSON.stringify(run.map));
+
+    // a spec battle materializes with the spec's id and enemy list
+    const first = fights[0].encounter!;
+    startBattle(run, first, newEmit());
+    expect(run.battle!.groupId).toBe(first.id);
+    expect(run.battle!.enemies.length).toBe(first.enemies.length);
   });
 
   it('conditional text folds in when live: "Flood: Deal 12" at High tide, "+5" suffix otherwise', () => {
