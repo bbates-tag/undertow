@@ -22,7 +22,7 @@ function ScorePanel() {
   ];
   if (run.ascension > 0) rows.push([`Depth ${run.ascension} bravery`, run.ascension * 15]);
   if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, run.loop * 100]);
-  if (run.result === 'win') rows.push(['Survived the Drowned God', 150 + run.hp]);
+  if (run.result === 'win') rows.push(['Survived the Kraken', 150 + run.hp]);
   // an endless death pays out only what was earned since the banked victory
   const fathoms = run.result === 'loss' && run.loop > 0
     ? Math.max(0, score - (run.endlessBanked ?? 0))
@@ -108,7 +108,7 @@ export function VictoryScreen() {
         THE TIDE TURNS
       </h1>
       <p className="text-(--color-mist) text-sm italic -mt-2 relative z-10 text-center max-w-sm">
-        The Drowned God sinks back into its dream. {ch.name} rises through {run.floor * 15} meters of silence, alive.
+        The Kraken's grip goes slack, arm by severed arm. {ch.name} rises through {run.floor * 15} meters of silence, alive.
       </p>
       <ScorePanel />
       <p className="text-xs text-(--color-gold) relative z-10">Depth {run.ascension + 1} is now open — a crueler trench awaits.</p>

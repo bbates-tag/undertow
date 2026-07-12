@@ -232,13 +232,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
   },
   krakenHead: {
     id: 'krakenHead', name: 'The Kraken', title: 'Terror of the Trench', icon: 'GiGiantSquid',
-    hp: [148, 158], tier: 'boss', act: 2, size: 'xl',
-    lore: 'The Terror of the Trench, fed by its cult and far older than their worship. While its Arms live it fights cruel and controlled, spraying Ink that leaves you Weakened and Brittle; sever them and it Thrashes in fury until it Regrows the pair. Choose which Kraken you would rather fight, because you cannot fight neither.',
+    hp: [195, 210], tier: 'boss', act: 3, size: 'xl',
+    lore: 'The Terror of the Trench, fed by its cult and far older than their worship — it followed you down, and the bottom is where it stops running. While its Arms live it fights cruel and controlled, spraying Ink that leaves you Weakened and Brittle; sever them and it Thrashes in fury until it Regrows the pair. Choose which Kraken you would rather fight, because you cannot fight neither.',
     moves: {
       inkSpray: { id: 'inkSpray', name: 'Ink Spray', intent: 'debuff', toPlayer: [['weakened', 2], ['brittle', 2]] },
-      crushJaws: { id: 'crushJaws', name: 'Crushing Jaws', intent: 'attack', attack: { amount: 15 } },
-      thrash: { id: 'thrash', name: 'Thrash', intent: 'attack', attack: { amount: 6, times: 3 } },
-      regrow: { id: 'regrow', name: 'Regrow Arms', intent: 'summon', summon: ['krakenArm', 'krakenArm'], block: 10 },
+      crushJaws: { id: 'crushJaws', name: 'Crushing Jaws', intent: 'attack', attack: { amount: 17 } },
+      thrash: { id: 'thrash', name: 'Thrash', intent: 'attack', attack: { amount: 7, times: 3 } },
+      regrow: { id: 'regrow', name: 'Regrow Arms', intent: 'summon', summon: ['krakenArm', 'krakenArm'], block: 12 },
     },
     ai: (c) => {
       if (c.allyCount > 1) {
@@ -252,11 +252,11 @@ export const ENEMIES: Record<string, EnemyDef> = {
     },
   },
   krakenArm: {
-    id: 'krakenArm', name: 'Kraken Arm', icon: 'GiSuckeredTentacle', hp: [26, 30], tier: 'minion', act: 0, size: 'md',
+    id: 'krakenArm', name: 'Kraken Arm', icon: 'GiSuckeredTentacle', hp: [32, 36], tier: 'minion', act: 0, size: 'md',
     lore: 'One limb of the Terror, thick as a mainmast and half as forgiving. It Slaps, and it Constricts to leave you Weakened. Cutting it away enrages the head — but so does leaving it be.',
     moves: {
-      slap: { id: 'slap', name: 'Slap', intent: 'attack', attack: { amount: 7 } },
-      constrict: { id: 'constrict', name: 'Constrict', intent: 'attackDebuff', attack: { amount: 4 }, toPlayer: [['weakened', 1]] },
+      slap: { id: 'slap', name: 'Slap', intent: 'attack', attack: { amount: 8 } },
+      constrict: { id: 'constrict', name: 'Constrict', intent: 'attackDebuff', attack: { amount: 5 }, toPlayer: [['weakened', 1]] },
     },
     ai: (c) => (c.roll < 0.6 ? 'slap' : 'constrict'),
   },
@@ -352,16 +352,16 @@ export const ENEMIES: Record<string, EnemyDef> = {
     ai: () => 'gnaw',
   },
   drownedGod: {
-    id: 'drownedGod', name: 'The Drowned God', title: 'It Dreams at the Bottom of Everything', icon: 'GiSeaDragon',
-    hp: [235, 250], tier: 'boss', act: 3, size: 'xl',
-    lore: 'It was old when the sea was still rain. Half-asleep, it laps at you with dark water, Murmurs Toxin into your blood, and raises the sea itself — Shifting the Tide and answering every High tide with TSUNAMI. At half health IT WAKES: Might, armor, Dread of the Deep forced into your deck, and two slams a turn. There is nothing small at the bottom of everything.',
+    id: 'drownedGod', name: 'The Drowned God', title: 'It Dreams Beneath the Trench', icon: 'GiSeaDragon',
+    hp: [150, 165], tier: 'boss', act: 2, size: 'xl',
+    lore: 'It was old when the sea was still rain, and it dreams shallower than you would hope. Half-asleep, it laps at you with dark water, Murmurs Toxin into your blood, and raises the sea itself — Shifting the Tide and answering every High tide with TSUNAMI. At half health IT WAKES: Might, armor, Dread of the Deep forced into your deck, and two slams a turn. Wake it gently, or not at all.',
     moves: {
-      lap: { id: 'lap', name: 'Lapping Dark', intent: 'attack', attack: { amount: 10 } },
-      murmur: { id: 'murmur', name: 'Sleeper\'s Murmur', intent: 'attackDebuff', attack: { amount: 6 }, toPlayer: [['toxin', 4]] },
-      swell: { id: 'swell', name: 'The Sea Rises', intent: 'block', block: 12, shift: 1 },
-      tsunami: { id: 'tsunami', name: 'TSUNAMI', intent: 'attack', attack: { amount: 22 } },
-      awaken: { id: 'awaken', name: 'IT WAKES', intent: 'buff', toSelf: [['might', 3]], block: 20 },
-      doubleSlam: { id: 'doubleSlam', name: 'Double Slam', intent: 'attack', attack: { amount: 11, times: 2 } },
+      lap: { id: 'lap', name: 'Lapping Dark', intent: 'attack', attack: { amount: 8 } },
+      murmur: { id: 'murmur', name: 'Sleeper\'s Murmur', intent: 'attackDebuff', attack: { amount: 5 }, toPlayer: [['toxin', 3]] },
+      swell: { id: 'swell', name: 'The Sea Rises', intent: 'block', block: 9, shift: 1 },
+      tsunami: { id: 'tsunami', name: 'TSUNAMI', intent: 'attack', attack: { amount: 16 } },
+      awaken: { id: 'awaken', name: 'IT WAKES', intent: 'buff', toSelf: [['might', 2]], block: 14 },
+      doubleSlam: { id: 'doubleSlam', name: 'Double Slam', intent: 'attack', attack: { amount: 9, times: 2 } },
       abyssCall: { id: 'abyssCall', name: 'Abyssal Call', intent: 'debuff', addCardToPlayer: { card: 'dreadOfTheDeep', pile: 'discardPile', count: 2 } },
     },
     ai: (c) => {
@@ -413,7 +413,7 @@ export const ENCOUNTERS: Record<string, EncounterDef> = Object.fromEntries(
       { id: 'a2_wraith_hatchet', enemies: ['pressureWraith', 'hatchetfish'], pool: 'hard', act: 2 },
       { id: 'a2_elite_cultist', enemies: ['krakenCultist'], pool: 'elite', act: 2 },
       { id: 'a2_elite_warden', enemies: ['abyssalWarden'], pool: 'elite', act: 2 },
-      { id: 'a2_boss', enemies: ['krakenArm', 'krakenHead', 'krakenArm'], pool: 'boss', act: 2 },
+      { id: 'a2_boss', enemies: ['drownedGod'], pool: 'boss', act: 2 },
       // Act 3
       { id: 'a3_angler', enemies: ['voidAngler'], pool: 'easy', act: 3 },
       { id: 'a3_stalker', enemies: ['trenchStalker'], pool: 'easy', act: 3 },
@@ -424,7 +424,7 @@ export const ENCOUNTERS: Record<string, EncounterDef> = Object.fromEntries(
       { id: 'a3_stalker_idol', enemies: ['trenchStalker', 'abyssIdol'], pool: 'hard', act: 3 },
       { id: 'a3_elite_colossus', enemies: ['trenchColossus'], pool: 'elite', act: 3 },
       { id: 'a3_elite_herald', enemies: ['heraldOfDeep'], pool: 'elite', act: 3 },
-      { id: 'a3_boss', enemies: ['drownedGod'], pool: 'boss', act: 3 },
+      { id: 'a3_boss', enemies: ['krakenArm', 'krakenHead', 'krakenArm'], pool: 'boss', act: 3 },
     ] as EncounterDef[]
   ).map((e) => [e.id, e]),
 );
