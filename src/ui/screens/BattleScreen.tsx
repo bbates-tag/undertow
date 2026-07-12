@@ -419,6 +419,7 @@ export function BattleScreen() {
                     canDrag={affordable && bs.phase === 'player' && !enemyTurnRunning}
                     dragging={drag?.uid === c.uid}
                     armed={drag?.uid === c.uid && drag.armed}
+                    overTarget={drag?.uid === c.uid && drag.hoverUid != null}
                     onSelect={() => selectCard(selectedCard === c.uid ? null : c.uid)}
                     onDragStartCard={onDragStartCard}
                     onDragMoveCard={onDragMoveCard}
@@ -565,6 +566,8 @@ interface HandCardProps {
   canDrag: boolean;
   dragging: boolean;
   armed: boolean;
+  /** drag is hovering an enemy — fade the card so the target stays visible */
+  overTarget: boolean;
   onSelect: () => void;
   onDragStartCard: (c: CardInstance, needsTarget: boolean) => void;
   onDragMoveCard: (needsTarget: boolean, info: PanInfo) => void;
@@ -572,7 +575,7 @@ interface HandCardProps {
 }
 
 function HandCard({
-  c, i, n, leftPx, bs, reduced, isSelected, affordable, canDrag, dragging, armed,
+  c, i, n, leftPx, bs, reduced, isSelected, affordable, canDrag, dragging, armed, overTarget,
   onSelect, onDragStartCard, onDragMoveCard, onDragEndCard,
 }: HandCardProps) {
   // a completed drag fires a click on release — swallow it so the card
@@ -726,7 +729,7 @@ function HandCard({
           suppressClick.current = false;
         }, 150);
       }}
-      className={`hand-card ${dragging ? 'dragging' : ''}`}
+      className={`hand-card ${dragging ? 'dragging' : ''} ${overTarget ? 'over-target' : ''}`}
       style={{
         left: `calc(50% + ${leftPx}px)`,
         ['--z' as string]: 10 + i,

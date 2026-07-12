@@ -78,6 +78,8 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
   const def = ENEMIES[e.defId];
   const hpFrac = e.hp / e.maxHp;
   const preview = previewAmount ? previewPlayerAttack(bs, previewAmount, e) : null;
+  // Hearthstone-style kill marker while drag-hovering: block soaks before HP
+  const lethal = hovered && preview !== null && preview * previewTimes >= e.hp + e.block;
 
   return (
     <motion.div
@@ -147,11 +149,29 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
             alt={def.name}
           />
         </motion.div>
+        {lethal && (
+          <motion.div
+            initial={reduced ? false : { scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            aria-hidden
+          >
+            <div className="absolute inset-0 rounded-full bg-black/50" />
+            <svg
+              viewBox="0 0 40 40"
+              style={{ width: '70%', height: '70%', filter: 'drop-shadow(0 0 9px rgba(255,60,60,0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.85))' }}
+            >
+              <path d="M9 9 L31 31 M31 9 L9 31" stroke="var(--color-danger)" strokeWidth="7.5" strokeLinecap="round" />
+              <path d="M9 9 L31 31 M31 9 L9 31" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.55" />
+            </svg>
+          </motion.div>
+        )}
         {preview !== null && (
           <div
             className="absolute -right-1 -top-1 chip font-black"
             style={{ color: 'var(--color-danger)', borderColor: 'rgba(255,111,111,0.5)' }}
-            aria-label={`would deal ${preview}${previewTimes > 1 ? ` times ${previewTimes}` : ''} damage`}
+            aria-label={`would deal ${preview}${previewTimes > 1 ? ` times ${previewTimes}` : ''} damage${lethal ? ', lethal' : ''}`}
           >
             −{preview}{previewTimes > 1 ? `×${previewTimes}` : ''}
           </div>

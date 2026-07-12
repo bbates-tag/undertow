@@ -410,6 +410,12 @@ body {
 }
 .card3d-front {
   backface-visibility: hidden;
+  transition: opacity 130ms ease;
+}
+/* drag hovering an enemy: ghost the card so the target — hover ring, damage
+   preview, and the lethal X — stays visible under the finger */
+.hand-card.over-target .card3d-front {
+  opacity: 0.3;
 }
 
 /* ── Hand fan ─────────────────────────────────────────────────────────────── */
