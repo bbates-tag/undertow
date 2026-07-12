@@ -486,10 +486,16 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
       case 'stormCore': gainCharge(run, bs, 3, emit); break;
       case 'spinedBracers': applyStatusTo(run, bs, bs.player, 'spines', 3, emit, 'player'); break;
       case 'sharktoothCharm': addStatus(bs.player, 'might', 1); break;
-      case 'rustedHelm': losePlayerHp(run, bs, 3, emit, { ignoreBlock: true, source: 'Rusted Diving Helm' }); break;
+      case 'pressureCrown': addStatus(bs.player, 'might', 1); break;
+      case 'blackPearl':
+        for (const e of living(bs)) {
+          applyStatusTo(run, bs, e, 'weakened', 1, emit, enemyKey(e));
+          applyStatusTo(run, bs, e, 'exposed', 1, emit, enemyKey(e));
+        }
+        break;
       case 'moonChart': bs.tide = 2; onTideHigh(run, bs, emit); break;
       case 'saltVein': gainDescent(run, bs, 3, emit); break;
-      case 'graveBallast': losePlayerHp(run, bs, 4, emit, { ignoreBlock: true, nonLethal: true, source: 'Grave Ballast' }); break;
+      case 'graveBallast': gainDescent(run, bs, 6, emit); break;
     }
   }
   if (run.daily?.mods.includes('hardShell')) gainPlayerBlock(run, bs, 10, emit, false);
@@ -498,6 +504,14 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
 
 function relicsTurnStart(run: RunState, bs: BattleState, emit: Emit) {
   if (run.relics.includes('glassFloat') && bs.turn === 1) drawCards(run, bs, 2, emit);
+  // Pressure Crown: the deep squeezes you stronger — turns 3, 6, 9, …
+  if (run.relics.includes('pressureCrown') && bs.turn > 1 && bs.turn % 3 === 0) {
+    applyStatusTo(run, bs, bs.player, 'might', 1, emit, 'player');
+  }
+  if (run.relics.includes('leviathansEye')) {
+    for (const e of living(bs)) applyStatusTo(run, bs, e, 'toxin', 1, emit, enemyKey(e));
+  }
+  if (run.relics.includes('stormglassJar')) gainCharge(run, bs, 2, emit);
 }
 
 function relicsTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
@@ -562,16 +576,13 @@ function powersTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
 
 export function maxEnergyFor(run: RunState): number {
   let e = 3;
-  for (const r of run.relics) {
-    if (r === 'rustedHelm' || r === 'blackPearl' || r === 'pressureCrown' || r === 'graveBallast') e += 1;
-  }
+  if (run.relics.includes('rustedHelm')) e += 1;
   if (run.daily?.mods.includes('glassCannon')) e += 1;
   return e;
 }
 
 function drawCountFor(run: RunState, bs: BattleState): number {
   let n = 5;
-  if (run.relics.includes('pressureCrown')) n -= 1;
   if (run.relics.includes('grimoireOfBrine')) n += 1;
   for (const p of bs.powers) {
     if (p === 'predatorsEye1') n += 1;

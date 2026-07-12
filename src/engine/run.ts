@@ -413,10 +413,6 @@ export function restHealAmount(run: RunState): number {
   return heal;
 }
 
-export function canRestHeal(run: RunState): boolean {
-  return !run.relics.includes('blackPearl');
-}
-
 export function doRestHeal(run: RunState, emit: Emit) {
   healPlayer(run, null, restHealAmount(run), emit);
   run.stats.restsUsed += 1;

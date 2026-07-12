@@ -142,6 +142,31 @@ describe('tide', () => {
     expect(bs.player.block).toBe(3);
   });
 
+  it('boss relics are pure upside: crown scales Might, pearl debuffs, only the helm grants energy', () => {
+    const run = testRun('boss-relics');
+    run.relics.push('pressureCrown', 'blackPearl');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(bs.maxEnergy).toBe(3); // pearl/crown no longer grant (or cost) energy
+    expect(bs.hand.length).toBe(5); // crown no longer cuts draw
+    expect(bs.player.hp).toBe(run.maxHp); // nothing bleeds you at battle start anymore
+    expect(getStatus(bs.player, 'might')).toBe(1);
+    expect(getStatus(bs.enemies[0], 'weakened')).toBe(1);
+    expect(getStatus(bs.enemies[0], 'exposed')).toBe(1);
+    runEnemyPhase(run); // → turn 2
+    runEnemyPhase(run); // → turn 3: crown ticks
+    expect(getStatus(bs.player, 'might')).toBe(2);
+  });
+
+  it("Leviathan's Eye poisons the field each turn; Stormglass Jar charges each turn", () => {
+    const run = testRun('eye-jar');
+    run.relics.push('leviathansEye', 'stormglassJar');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(getStatus(bs.enemies[0], 'toxin')).toBe(1);
+    expect(getStatus(bs.player, 'charge')).toBe(2);
+  });
+
   it('Ebb bonus applies at Low tide', () => {
     const run = battleRun();
     const bs = run.battle!;
