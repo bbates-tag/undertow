@@ -4,7 +4,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimationControls, usePresence, type PanInfo, type TargetAndTransition } from 'framer-motion';
-import { BookOpen, ChevronRight, Heart, Menu as MenuIcon, Shield, SkipForward } from 'lucide-react';
+import { BookOpen, ChevronRight, Heart, Menu as MenuIcon, Shield } from 'lucide-react';
 import { useGame, checkFlawless, type LastPlay } from '../../state/store';
 import { CARDS } from '../../content/cards';
 import { CHARACTERS } from '../../content/characters';
@@ -442,19 +442,13 @@ export function BattleScreen() {
             >
               {enemyTurnRunning || bs.phase === 'enemy' ? '· · ·' : <>End<br />Turn</>}
             </button>
-            <div className="flex items-end gap-1.5">
-              <PileWidget
-                kind="discardPile"
-                count={bs.discardPile.length}
-                onClick={() => setOverlay('discardPile')}
-                label={`discard pile, ${bs.discardPile.length} cards`}
-              />
-              {bs.exhaustPile.length > 0 && (
-                <button className="chip" onClick={() => setOverlay('exhaustPile')} aria-label={`exhausted, ${bs.exhaustPile.length} cards`}>
-                  <SkipForward size={11} /> {bs.exhaustPile.length}
-                </button>
-              )}
-            </div>
+            {/* exhausted cards live in a tab of the discard overlay */}
+            <PileWidget
+              kind="discardPile"
+              count={bs.discardPile.length}
+              onClick={() => setOverlay('discardPile')}
+              label={`discard pile, ${bs.discardPile.length} cards`}
+            />
           </div>
         </div>
       </div>
