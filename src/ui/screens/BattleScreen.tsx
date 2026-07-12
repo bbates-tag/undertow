@@ -14,6 +14,7 @@ import { cardCost, cardDef, living } from '../../engine/battle';
 import { describeCard } from '../../engine/describe';
 import type { Amount, BattleState, CardInstance, Op } from '../../engine/types';
 import { CardView, highlightText } from '../components/CardView';
+import { EnemyDossier } from '../components/EnemyDossier';
 import { EnemyView } from '../components/EnemyView';
 import { FxLayer } from '../components/FxLayer';
 import { RelicBar } from '../components/RelicBar';
@@ -80,6 +81,8 @@ export function BattleScreen() {
   const [ceremony, setCeremony] = useState(0);
   const handAreaRef = useRef<HTMLDivElement>(null);
   const [handMetrics, setHandMetrics] = useState({ avail: 0, cardW: 0 });
+  /** enemy defId whose dossier overlay is open (tap an enemy to inspect it) */
+  const [dossierId, setDossierId] = useState<string | null>(null);
 
   // measure the hand's real estate so the fan only overlaps as much as the
   // available width actually requires
@@ -278,6 +281,8 @@ export function BattleScreen() {
               previewAmount={targetingActive ? previewDmg?.amount ?? null : null}
               previewTimes={previewDmg?.times ?? 1}
               onPick={() => playSelected(e.uid)}
+              /* with a card selected, taps keep their play semantics — no dossier */
+              onInspect={selected || drag ? undefined : () => setDossierId(e.defId)}
               reduced={reduced}
             />
           ))}
@@ -535,6 +540,11 @@ export function BattleScreen() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* enemy dossier */}
+      <AnimatePresence>
+        {dossierId && <EnemyDossier key={dossierId} defId={dossierId} onClose={() => setDossierId(null)} />}
       </AnimatePresence>
 
       <StatusChipsGlossary />

@@ -69,10 +69,12 @@ interface EnemyViewProps {
   previewAmount?: Amount | null;
   previewTimes?: number;
   onPick: () => void;
+  /** tap outside of targeting opens the dossier; omit to disable */
+  onInspect?: () => void;
   reduced: boolean;
 }
 
-export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTimes = 1, onPick, reduced }: EnemyViewProps) {
+export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTimes = 1, onPick, onInspect, reduced }: EnemyViewProps) {
   const def = ENEMIES[e.defId];
   const hpFrac = e.hp / e.maxHp;
   const preview = previewAmount ? previewPlayerAttack(bs, previewAmount, e) : null;
@@ -87,11 +89,19 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
       transition={{ duration: 0.35 }}
       className={[
         'relative flex flex-col items-center gap-1 px-1 select-none',
-        targeting ? 'cursor-pointer' : '',
+        targeting || onInspect ? 'cursor-pointer' : '',
       ].join(' ')}
-      onClick={() => targeting && onPick()}
-      role={targeting ? 'button' : undefined}
-      aria-label={`${def.name}, ${e.hp} of ${e.maxHp} HP${targeting ? ', tap to target' : ''}`}
+      onClick={(ev) => {
+        if (targeting) {
+          onPick();
+        } else if (onInspect) {
+          // don't let the tap bubble to the battlefield (which plays selected skills)
+          ev.stopPropagation();
+          onInspect();
+        }
+      }}
+      role={targeting || onInspect ? 'button' : undefined}
+      aria-label={`${def.name}, ${e.hp} of ${e.maxHp} HP${targeting ? ', tap to target' : onInspect ? ', tap for dossier' : ''}`}
       data-testid={`enemy-${e.uid}`}
     >
       {targeting && (
