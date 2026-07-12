@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  calcAttack, endPlayerTurn, getStatus, newEmit, playCard, startBattle, stepEnemy,
+  ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
 import { relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
 import { makeRng, hashSeed } from '../lib/rng';
@@ -142,6 +142,37 @@ describe('tide', () => {
     expect(bs.tide).toBe(3); // Falling — natural +1 only
     // …and the natural change's block survives the start-of-turn reset
     expect(bs.player.block).toBe(3);
+  });
+
+  it('endless: beginLoop cycles to Act I deterministically and compounds enemy stats', () => {
+    const run = testRun('endless');
+    run.act = 3;
+    run.result = 'win';
+    beginLoop(run, newEmit());
+    expect(run.loop).toBe(1);
+    expect(run.act).toBe(1);
+    expect(run.result).toBeNull();
+    expect(run.map.act).toBe(1);
+    expect(run.map.rows.length).toBeGreaterThan(0);
+
+    // same seed, same path → identical loop-1 map
+    const run2 = testRun('endless');
+    run2.act = 3;
+    run2.result = 'win';
+    beginLoop(run2, newEmit());
+    expect(JSON.stringify(run2.map)).toBe(JSON.stringify(run.map));
+
+    // loop 1: HP ×1.28, +2 enemy damage, +1 starting Might
+    startBattle(run, 'a1_crab', newEmit());
+    const e = run.battle!.enemies[0];
+    expect(getStatus(e, 'might')).toBe(1);
+    expect(e.maxHp).toBeGreaterThanOrEqual(Math.round(26 * 1.28)); // crab floor, scaled
+    expect(ascEnemyDmgBonus(run)).toBe(2);
+
+    // each loop is worth 100 score
+    const s1 = scoreRun(run);
+    run.loop = 2;
+    expect(scoreRun(run) - s1).toBe(100);
   });
 
   it('conditional text folds in when live: "Flood: Deal 12" at High tide, "+5" suffix otherwise', () => {

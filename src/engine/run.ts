@@ -167,6 +167,7 @@ export function newRun(opts: {
     unlockedPacks: [...opts.unlockedPacks],
     daily: opts.daily ?? null,
     act: 1,
+    loop: 0,
     map: { act: 1, rows: [] },
     pos: null,
     floor: 0,
@@ -284,6 +285,7 @@ export function generateBattleReward(run: RunState): RewardState {
     source === 'boss' ? r.int(75, 90) :
     source === 'elite' ? r.int(28, 40) :
     r.int(12, 18) + run.act * 2;
+  gold += run.loop * 4; // endless: the economy keeps partial pace with the scaling
   if (run.relics.includes('ledgerOfTheDrowned')) gold += 8;
   if (run.relics.includes('merchantsDebt')) gold = Math.max(0, gold - 10);
   if (run.daily?.mods.includes('richWaters')) gold = Math.round(gold * 1.5);
@@ -583,6 +585,18 @@ export function descend(run: RunState, emit: Emit): 'nextAct' | 'victory' {
   return 'nextAct';
 }
 
+/** Endless: descend past the Drowned God — acts cycle, the deep compounds. */
+export function beginLoop(run: RunState, emit: Emit) {
+  run.loop += 1;
+  run.act = 1;
+  run.result = null;
+  const { r, done } = runRng(run);
+  run.map = generateMap(r, 1);
+  done();
+  run.pos = null;
+  healPlayer(run, null, Math.round(run.maxHp * 0.25), emit);
+}
+
 export function scoreRun(run: RunState): number {
   const s = run.stats;
   let score =
@@ -592,7 +606,8 @@ export function scoreRun(run: RunState): number {
     s.bossesKilled * 60 +
     Math.round(run.gold / 5) +
     s.battlesFlawless * 10 +
-    run.ascension * 15;
+    run.ascension * 15 +
+    run.loop * 100;
   if (run.result === 'win') score += 150 + run.hp;
   return Math.max(0, score);
 }

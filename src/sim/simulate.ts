@@ -7,7 +7,7 @@
 
 import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, startBattle } from '../engine/battle';
 import {
-  addRelic, applyEventEffect, buyRemoval, buyShopItem, descend, doRestHeal, enterNode,
+  addRelic, applyEventEffect, beginLoop, buyRemoval, buyShopItem, descend, doRestHeal, enterNode,
   generateBattleReward, generateShop, newRun, reachableNodes, scoreRun, completePick,
 } from '../engine/run';
 import type { CharacterId, MapNode, RunState } from '../engine/types';
@@ -22,6 +22,7 @@ interface SimResult {
   win: boolean;
   floor: number;
   act: number;
+  loop: number;
   score: number;
   killedBy?: string;
   deckSize: number;
@@ -128,14 +129,14 @@ function pickNodeHeuristic(run: RunState, nodes: MapNode[], rng: () => number): 
   return nodes[Math.floor(rng() * nodes.length)];
 }
 
-export function simulateRun(charId: CharacterId, seed: string): SimResult {
+export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?: boolean }): SimResult {
   const run = newRun({ charId, ascension: 0, seed, unlockedPacks: ALL_PACKS });
   const r = makeRng(hashSeed(seed + '-policy'));
   const rng = () => r.next();
   let guard = 0;
 
   while (!run.result) {
-    if (++guard > 200) throw new Error('run stalled');
+    if (++guard > (opts?.endless ? 2000 : 200)) throw new Error('run stalled');
     const nodes = reachableNodes(run);
     if (!nodes.length) throw new Error('no reachable nodes');
     const node = pickNodeHeuristic(run, nodes, rng);
@@ -161,6 +162,10 @@ export function simulateRun(charId: CharacterId, seed: string): SimResult {
       const wasBoss = bs.isBoss;
       run.battle = null;
       if (wasBoss) {
+        if (opts?.endless && run.act >= 3) {
+          beginLoop(run, newEmit()); // the bot always descends deeper
+          continue;
+        }
         const next = descend(run, newEmit());
         if (next === 'victory') break;
       }
@@ -204,6 +209,7 @@ export function simulateRun(charId: CharacterId, seed: string): SimResult {
     win: run.result === 'win',
     floor: run.floor,
     act: run.act,
+    loop: run.loop,
     score: scoreRun(run),
     killedBy: run.killedBy,
     deckSize: run.deck.length,
@@ -237,12 +243,13 @@ declare const process: { argv: string[] } | undefined;
 const isMain = typeof process !== 'undefined' && process.argv[1]?.includes('simulate');
 if (isMain) {
   const N = Number(process!.argv[2]) || 60;
+  const endless = process!.argv.includes('--endless');
   for (const charId of ['tidecaller', 'voltaic', 'drowned'] as CharacterId[]) {
     const results: SimResult[] = [];
     const deaths: Record<string, number> = {};
     for (let i = 0; i < N; i++) {
       try {
-        const res = simulateRun(charId, `sim-${charId}-${i}`);
+        const res = simulateRun(charId, `sim-${charId}-${i}`, { endless });
         results.push(res);
         if (!res.win && res.killedBy) deaths[res.killedBy] = (deaths[res.killedBy] ?? 0) + 1;
       } catch (err) {
@@ -252,9 +259,17 @@ if (isMain) {
     const wins = results.filter((r) => r.win).length;
     const avgFloor = results.reduce((a, b) => a + b.floor, 0) / results.length;
     const acts = [1, 2, 3].map((a) => results.filter((r) => !r.win && r.act === a).length);
-    console.log(`\n═══ ${charId.toUpperCase()} — ${results.length} greedy-bot runs ═══`);
-    console.log(`  winrate: ${((wins / results.length) * 100).toFixed(1)}%  (bot is weak; human target ~2-3x)`);
-    console.log(`  avg floor reached: ${avgFloor.toFixed(1)} / 36`);
+    console.log(`\n═══ ${charId.toUpperCase()} — ${results.length} greedy-bot runs${endless ? ' (ENDLESS)' : ''} ═══`);
+    if (endless) {
+      const loopers = results.filter((r) => r.loop > 0);
+      const maxLoop = Math.max(0, ...results.map((r) => r.loop));
+      const loopDist = Array.from({ length: maxLoop + 1 }, (_, l) => results.filter((r) => r.loop === l).length);
+      console.log(`  reached endless: ${loopers.length}/${results.length}  |  deepest loop: ${maxLoop}`);
+      console.log(`  died at loop: ${loopDist.map((n, l) => `L${l}=${n}`).join(' ')}`);
+    } else {
+      console.log(`  winrate: ${((wins / results.length) * 100).toFixed(1)}%  (bot is weak; human target ~2-3x)`);
+    }
+    console.log(`  avg floor reached: ${avgFloor.toFixed(1)}${endless ? '' : ' / 36'}`);
     console.log(`  deaths by act: A1=${acts[0]} A2=${acts[1]} A3=${acts[2]} | wins=${wins}`);
     const topDeaths = Object.entries(deaths).sort((a, b) => b[1] - a[1]).slice(0, 6);
     console.log(`  top killers: ${topDeaths.map(([k, v]) => `${k}×${v}`).join(', ') || '—'}`);

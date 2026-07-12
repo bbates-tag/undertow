@@ -685,6 +685,8 @@ export function startBattle(run: RunState, groupId: string, emit: Emit) {
 
   // ascension 10: all enemies open with +1 Might
   if (run.ascension >= 10) for (const e of living(bs)) addStatus(e, 'might', 1);
+  // endless: +1 Might per loop on top of everything else
+  if (run.loop > 0) for (const e of living(bs)) addStatus(e, 'might', run.loop);
   if (run.daily?.mods.includes('toxicWaters')) for (const e of living(bs)) addStatus(e, 'toxin', 4);
 
   relicsBattleStart(run, bs, emit);
@@ -698,6 +700,8 @@ function ascHpScale(run: RunState): number {
   if (run.ascension >= 1) s += 0.08;
   if (run.ascension >= 6) s += 0.08;
   if (run.daily?.mods.includes('swarmSeason')) s += 0.15;
+  // endless: the deep compounds
+  if (run.loop > 0) s *= Math.pow(1.28, run.loop);
   return s;
 }
 
@@ -705,6 +709,7 @@ export function ascEnemyDmgBonus(run: RunState): number {
   let b = 0;
   if (run.ascension >= 2) b += 1;
   if (run.ascension >= 9) b += 1;
+  b += 2 * run.loop; // endless
   return b;
 }
 

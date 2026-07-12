@@ -14,7 +14,7 @@ import {
   canPlay, cardExhausts, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
 } from '../engine/battle';
 import {
-  addCardToDeck, addRelic, applyEventEffect, buyRemoval, buyShopItem, completePick, descend,
+  addCardToDeck, addRelic, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
   doRestHeal, enterNode, generateBattleReward, newRun, scoreRun, type PendingPick,
 } from '../engine/run';
 import { EVENTS } from '../content/events';
@@ -109,6 +109,8 @@ interface GameStore {
   rewardSkipCards(): void;
   rewardTakeBossRelic(i: number): void;
   leaveReward(): void;
+  /** endless: from the victory screen, dive past the Drowned God into loop 2 */
+  continueEndless(): void;
 
   shopBuy(i: number): void;
   shopStartRemoval(): void;
@@ -183,11 +185,15 @@ export const useGame = create<GameStore>((set, get) => {
     if (!run) return;
     run.result = result;
     const score = scoreRun(run);
+    // an endless death ends a run whose victory was already banked — award
+    // only the fathoms earned since, and don't re-count the run itself
+    const endlessDeath = result === 'loss' && run.loop > 0;
     const meta = deepClone(get().meta);
-    meta.runsPlayed += 1;
-    meta.fathoms += score;
+    if (!endlessDeath) meta.runsPlayed += 1;
+    meta.fathoms += endlessDeath ? Math.max(0, score - (run.endlessBanked ?? 0)) : score;
     meta.bestScore = Math.max(meta.bestScore, score);
     if (result === 'win') {
+      run.endlessBanked = score; // continueEndless pays out deltas from here
       meta.wins[run.charId] = (meta.wins[run.charId] ?? 0) + 1;
       const cur = meta.ascension[run.charId] ?? 0;
       meta.ascension[run.charId] = Math.min(10, Math.max(cur, run.ascension + 1));
@@ -219,6 +225,7 @@ export const useGame = create<GameStore>((set, get) => {
       daily: !!run.daily,
       killedBy: run.killedBy,
       fathoms: score,
+      loop: run.loop > 0 ? run.loop : undefined,
     });
     meta.runHistory = meta.runHistory.slice(0, 40);
     if (run.daily) {
@@ -540,12 +547,32 @@ export const useGame = create<GameStore>((set, get) => {
       commit(run);
     },
 
+    continueEndless() {
+      const run = deepClone(get().run);
+      if (!run || run.result !== 'win' || run.daily) return;
+      const emit = newEmit();
+      beginLoop(run, emit);
+      commit(run, emit);
+      music.setMood('calm');
+      playSfx('battleStart');
+      get().toast(`Loop ${run.loop + 1} — the sea has no bottom`);
+      set({ screen: 'map' });
+    },
+
     leaveReward() {
       const run = deepClone(get().run!);
       const wasBoss = run.reward?.source === 'boss';
       run.reward = null;
       if (wasBoss) {
         const emit = newEmit();
+        // already looping: repeat Drowned God kills descend again without ceremony
+        if (run.act >= 3 && run.loop > 0) {
+          beginLoop(run, emit);
+          commit(run, emit);
+          get().toast(`Loop ${run.loop + 1} — The Sunlit Shallows, deeper than before`);
+          set({ screen: 'map' });
+          return;
+        }
         const next = descend(run, emit);
         commit(run, emit);
         if (next === 'victory') {
