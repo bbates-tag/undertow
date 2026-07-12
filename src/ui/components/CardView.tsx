@@ -84,7 +84,7 @@ export const CardView = memo(function CardView({
           iconSize="52%"
         />
       </div>
-      <div className="card-text">
+      <div className={`card-text ${text.length >= 70 ? 'long' : ''}`}>
         <div style={scale === 'lg' ? { fontSize: '13px', lineHeight: 1.35 } : undefined}>{highlightText(text)}</div>
       </div>
       <div className="card-footer">{TYPE_LABEL[def.type]}</div>
