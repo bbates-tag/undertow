@@ -63,7 +63,8 @@ export function FxLayer({ shakeTarget, reduced }: { shakeTarget: RefObject<HTMLE
   const [bolts, setBolts] = useState<Bolt[]>([]);
   const [flash, setFlash] = useState(0);
   const [sweep, setSweep] = useState(0);
-  const lastId = useRef(0);
+  /** -1 = not yet mounted-in; set to the backlog's newest id on first pass */
+  const lastId = useRef(-1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particles = useRef<Particle[]>([]);
   const raf = useRef(0);
@@ -130,6 +131,14 @@ export function FxLayer({ shakeTarget, reduced }: { shakeTarget: RefObject<HTMLE
   }, []);
 
   useEffect(() => {
+    // a freshly-mounted layer swallows the backlog: the store's fx queue
+    // lingers across battles, and replaying the previous battle's floaters
+    // (or this battle's pre-mount setup events) as one burst on load reads
+    // as a glitch. Only events emitted after mount get animated.
+    if (lastId.current === -1) {
+      lastId.current = fx.length ? fx[fx.length - 1].id : 0;
+      return;
+    }
     const fresh = fx.filter((f) => f.id > lastId.current);
     if (!fresh.length) return;
     lastId.current = fx[fx.length - 1].id;

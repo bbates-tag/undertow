@@ -4,6 +4,7 @@ import {
 } from './battle';
 import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic } from './run';
 import { relicPool } from '../content/relics';
+import { cardConditionActive, describeCard } from './describe';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -141,6 +142,18 @@ describe('tide', () => {
     expect(bs.tide).toBe(3); // Falling — natural +1 only
     // …and the natural change's block survives the start-of-turn reset
     expect(bs.player.block).toBe(3);
+  });
+
+  it('conditional text folds in when live: "Flood: Deal 12" at High tide, "+5" suffix otherwise', () => {
+    const run = battleRun();
+    const bs = run.battle!;
+    const slam = CARDS.tidalSlam;
+    bs.tide = 1; // Rising — condition dormant
+    expect(describeCard(slam, false, { bs })).toBe('Deal 7 damage. Flood: +5 damage.');
+    expect(cardConditionActive(slam, false, bs)).toBe(false);
+    bs.tide = 2; // High — bonus folds into the number, suffix drops
+    expect(describeCard(slam, false, { bs })).toBe('Flood: Deal 12 damage.');
+    expect(cardConditionActive(slam, false, bs)).toBe(true);
   });
 
   it('boss relics are pure upside: crown scales Might, pearl debuffs, only the helm grants energy', () => {

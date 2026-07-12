@@ -219,6 +219,25 @@ body {
 .card-frame.unaffordable { filter: grayscale(0.45) brightness(0.75); }
 .card-frame:focus-visible { outline-offset: 0; }
 
+/* a conditional effect (Flood/Ebb/Charge/Descent) is live right now — the
+   card's number already includes the bonus, and the frame says so */
+.card-frame.cond-active:not(.selected):not(.armed) {
+  border-color: color-mix(in srgb, var(--color-glow) 70%, transparent);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--color-glow) 80%, transparent),
+    0 0 16px rgba(56, 225, 211, 0.4),
+    0 6px 18px rgba(2, 6, 14, 0.55),
+    inset 0 0 22px rgba(2, 8, 18, 0.5);
+  animation: condPulse 2.4s ease-in-out infinite;
+}
+@keyframes condPulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(56, 225, 211, 0.25)); }
+  50% { filter: drop-shadow(0 0 9px rgba(56, 225, 211, 0.55)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-frame.cond-active:not(.selected):not(.armed) { animation: none; }
+}
+
 /* drag-to-play: past the release threshold / hovering a valid target */
 .card-frame.armed {
   box-shadow: 0 0 0 2px var(--color-gold), 0 0 34px rgba(255, 206, 92, 0.55), 0 14px 30px rgba(2, 6, 14, 0.7);
