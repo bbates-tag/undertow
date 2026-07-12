@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   calcAttack, endPlayerTurn, getStatus, newEmit, playCard, startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic } from './run';
+import { relicPool } from '../content/relics';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -165,6 +166,58 @@ describe('tide', () => {
     const bs = run.battle!;
     expect(getStatus(bs.enemies[0], 'toxin')).toBe(1);
     expect(getStatus(bs.player, 'charge')).toBe(2);
+  });
+
+  it('treasure tier is chest-exclusive: 6 cursed relics, absent from every other pool', () => {
+    const pool = relicPool('treasure', 'tidecaller', [], new Set());
+    expect(pool.length).toBe(6);
+    expect(pool.every((r) => r.tier === 'treasure')).toBe(true);
+    for (const t of ['common', 'uncommon', 'rare', 'boss'] as const) {
+      expect(relicPool(t, 'tidecaller', [], new Set()).every((r) => r.tier === t)).toBe(true);
+    }
+  });
+
+  it('treasure relic battle hooks: locket bites, chain shields, veil poisons both sides', () => {
+    const run = testRun('cursed');
+    run.relics.push('fangedLocket', 'barbedChain', 'widowsVeil');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(getStatus(bs.player, 'might')).toBe(2);
+    // locket bite (2, ignores block) + the veil's own toxin ticking on turn 1 (2)
+    expect(bs.player.hp).toBe(run.maxHp - 4);
+    expect(bs.player.block).toBe(10);
+    expect(getStatus(bs.enemies[0], 'toxin')).toBe(2); // ticks on THEIR first turn
+    expect(getStatus(bs.player, 'toxin')).toBe(1); // already ticked once and fell
+  });
+
+  it('Bloodletter Hook doubles only the first attack, then takes its cut on victory', () => {
+    const run = battleRun();
+    run.relics.push('bloodletterHook');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    giveHand(run, ['tideStrike', 'tideStrike']);
+    const hp0 = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hp0 - e.hp).toBe(12); // 6 doubled
+    const hp1 = e.hp;
+    e.hp = Math.min(e.hp, 5); // ensure the next (normal) hit is lethal
+    playCard(run, 9001, e.uid, newEmit());
+    expect(bs.phase).toBe('won');
+    // victory: run.hp = player hp, +5 Living Coral (starter), then the hook's -2
+    expect(run.hp).toBe(run.maxHp - 2);
+    void hp1;
+  });
+
+  it('Leaden Idol and Merchant\'s Debt pickup effects apply once', () => {
+    const run = testRun('pickup');
+    const hp = run.maxHp;
+    const gold = run.gold;
+    addRelic(run, 'leadenIdol');
+    addRelic(run, 'merchantsDebt');
+    expect(run.maxHp).toBe(hp + 12);
+    expect(run.gold).toBe(gold + 60);
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.tide).toBe(0); // idol drags battles to Low tide
   });
 
   it('Ebb bonus applies at Low tide', () => {

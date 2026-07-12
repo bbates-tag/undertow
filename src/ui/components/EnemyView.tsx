@@ -3,6 +3,7 @@ import { Shield, Swords, ChevronsUp, CloudFog, Users, Moon, HelpCircle } from 'l
 import type { BattleState, EnemyState } from '../../engine/types';
 import { ENEMIES } from '../../content/enemies';
 import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../../engine/battle';
+import { useGame } from '../../state/store';
 import { ArtImage } from './Art';
 import { StatusChips } from './StatusChips';
 import { fxTargetRef } from '../fxRegistry';
@@ -76,8 +77,9 @@ interface EnemyViewProps {
 
 export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTimes = 1, onPick, onInspect, reduced }: EnemyViewProps) {
   const def = ENEMIES[e.defId];
+  const run = useGame((s) => s.run);
   const hpFrac = e.hp / e.maxHp;
-  const preview = previewAmount ? previewPlayerAttack(bs, previewAmount, e) : null;
+  const preview = previewAmount && run ? previewPlayerAttack(run, bs, previewAmount, e) : null;
   // Hearthstone-style kill marker while drag-hovering: block soaks before HP
   const lethal = hovered && preview !== null && preview * previewTimes >= e.hp + e.block;
 
