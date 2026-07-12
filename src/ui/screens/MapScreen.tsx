@@ -163,7 +163,13 @@ export function MapScreen() {
               const canGo = isReachable(n);
               const isCurrent = current && current.row === n.row && current.col === n.col;
               const size = n.type === 'boss' ? 64 : 44;
-              const bossIcon = n.type === 'boss' ? ENEMIES[ENCOUNTERS[n.payload!].enemies.find((e) => ENEMIES[e].tier === 'boss')!].icon : null;
+              // loop maps carry a procedural spec instead of (or alongside) an
+              // authored payload — read whichever exists, never crash the map
+              const bossIds = n.type === 'boss'
+                ? (n.encounter?.enemies.map((e) => e.defId) ?? ENCOUNTERS[n.payload!]?.enemies ?? [])
+                : null;
+              const bossDef = bossIds ? ENEMIES[bossIds.find((id) => ENEMIES[id]?.tier === 'boss') ?? bossIds[0]] : null;
+              const bossIcon = bossDef?.icon ?? (n.type === 'boss' ? 'GiSeaDragon' : null);
               return (
                 <button
                   key={`${n.row}-${n.col}`}

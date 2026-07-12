@@ -126,6 +126,9 @@ export function generateMap(rng: Rng, act: 1 | 2 | 3, loop = 0): GameMap {
         n.encounter = generateEliteSpec(rng, act, loop, `endless-L${loop}-a${act}-${r}.${n.col}e`);
       } else if (n.type === 'boss' && loop > 0) {
         n.encounter = generateBossSpec(rng, act, loop, `endless-L${loop}-a${act}-boss`);
+        // keep the authored payload too — consumers that only know payload
+        // (map boss icon, achievements-by-groupId) must never find a hole
+        n.payload = encounterPool(act, 'boss')[0].id;
       } else if (n.type === 'battle') n.payload = pickEnc(r <= 2 ? easy : hard);
       else if (n.type === 'elite') n.payload = rng.pick(elitePool).id;
       else if (n.type === 'boss') n.payload = encounterPool(act, 'boss')[0].id;

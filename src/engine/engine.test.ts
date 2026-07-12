@@ -220,6 +220,11 @@ describe('tide', () => {
       }
     }
 
+    // boss nodes carry BOTH the spec and the authored payload — a payload-only
+    // consumer (map boss icon) crashed the whole tree when this was missing
+    const bossNode = nodes.find((n) => n.type === 'boss')!;
+    expect(bossNode.payload).toBe('a1_boss');
+
     // same seed, same path → identical procedural maps
     const run2 = testRun('proc');
     run2.act = 3;
