@@ -569,6 +569,7 @@ export const useGame = create<GameStore>((set, get) => {
       const emit = newEmit();
       beginLoop(run, emit);
       commit(run, emit);
+      award('noBottom');
       music.setMood('calm');
       playSfx('battleStart');
       get().toast(`Loop ${run.loop + 1} — the sea has no bottom`);
@@ -585,6 +586,7 @@ export const useGame = create<GameStore>((set, get) => {
         if (run.act >= 3 && run.loop > 0) {
           beginLoop(run, emit);
           commit(run, emit);
+          if (run.loop >= 2) award('pressureHolds'); // entering the third full descent
           get().toast(`Loop ${run.loop + 1} — The Sunlit Shallows, deeper than before`);
           set({ screen: 'map' });
           return;

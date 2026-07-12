@@ -3,7 +3,7 @@ import {
   ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop, restHealAmount } from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
 import { generateBossSpec, threatCost } from './endless';
@@ -302,6 +302,15 @@ describe('tide', () => {
     const reward = generateBattleReward(run);
     expect(reward.relics.length).toBe(0);
     expect(reward.gold).toBeGreaterThanOrEqual(28 + 40); // elite floor + compensation
+  });
+
+  it('rest heals warm up with loop depth, capped at half Max HP', () => {
+    const run = testRun('rest');
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.3));
+    run.loop = 3;
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.42));
+    run.loop = 10;
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.5)); // capped
   });
 
   it('enemy intent previews include the ascension/endless damage bonus', () => {

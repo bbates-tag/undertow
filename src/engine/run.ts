@@ -476,7 +476,8 @@ export function buyRemoval(run: RunState, cardUid: number): ShopError | null {
 // ── Rest ─────────────────────────────────────────────────────────────────────
 
 export function restHealAmount(run: RunState): number {
-  const frac = run.ascension >= 3 ? 0.25 : 0.3;
+  // endless: fights hit harder and run longer each loop — vents warm up too
+  const frac = Math.min(0.5, (run.ascension >= 3 ? 0.25 : 0.3) + 0.04 * run.loop);
   let heal = Math.round(run.maxHp * frac);
   if (run.relics.includes('whaleOilFlask')) heal += 15;
   return heal;
