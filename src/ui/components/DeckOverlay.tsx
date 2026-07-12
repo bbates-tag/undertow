@@ -42,6 +42,9 @@ export function DeckOverlay() {
     return null;
   }
 
+  // discard & exhausted share one overlay with two tabs
+  const pileTabs = overlay === 'discardPile' || overlay === 'exhaustPile';
+
   const picking = pendingPick && overlay === 'deck';
   const pickable = (c: CardInstance) => {
     if (!picking) return false;
@@ -65,7 +68,28 @@ export function DeckOverlay() {
       aria-label={title}
     >
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)' }}>
-        <h2 className="font-display text-lg font-bold">{picking ? PICK_LABEL[pendingPick!.kind] : title}</h2>
+        {pileTabs ? (
+          <div className="flex gap-2" role="tablist" aria-label="battle piles">
+            <button
+              className={`btn !py-1.5 !px-3 text-sm ${overlay === 'discardPile' ? 'btn-primary' : ''}`}
+              onClick={() => setOverlay('discardPile')}
+              role="tab"
+              aria-selected={overlay === 'discardPile'}
+            >
+              Discard ({run.battle?.discardPile.length ?? 0})
+            </button>
+            <button
+              className={`btn !py-1.5 !px-3 text-sm ${overlay === 'exhaustPile' ? 'btn-primary' : ''}`}
+              onClick={() => setOverlay('exhaustPile')}
+              role="tab"
+              aria-selected={overlay === 'exhaustPile'}
+            >
+              Exhausted ({run.battle?.exhaustPile.length ?? 0})
+            </button>
+          </div>
+        ) : (
+          <h2 className="font-display text-lg font-bold">{picking ? PICK_LABEL[pendingPick!.kind] : title}</h2>
+        )}
         <button
           className="btn !p-2"
           onClick={() => (picking ? cancelPick() : setOverlay('none'))}

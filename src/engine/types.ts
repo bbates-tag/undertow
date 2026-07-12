@@ -180,6 +180,8 @@ export interface EnemyDef {
   /** gains might when the tide turns High */
   tideTouched?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** 3-4 sentences for the tap-to-open dossier: origin + how it fights */
+  lore?: string;
 }
 
 // ── Battle ───────────────────────────────────────────────────────────────────

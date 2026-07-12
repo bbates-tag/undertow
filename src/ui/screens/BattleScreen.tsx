@@ -4,7 +4,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimationControls, usePresence, type PanInfo, type TargetAndTransition } from 'framer-motion';
-import { BookOpen, ChevronRight, Heart, Menu as MenuIcon, Shield, SkipForward } from 'lucide-react';
+import { BookOpen, ChevronRight, Heart, Menu as MenuIcon, Shield } from 'lucide-react';
 import { useGame, checkFlawless, type LastPlay } from '../../state/store';
 import { CARDS } from '../../content/cards';
 import { CHARACTERS } from '../../content/characters';
@@ -14,6 +14,7 @@ import { cardCost, cardDef, living } from '../../engine/battle';
 import { describeCard } from '../../engine/describe';
 import type { Amount, BattleState, CardInstance, Op } from '../../engine/types';
 import { CardView, highlightText } from '../components/CardView';
+import { EnemyDossier } from '../components/EnemyDossier';
 import { EnemyView } from '../components/EnemyView';
 import { FxLayer } from '../components/FxLayer';
 import { RelicBar } from '../components/RelicBar';
@@ -80,6 +81,8 @@ export function BattleScreen() {
   const [ceremony, setCeremony] = useState(0);
   const handAreaRef = useRef<HTMLDivElement>(null);
   const [handMetrics, setHandMetrics] = useState({ avail: 0, cardW: 0 });
+  /** enemy defId whose dossier overlay is open (tap an enemy to inspect it) */
+  const [dossierId, setDossierId] = useState<string | null>(null);
 
   // measure the hand's real estate so the fan only overlaps as much as the
   // available width actually requires
@@ -278,6 +281,8 @@ export function BattleScreen() {
               previewAmount={targetingActive ? previewDmg?.amount ?? null : null}
               previewTimes={previewDmg?.times ?? 1}
               onPick={() => playSelected(e.uid)}
+              /* with a card selected, taps keep their play semantics — no dossier */
+              onInspect={selected || drag ? undefined : () => setDossierId(e.defId)}
               reduced={reduced}
             />
           ))}
@@ -414,6 +419,7 @@ export function BattleScreen() {
                     canDrag={affordable && bs.phase === 'player' && !enemyTurnRunning}
                     dragging={drag?.uid === c.uid}
                     armed={drag?.uid === c.uid && drag.armed}
+                    overTarget={drag?.uid === c.uid && drag.hoverUid != null}
                     onSelect={() => selectCard(selectedCard === c.uid ? null : c.uid)}
                     onDragStartCard={onDragStartCard}
                     onDragMoveCard={onDragMoveCard}
@@ -437,19 +443,13 @@ export function BattleScreen() {
             >
               {enemyTurnRunning || bs.phase === 'enemy' ? '· · ·' : <>End<br />Turn</>}
             </button>
-            <div className="flex items-end gap-1.5">
-              <PileWidget
-                kind="discardPile"
-                count={bs.discardPile.length}
-                onClick={() => setOverlay('discardPile')}
-                label={`discard pile, ${bs.discardPile.length} cards`}
-              />
-              {bs.exhaustPile.length > 0 && (
-                <button className="chip" onClick={() => setOverlay('exhaustPile')} aria-label={`exhausted, ${bs.exhaustPile.length} cards`}>
-                  <SkipForward size={11} /> {bs.exhaustPile.length}
-                </button>
-              )}
-            </div>
+            {/* exhausted cards live in a tab of the discard overlay */}
+            <PileWidget
+              kind="discardPile"
+              count={bs.discardPile.length}
+              onClick={() => setOverlay('discardPile')}
+              label={`discard pile, ${bs.discardPile.length} cards`}
+            />
           </div>
         </div>
       </div>
@@ -537,6 +537,11 @@ export function BattleScreen() {
         )}
       </AnimatePresence>
 
+      {/* enemy dossier */}
+      <AnimatePresence>
+        {dossierId && <EnemyDossier key={dossierId} defId={dossierId} onClose={() => setDossierId(null)} />}
+      </AnimatePresence>
+
       <StatusChipsGlossary />
     </div>
   );
@@ -561,6 +566,8 @@ interface HandCardProps {
   canDrag: boolean;
   dragging: boolean;
   armed: boolean;
+  /** drag is hovering an enemy — fade the card so the target stays visible */
+  overTarget: boolean;
   onSelect: () => void;
   onDragStartCard: (c: CardInstance, needsTarget: boolean) => void;
   onDragMoveCard: (needsTarget: boolean, info: PanInfo) => void;
@@ -568,7 +575,7 @@ interface HandCardProps {
 }
 
 function HandCard({
-  c, i, n, leftPx, bs, reduced, isSelected, affordable, canDrag, dragging, armed,
+  c, i, n, leftPx, bs, reduced, isSelected, affordable, canDrag, dragging, armed, overTarget,
   onSelect, onDragStartCard, onDragMoveCard, onDragEndCard,
 }: HandCardProps) {
   // a completed drag fires a click on release — swallow it so the card
@@ -722,7 +729,7 @@ function HandCard({
           suppressClick.current = false;
         }, 150);
       }}
-      className={`hand-card ${dragging ? 'dragging' : ''}`}
+      className={`hand-card ${dragging ? 'dragging' : ''} ${overTarget ? 'over-target' : ''}`}
       style={{
         left: `calc(50% + ${leftPx}px)`,
         ['--z' as string]: 10 + i,
