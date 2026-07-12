@@ -514,13 +514,13 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
       case 'pressureCrown': addStatus(bs.player, 'might', 1); break;
       case 'blackPearl':
         for (const e of living(bs)) {
-          applyStatusTo(run, bs, e, 'weakened', 1, emit, enemyKey(e));
-          applyStatusTo(run, bs, e, 'exposed', 1, emit, enemyKey(e));
+          applyStatusTo(run, bs, e, 'weakened', 2, emit, enemyKey(e));
+          applyStatusTo(run, bs, e, 'exposed', 2, emit, enemyKey(e));
         }
         break;
       case 'moonChart': bs.tide = 2; onTideHigh(run, bs, emit); break;
       case 'saltVein': gainDescent(run, bs, 3, emit); break;
-      case 'graveBallast': gainDescent(run, bs, 6, emit); break;
+      case 'graveBallast': gainDescent(run, bs, 8, emit); break;
       // treasure salvage — power with teeth (tide conflicts resolve in pickup order)
       case 'fangedLocket':
         addStatus(bs.player, 'might', 2);

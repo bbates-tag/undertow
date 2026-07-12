@@ -152,8 +152,8 @@ describe('tide', () => {
     expect(bs.hand.length).toBe(5); // crown no longer cuts draw
     expect(bs.player.hp).toBe(run.maxHp); // nothing bleeds you at battle start anymore
     expect(getStatus(bs.player, 'might')).toBe(1);
-    expect(getStatus(bs.enemies[0], 'weakened')).toBe(1);
-    expect(getStatus(bs.enemies[0], 'exposed')).toBe(1);
+    expect(getStatus(bs.enemies[0], 'weakened')).toBe(2);
+    expect(getStatus(bs.enemies[0], 'exposed')).toBe(2);
     runEnemyPhase(run); // → turn 2
     runEnemyPhase(run); // → turn 3: crown ticks
     expect(getStatus(bs.player, 'might')).toBe(2);

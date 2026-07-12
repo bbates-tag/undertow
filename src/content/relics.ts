@@ -61,13 +61,13 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'widowsVeil', name: "Widow's Veil", icon: 'GiPoisonCloud', tier: 'treasure', text: 'Enemies start each battle with 2 Toxin. So do you.', flavor: 'Grief settles over everything evenly.' },
       // ── Boss (choose one after each act boss — pure upside, each on its own axis) ──
       { id: 'rustedHelm', name: 'Rusted Diving Helm', icon: 'GiDivingHelmet', tier: 'boss', text: '+1 Energy each turn.' },
-      { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: 'At the start of each battle, apply 1 Weakened and 1 Exposed to ALL enemies.', flavor: 'Its light arrives as hunger.' },
+      { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: 'At the start of each battle, apply 2 Weakened and 2 Exposed to ALL enemies.', flavor: 'Its light arrives as hunger.' },
       { id: 'pressureCrown', name: 'Pressure Crown', icon: 'GiCrown', tier: 'boss', text: 'Gain 1 Might at the start of each battle, and 1 more every 3rd turn.' },
       { id: 'heartOfMaelstrom', name: 'Heart of the Maelstrom', icon: 'GiTentacleHeart', tier: 'boss', text: 'Whenever the tide changes, gain 3 Block.', flavor: 'The churn shields those who ride it.' },
       { id: 'grimoireOfBrine', name: 'Grimoire of Brine', icon: 'GiSpellBook', tier: 'boss', text: 'Draw 1 extra card each turn.' },
       { id: 'leviathansEye', name: "Leviathan's Eye", icon: 'GiBeastEye', tier: 'boss', text: 'At the start of each turn, apply 1 Toxin to ALL enemies.', flavor: 'It watched you the whole way down.' },
       { id: 'stormglassJar', name: 'Stormglass Jar', icon: 'GiBatteries', tier: 'boss', char: 'voltaic', text: 'Gain 2 Charge at the start of each turn.', flavor: 'Weather, bottled at the moment of breaking.' },
-      { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: 'Start each battle with 6 Descent.', flavor: 'Sink faster. Arrive first.' },
+      { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: 'Start each battle with 8 Descent.', flavor: 'Sink faster. Arrive first.' },
     ] as RelicDef[]
   ).map((r) => [r.id, r]),
 );
