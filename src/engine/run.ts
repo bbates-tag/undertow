@@ -8,6 +8,7 @@ import { hashSeed, makeRng, type Rng } from '../lib/rng';
 import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
 import { CHARACTERS } from '../content/characters';
 import { RELICS, relicPool } from '../content/relics';
+import { BOONS } from '../content/boons';
 import { generateBattleSpec, generateBossSpec, generateEliteSpec } from './endless';
 import { EVENTS } from '../content/events';
 import { encounterPool } from '../content/enemies';
@@ -256,8 +257,13 @@ export function enterNode(run: RunState, row: number, col: number, emit: Emit): 
       const relic = pool.length ? r.pick(pool).id : null;
       done();
       run.reward = {
-        gold: 0, cards: [], relics: relic ? [relic] : [], bossRelics: [], taken: {}, source: 'treasure',
+        // every relic in the sea claimed: the chest still pays out
+        gold: relic ? 0 : 60, cards: [], relics: relic ? [relic] : [], bossRelics: [], taken: {}, source: 'treasure',
       };
+      if (!relic) {
+        run.gold += 60;
+        run.stats.goldEarned += 60;
+      }
       return 'reward';
     }
   }
@@ -300,13 +306,25 @@ export function generateBattleReward(run: RunState): RewardState {
 
   const relics: string[] = [];
   const bossRelics: string[] = [];
+  let bossBoons: string[] | undefined;
   const locked = lockedContent(run.unlockedPacks).relics;
   if (source === 'elite') {
     const n = run.relics.includes('abyssalFigurehead') ? 2 : 1;
     for (let i = 0; i < n; i++) {
       const tier = r.weighted([['common', 45], ['uncommon', 40], ['rare', 15]] as const);
-      const pool = relicPool(tier, run.charId, [...run.relics, ...relics], locked);
-      if (pool.length) relics.push(r.pick(pool).id);
+      // fall through the remaining tiers before giving up — drained pools
+      // (deep endless, or figurehead runs) must not silently whiff
+      const order = [tier, ...(['rare', 'uncommon', 'common'] as const).filter((t) => t !== tier)];
+      let picked = false;
+      for (const t of order) {
+        const pool = relicPool(t, run.charId, [...run.relics, ...relics], locked);
+        if (pool.length) {
+          relics.push(r.pick(pool).id);
+          picked = true;
+          break;
+        }
+      }
+      if (!picked) gold += 40; // every relic claimed: the elite pays in coin
     }
     run.stats.elitesKilled += 1;
   }
@@ -314,12 +332,39 @@ export function generateBattleReward(run: RunState): RewardState {
     const pool = relicPool('boss', run.charId, run.relics, new Set());
     r.shuffle(pool);
     bossRelics.push(...pool.slice(0, 3).map((x) => x.id));
+    // the pool ran dry (deep endless): offer one-shot boons instead
+    if (!bossRelics.length) bossBoons = Object.keys(BOONS);
     run.stats.bossesKilled += 1;
   }
   done();
 
   const cards = pickRewardCards(run, source);
-  return { gold, cards, relics, bossRelics, taken: {}, source };
+  return { gold, cards, relics, bossRelics, ...(bossBoons ? { bossBoons } : {}), taken: {}, source };
+}
+
+/** apply a picked boss boon (offered once the boss relic pool is empty) */
+export function applyBoon(run: RunState, boonId: string, emit: Emit): string {
+  switch (boonId) {
+    case 'leviathansFeast':
+      run.maxHp += 8;
+      healPlayer(run, null, run.maxHp, emit);
+      return 'The feast restores you — +8 Max HP, fully healed.';
+    case 'sunkenHoard':
+      run.gold += 100;
+      run.stats.goldEarned += 100;
+      return 'You pry loose 100 gold.';
+    case 'deepTempering': {
+      const { r, done } = runRng(run);
+      const cand = run.deck.filter((c) => !c.upgraded && CARDS[c.defId].type !== 'curse');
+      const picks = r.shuffle([...cand]).slice(0, 2);
+      for (const c of picks) c.upgraded = true;
+      done();
+      return picks.length
+        ? `Tempered: ${picks.map((c) => CARDS[c.defId].name).join(', ')}.`
+        : 'Nothing left to temper — the deep shrugs.';
+    }
+  }
+  return '';
 }
 
 export function addRelic(run: RunState, relicId: string) {

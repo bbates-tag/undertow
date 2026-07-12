@@ -279,6 +279,8 @@ export interface RewardState {
   cards: CardInstance[];
   relics: string[]; // pending relic pickups (elite/treasure)
   bossRelics: string[]; // pick-one-of-N after boss
+  /** deep endless: offered when the boss relic pool has run dry */
+  bossBoons?: string[];
   taken: { gold?: boolean; card?: boolean; bossRelic?: boolean };
   source: 'battle' | 'elite' | 'boss' | 'treasure';
 }

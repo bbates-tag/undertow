@@ -14,7 +14,7 @@ import {
   canPlay, cardExhausts, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
 } from '../engine/battle';
 import {
-  addCardToDeck, addRelic, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
+  addCardToDeck, addRelic, applyBoon, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
   doRestHeal, enterNode, generateBattleReward, newRun, scoreRun, type PendingPick,
 } from '../engine/run';
 import { EVENTS } from '../content/events';
@@ -108,6 +108,8 @@ interface GameStore {
   rewardTakeCard(i: number): void;
   rewardSkipCards(): void;
   rewardTakeBossRelic(i: number): void;
+  /** deep endless: take a boss boon when the relic pool has run dry */
+  rewardTakeBoon(i: number): void;
   leaveReward(): void;
   /** endless: from the victory screen, dive past the Drowned God into loop 2 */
   continueEndless(): void;
@@ -545,6 +547,20 @@ export const useGame = create<GameStore>((set, get) => {
       reward.taken.bossRelic = true;
       playSfx('relicGet');
       commit(run);
+    },
+
+    rewardTakeBoon(i) {
+      const run = deepClone(get().run!);
+      const reward = run.reward;
+      if (!reward || reward.taken.bossRelic) return;
+      const boon = reward.bossBoons?.[i];
+      if (!boon) return;
+      const emit = newEmit();
+      const msg = applyBoon(run, boon, emit);
+      reward.taken.bossRelic = true; // boons share the one-pick-per-boss slot
+      commit(run, emit);
+      if (msg) get().toast(msg);
+      playSfx('relicGet');
     },
 
     continueEndless() {
