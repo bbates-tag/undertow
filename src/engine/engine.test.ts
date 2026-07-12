@@ -3,8 +3,8 @@ import {
   ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
-import { relicPool } from '../content/relics';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop, restHealAmount } from './run';
+import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
 import { generateBossSpec, threatCost } from './endless';
 import { ENEMIES } from '../content/enemies';
@@ -270,6 +270,47 @@ describe('tide', () => {
     runEnemyPhase(run);
     expect(getStatus(bs.player, 'toxin')).toBeGreaterThanOrEqual(1);
     void c;
+  });
+
+  it('deep endless: boons replace a drained boss pool, and each boon works', () => {
+    const run = battleRun('a1_boss');
+    run.relics.push('rustedHelm', 'blackPearl', 'pressureCrown', 'heartOfMaelstrom', 'grimoireOfBrine', 'leviathansEye');
+    const reward = generateBattleReward(run);
+    expect(reward.bossRelics.length).toBe(0);
+    expect(reward.bossBoons).toEqual(['leviathansFeast', 'sunkenHoard', 'deepTempering']);
+
+    run.hp = 10;
+    const hpMax = run.maxHp;
+    applyBoon(run, 'leviathansFeast', newEmit());
+    expect(run.maxHp).toBe(hpMax + 8);
+    expect(run.hp).toBe(run.maxHp);
+
+    const gold0 = run.gold;
+    applyBoon(run, 'sunkenHoard', newEmit());
+    expect(run.gold).toBe(gold0 + 100);
+
+    const upBefore = run.deck.filter((c) => c.upgraded).length;
+    applyBoon(run, 'deepTempering', newEmit());
+    expect(run.deck.filter((c) => c.upgraded).length).toBe(Math.min(upBefore + 2, run.deck.length));
+  });
+
+  it('elite rewards fall through drained tiers, then pay gold', () => {
+    const run = battleRun('a1_elite_angler');
+    for (const rel of Object.values(RELICS)) {
+      if (rel.tier === 'common' || rel.tier === 'uncommon' || rel.tier === 'rare') run.relics.push(rel.id);
+    }
+    const reward = generateBattleReward(run);
+    expect(reward.relics.length).toBe(0);
+    expect(reward.gold).toBeGreaterThanOrEqual(28 + 40); // elite floor + compensation
+  });
+
+  it('rest heals warm up with loop depth, capped at half Max HP', () => {
+    const run = testRun('rest');
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.3));
+    run.loop = 3;
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.42));
+    run.loop = 10;
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.5)); // capped
   });
 
   it('enemy intent previews include the ascension/endless damage bonus', () => {

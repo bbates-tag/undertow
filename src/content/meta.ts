@@ -65,6 +65,8 @@ export const ACHIEVEMENTS: Record<string, AchievementDef> = Object.fromEntries(
       { id: 'depth10', name: 'Hadal Certified', text: 'Win a run at Depth 10.', icon: 'GiSeaSerpent' },
       { id: 'dailyDiver', name: 'Creature of Habit', text: 'Complete a Daily Dive.', icon: 'GiSolarTime' },
       { id: 'mightyOne', name: 'Leviathan Diet', text: 'Reach 10 Might in one battle.', icon: 'GiFist' },
+      { id: 'noBottom', name: 'No Bottom', text: 'Descend deeper after defeating the Drowned God.', icon: 'GiSinkingShip' },
+      { id: 'pressureHolds', name: 'The Pressure Holds', text: 'Reach Loop 3 of an endless dive.', icon: 'GiVortex' },
     ] as AchievementDef[]
   ).map((a) => [a.id, a]),
 );

@@ -4,6 +4,7 @@
 import { ChevronRight, Coins } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { RELICS } from '../../content/relics';
+import { BOONS } from '../../content/boons';
 import { CardView } from '../components/CardView';
 import { GameIcon } from '../icons';
 import { Bubbles } from '../components/Bits';
@@ -13,12 +14,14 @@ export function RewardScreen() {
   const takeCard = useGame((s) => s.rewardTakeCard);
   const skipCards = useGame((s) => s.rewardSkipCards);
   const takeBossRelic = useGame((s) => s.rewardTakeBossRelic);
+  const takeBoon = useGame((s) => s.rewardTakeBoon);
   const leaveReward = useGame((s) => s.leaveReward);
   if (!run?.reward) return null;
   const r = run.reward;
 
   const cardsPending = r.cards.length > 0 && !r.taken.card;
   const bossPending = r.bossRelics.length > 0 && !r.taken.bossRelic;
+  const boonPending = !bossPending && (r.bossBoons?.length ?? 0) > 0 && !r.taken.bossRelic;
   const title =
     r.source === 'boss' ? 'THE DEEP YIELDS' :
     r.source === 'elite' ? 'ELITE SPOILS' :
@@ -69,7 +72,35 @@ export function RewardScreen() {
         </div>
       )}
 
-      {cardsPending && !bossPending && (
+      {boonPending && (
+        <div className="w-full max-w-2xl">
+          <h2 className="text-center text-sm font-bold text-(--color-lure) mb-1 tracking-wide">CHOOSE A BOON</h2>
+          <p className="text-center text-[11px] text-(--color-dim) italic mb-2">
+            Every relic in the sea is yours already — the deep pays another way.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            {r.bossBoons!.map((id, i) => {
+              const def = BOONS[id];
+              return def ? (
+                <button
+                  key={id}
+                  className="panel p-3 w-[170px] text-center hover:scale-[1.03] transition-transform"
+                  style={{ borderColor: 'rgba(255,206,92,0.4)' }}
+                  onClick={() => takeBoon(i)}
+                >
+                  <div className="flex justify-center mb-2" style={{ color: 'var(--color-gold)' }}>
+                    <GameIcon id={def.icon} size={34} />
+                  </div>
+                  <div className="font-bold text-sm mb-1">{def.name}</div>
+                  <div className="text-[11px] text-(--color-mist)">{def.text}</div>
+                </button>
+              ) : null;
+            })}
+          </div>
+        </div>
+      )}
+
+      {cardsPending && !bossPending && !boonPending && (
         <div className="flex flex-col items-center gap-3">
           <h2 className="text-sm font-bold text-(--color-glow) tracking-wide">ADD A CARD TO YOUR DECK</h2>
           <div className="flex gap-3 justify-center flex-wrap">
@@ -83,7 +114,7 @@ export function RewardScreen() {
         </div>
       )}
 
-      {!cardsPending && !bossPending && (
+      {!cardsPending && !bossPending && !boonPending && (
         <button className="btn btn-primary text-base !px-7 !py-3" onClick={leaveReward} autoFocus>
           {r.source === 'boss' ? (run.act >= 3 ? 'Surface victorious' : 'Descend deeper') : 'Back to the trench'}
           <ChevronRight size={16} />

@@ -71,6 +71,7 @@ export function StatsScreen() {
             <span className="text-(--color-mist)">
               {r.daily ? 'daily · ' : r.ascension > 0 ? `D${r.ascension} · ` : ''}
               act {r.act}, floor {r.floor}
+              {r.loop ? <span className="font-bold" style={{ color: 'var(--color-lure)' }}> · loop {r.loop + 1}</span> : null}
               {r.killedBy ? ` · ${r.killedBy}` : ''}
             </span>
             <span className="flex-1" />

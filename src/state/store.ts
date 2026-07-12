@@ -14,7 +14,7 @@ import {
   canPlay, cardExhausts, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
 } from '../engine/battle';
 import {
-  addCardToDeck, addRelic, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
+  addCardToDeck, addRelic, applyBoon, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
   doRestHeal, enterNode, generateBattleReward, newRun, scoreRun, type PendingPick,
 } from '../engine/run';
 import { EVENTS } from '../content/events';
@@ -108,6 +108,8 @@ interface GameStore {
   rewardTakeCard(i: number): void;
   rewardSkipCards(): void;
   rewardTakeBossRelic(i: number): void;
+  /** deep endless: take a boss boon when the relic pool has run dry */
+  rewardTakeBoon(i: number): void;
   leaveReward(): void;
   /** endless: from the victory screen, dive past the Drowned God into loop 2 */
   continueEndless(): void;
@@ -547,12 +549,27 @@ export const useGame = create<GameStore>((set, get) => {
       commit(run);
     },
 
+    rewardTakeBoon(i) {
+      const run = deepClone(get().run!);
+      const reward = run.reward;
+      if (!reward || reward.taken.bossRelic) return;
+      const boon = reward.bossBoons?.[i];
+      if (!boon) return;
+      const emit = newEmit();
+      const msg = applyBoon(run, boon, emit);
+      reward.taken.bossRelic = true; // boons share the one-pick-per-boss slot
+      commit(run, emit);
+      if (msg) get().toast(msg);
+      playSfx('relicGet');
+    },
+
     continueEndless() {
       const run = deepClone(get().run);
       if (!run || run.result !== 'win' || run.daily) return;
       const emit = newEmit();
       beginLoop(run, emit);
       commit(run, emit);
+      award('noBottom');
       music.setMood('calm');
       playSfx('battleStart');
       get().toast(`Loop ${run.loop + 1} — the sea has no bottom`);
@@ -569,6 +586,7 @@ export const useGame = create<GameStore>((set, get) => {
         if (run.act >= 3 && run.loop > 0) {
           beginLoop(run, emit);
           commit(run, emit);
+          if (run.loop >= 2) award('pressureHolds'); // entering the third full descent
           get().toast(`Loop ${run.loop + 1} — The Sunlit Shallows, deeper than before`);
           set({ screen: 'map' });
           return;
