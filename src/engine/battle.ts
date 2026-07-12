@@ -970,6 +970,7 @@ export function stepEnemy(run: RunState, emit: Emit): boolean {
 }
 
 function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
+  if (e.surfacing) return; // just summoned — it acts next phase, telegraphed
   const def = ENEMIES[e.defId];
   const mv = def.moves[e.moveId];
   if (!mv) return;
@@ -1018,6 +1019,9 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
       bs.enemies.push({
         uid: bs.nextUid++, defId: id, hp, maxHp: hp, block: 0,
         statuses: { ...(sdef.startStatuses ?? {}) }, moveId: '', history: [],
+        // summoning sickness: it surfaces this phase, telegraphs, and only
+        // acts next turn — the player must never eat un-telegraphed damage
+        surfacing: true,
       });
       const spawned = bs.enemies[bs.enemies.length - 1];
       rollIntent(run, bs, spawned);
@@ -1043,6 +1047,7 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
 function finishEnemyPhase(run: RunState, bs: BattleState, emit: Emit) {
   // enemy duration statuses tick at end of enemy phase
   for (const e of living(bs)) {
+    delete e.surfacing; // summoning sickness ends — its intent below is real
     for (const s of ['weakened', 'exposed', 'brittle'] as StatusId[]) {
       if (getStatus(e, s) > 0) addStatus(e, s, -1);
     }
