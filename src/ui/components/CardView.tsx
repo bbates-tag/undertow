@@ -2,7 +2,7 @@ import { memo } from 'react';
 import type { BattleState, CardInstance, EnemyState } from '../../engine/types';
 import { CARDS } from '../../content/cards';
 import { cardCost } from '../../engine/battle';
-import { describeCard } from '../../engine/describe';
+import { cardConditionActive, describeCard } from '../../engine/describe';
 import { ArtImage } from './Art';
 import { KEYWORD_PATTERN } from '../../content/keywords';
 
@@ -47,6 +47,8 @@ export const CardView = memo(function CardView({
   const cost = cardCost(card);
   const text = describeCard(def, card.upgraded, battle ? { bs: battle, target } : undefined);
   const name = card.upgraded ? `${def.name}+` : def.name;
+  // a Flood/Ebb/Charge/Descent condition is live right now — glow the frame
+  const condActive = battle ? cardConditionActive(def, card.upgraded, battle) : false;
 
   return (
     <div
@@ -55,6 +57,7 @@ export const CardView = memo(function CardView({
         inHand ? 'hand-card' : '',
         selected ? 'selected' : '',
         armed ? 'armed' : '',
+        condActive ? 'cond-active' : '',
         !affordable ? 'unaffordable' : '',
       ].join(' ')}
       style={scale === 'lg' ? { width: 'calc(var(--card-w) * 1.5)', height: 'calc(var(--card-h) * 1.5)' } : undefined}

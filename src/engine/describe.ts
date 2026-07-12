@@ -78,6 +78,10 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       const a = op.amount;
       const equalBlock = a.base === 0 && a.perBlock === 1;
       const n = dmgNumber(a, ctx);
+      // when the tide bonus is live, the number already contains it — fold the
+      // clause into a prefix instead of double-stating it as "+X"
+      const floodLive = !!ctx && !!a.flood && ctx.bs.tide === 2;
+      const ebbLive = !!ctx && !!a.ebb && ctx.bs.tide === 0;
       const where = op.target === 'all' ? ' to ALL enemies' : op.target === 'random' ? ' to a random enemy' : '';
       let s: string;
       if (equalBlock && !ctx) s = `Deal damage equal to your Block${where}.`;
@@ -86,23 +90,29 @@ function opText(op: Op, ctx?: DescribeCtx): string {
         const times = op.times === 'charge' ? ' once per Charge' : op.times && op.times > 1 ? ` ${op.times} times` : '';
         s = `Deal ${n} damage${where}${times}.`;
       }
+      if (floodLive) s = `Flood: ${s}`;
+      if (ebbLive) s = `Ebb: ${s}`;
       if (op.pierce) s += ' Pierce.';
       const clauses = amountClauses(a);
       if (clauses.length && !equalBlock) s += ` (${clauses.join(', ')}.)`;
-      if (a.flood) s += ` Flood: +${a.flood} damage.`;
-      if (a.ebb) s += ` Ebb: +${a.ebb} damage.`;
+      if (a.flood && !floodLive) s += ` Flood: +${a.flood} damage.`;
+      if (a.ebb && !ebbLive) s += ` Ebb: +${a.ebb} damage.`;
       return s;
     }
     case 'loseHp':
       return `Lose ${op.amount} HP.`;
     case 'block': {
       const n = blockNumber(op.amount, ctx);
+      const floodLive = !!ctx && !!op.amount.flood && ctx.bs.tide === 2;
+      const ebbLive = !!ctx && !!op.amount.ebb && ctx.bs.tide === 0;
       let s = `Gain ${n} Block.`;
+      if (floodLive) s = `Flood: ${s}`;
+      if (ebbLive) s = `Ebb: ${s}`;
       const clauses = amountClauses(op.amount);
       if (op.amount.perBlock) clauses.push(`+${op.amount.perBlock} per current Block`);
       if (clauses.length) s += ` (${clauses.join(', ')}.)`;
-      if (op.amount.flood) s += ` Flood: +${op.amount.flood} Block.`;
-      if (op.amount.ebb) s += ` Ebb: +${op.amount.ebb} Block.`;
+      if (op.amount.flood && !floodLive) s += ` Flood: +${op.amount.flood} Block.`;
+      if (op.amount.ebb && !ebbLive) s += ` Ebb: +${op.amount.ebb} Block.`;
       return s;
     }
     case 'status': {
@@ -154,6 +164,30 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       return `If you have ${op.cond.chargeAtLeast}+ Charge: ${inner}${alt}`;
     }
   }
+}
+
+/**
+ * True when a globally-checkable condition on this card (Flood/Ebb tide
+ * bonuses, Charge/Descent thresholds) is currently met — the UI glows the
+ * card. Target-dependent conditions (targetToxined, targetBelowHalf) can't
+ * be judged without a chosen target and never glow.
+ */
+export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleState): boolean {
+  const amountLive = (a: Amount) => (!!a.flood && bs.tide === 2) || (!!a.ebb && bs.tide === 0);
+  const check = (ops: Op[]): boolean =>
+    ops.some((op) => {
+      if ((op.op === 'damage' || op.op === 'block' || op.op === 'status' || op.op === 'heal') && amountLive(op.amount)) return true;
+      if (op.op === 'if') {
+        const c = op.cond;
+        if (c === 'flood') return bs.tide === 2;
+        if (c === 'ebb') return bs.tide === 0;
+        if (typeof c === 'object' && 'descentAtLeast' in c) return (bs.player.statuses.descent ?? 0) >= c.descentAtLeast;
+        if (typeof c === 'object' && 'chargeAtLeast' in c) return (bs.player.statuses.charge ?? 0) >= c.chargeAtLeast;
+        return false;
+      }
+      return false;
+    });
+  return check(upgraded ? (def.opsUp ?? def.ops) : def.ops);
 }
 
 export function describeCard(def: CardDef, upgraded: boolean, ctx?: DescribeCtx): string {
