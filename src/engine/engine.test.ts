@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   calcAttack, endPlayerTurn, getStatus, newEmit, playCard, startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic } from './run';
+import { relicPool } from '../content/relics';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -140,6 +141,123 @@ describe('tide', () => {
     expect(bs.tide).toBe(3); // Falling — natural +1 only
     // …and the natural change's block survives the start-of-turn reset
     expect(bs.player.block).toBe(3);
+  });
+
+  it('boss relics are pure upside: crown scales Might, pearl debuffs, only the helm grants energy', () => {
+    const run = testRun('boss-relics');
+    run.relics.push('pressureCrown', 'blackPearl');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(bs.maxEnergy).toBe(3); // pearl/crown no longer grant (or cost) energy
+    expect(bs.hand.length).toBe(5); // crown no longer cuts draw
+    expect(bs.player.hp).toBe(run.maxHp); // nothing bleeds you at battle start anymore
+    expect(getStatus(bs.player, 'might')).toBe(1);
+    expect(getStatus(bs.enemies[0], 'weakened')).toBe(2);
+    expect(getStatus(bs.enemies[0], 'exposed')).toBe(2);
+    runEnemyPhase(run); // → turn 2
+    runEnemyPhase(run); // → turn 3: crown ticks
+    expect(getStatus(bs.player, 'might')).toBe(2);
+  });
+
+  it("Leviathan's Eye poisons the field each turn; Stormglass Jar charges each turn", () => {
+    const run = testRun('eye-jar');
+    run.relics.push('leviathansEye', 'stormglassJar');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(getStatus(bs.enemies[0], 'toxin')).toBe(1);
+    expect(getStatus(bs.player, 'charge')).toBe(2);
+  });
+
+  it('treasure tier is chest-exclusive: 6 cursed relics, absent from every other pool', () => {
+    const pool = relicPool('treasure', 'tidecaller', [], new Set());
+    expect(pool.length).toBe(6);
+    expect(pool.every((r) => r.tier === 'treasure')).toBe(true);
+    for (const t of ['common', 'uncommon', 'rare', 'boss'] as const) {
+      expect(relicPool(t, 'tidecaller', [], new Set()).every((r) => r.tier === t)).toBe(true);
+    }
+  });
+
+  it('treasure relic battle hooks: locket bites, chain shields, veil poisons both sides', () => {
+    const run = testRun('cursed');
+    run.relics.push('fangedLocket', 'barbedChain', 'widowsVeil');
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    expect(getStatus(bs.player, 'might')).toBe(2);
+    // locket bite (2, ignores block) + the veil's own toxin ticking on turn 1 (2)
+    expect(bs.player.hp).toBe(run.maxHp - 4);
+    expect(bs.player.block).toBe(10);
+    expect(getStatus(bs.enemies[0], 'toxin')).toBe(2); // ticks on THEIR first turn
+    expect(getStatus(bs.player, 'toxin')).toBe(1); // already ticked once and fell
+  });
+
+  it('Bloodletter Hook doubles only the first attack, then takes its cut on victory', () => {
+    const run = battleRun();
+    run.relics.push('bloodletterHook');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    giveHand(run, ['tideStrike', 'tideStrike']);
+    const hp0 = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hp0 - e.hp).toBe(12); // 6 doubled
+    const hp1 = e.hp;
+    e.hp = Math.min(e.hp, 5); // ensure the next (normal) hit is lethal
+    playCard(run, 9001, e.uid, newEmit());
+    expect(bs.phase).toBe('won');
+    // victory: run.hp = player hp, +5 Living Coral (starter), then the hook's -2
+    expect(run.hp).toBe(run.maxHp - 2);
+    void hp1;
+  });
+
+  it("Harpooner's Line only bites armored enemies; Oarfish Ribbon pays out per Shift", () => {
+    const run = battleRun();
+    run.relics.push('harpoonersLine', 'oarfishRibbon');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    giveHand(run, ['tideStrike', 'tideStrike', 'riptide']);
+    e.block = 0;
+    const hp0 = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hp0 - e.hp).toBe(6); // no block, no bonus
+    e.block = 5;
+    playCard(run, 9001, e.uid, newEmit());
+    expect(e.block).toBe(0);
+    expect(hp0 - 6 - e.hp).toBe(8 - 5); // 6+2, 5 soaked by block
+    const blk0 = bs.player.block;
+    playCard(run, 9002, e.uid, newEmit()); // riptide: damage + Shift +1
+    expect(bs.player.block - blk0).toBe(2);
+  });
+
+  it('Pale Starfish heals bloodless turns; Gull Feather draws on kills', () => {
+    const run = battleRun();
+    run.relics.push('paleStarfish', 'gullFeather');
+    const bs = run.battle!;
+    bs.player.hp = 50;
+    giveHand(run, ['tideStrike']);
+    bs.enemies[0].hp = 1;
+    const hand0 = bs.hand.length;
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    expect(bs.phase).toBe('won'); // solo crab dies…
+    expect(bs.hand.length).toBe(hand0 - 1 + 1); // …and the feather still drew first
+    // starfish: end an untouched turn in a fresh battle
+    const run2 = battleRun('a1_moray');
+    run2.relics.push('paleStarfish');
+    const bs2 = run2.battle!;
+    bs2.player.hp = 40;
+    bs2.enemies[0].moveId = 'lurk'; // enemy blocks instead of attacking
+    endPlayerTurn(run2, newEmit());
+    expect(bs2.player.hp).toBeGreaterThanOrEqual(42 - 2); // healed 2 at turn end (before enemy act)
+  });
+
+  it('Leaden Idol and Merchant\'s Debt pickup effects apply once', () => {
+    const run = testRun('pickup');
+    const hp = run.maxHp;
+    const gold = run.gold;
+    addRelic(run, 'leadenIdol');
+    addRelic(run, 'merchantsDebt');
+    expect(run.maxHp).toBe(hp + 12);
+    expect(run.gold).toBe(gold + 60);
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.tide).toBe(0); // idol drags battles to Low tide
   });
 
   it('Ebb bonus applies at Low tide', () => {

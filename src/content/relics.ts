@@ -3,7 +3,7 @@
 
 import type { CharacterId } from '../engine/types';
 
-export type RelicTier = 'starter' | 'common' | 'uncommon' | 'rare' | 'boss';
+export type RelicTier = 'starter' | 'common' | 'uncommon' | 'rare' | 'boss' | 'treasure';
 
 export interface RelicDef {
   id: string;
@@ -38,6 +38,8 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'glassFloat', name: 'Glass Float', icon: 'GiFloatingCrystal', tier: 'common', text: 'Draw 2 extra cards on your first turn each battle.' },
       { id: 'whaleOilFlask', name: 'Whale-Oil Flask', icon: 'GiSpermWhale', tier: 'common', text: 'Resting heals 15 extra HP.' },
       { id: 'saltVein', name: 'Salt Vein', icon: 'GiHeartDrop', tier: 'common', char: 'drowned', text: 'Start each battle with 3 Descent.' },
+      { id: 'gullFeather', name: 'Gull Feather', icon: 'GiFeather', tier: 'common', text: 'Whenever an enemy dies, draw 1 card.', flavor: 'Where gulls circle, something is being finished.' },
+      { id: 'oarfishRibbon', name: 'Oarfish Ribbon', icon: 'GiSeaSerpent', tier: 'common', text: 'Whenever you Shift the tide, gain 2 Block.' },
       // ── Uncommon / Rare ──
       { id: 'chumBucket', name: 'Chum Bucket', icon: 'GiCauldron', tier: 'uncommon', text: 'Enemies start each battle with 3 Toxin.' },
       { id: 'sirenScale', name: 'Siren Scale', icon: 'GiMusicalNotes', tier: 'uncommon', text: 'Whenever you play a Power, draw 2 cards.' },
@@ -45,20 +47,32 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'deepSextant', name: 'Deep Sextant', icon: 'GiSextant', tier: 'uncommon', text: 'Card removal at shops costs half.' },
       { id: 'bioBulb', name: 'Bioluminescent Bulb', icon: 'GiCandlebright', tier: 'uncommon', text: 'At the start of each battle, apply 1 Exposed to ALL enemies.' },
       { id: 'spinedBracers', name: 'Spined Bracers', icon: 'GiSpikedArmor', tier: 'uncommon', text: 'Start each battle with 3 Spines.' },
+      { id: 'harpoonersLine', name: "Harpooner's Line", icon: 'GiHarpoonTrident', tier: 'uncommon', text: 'Your Attacks deal +2 damage to enemies that have Block.', flavor: 'Armor just gives the barb something to hold.' },
       { id: 'nacreCharm', name: 'Nacre Charm', icon: 'GiCrystalShine', tier: 'rare', text: 'The first time you would lose HP each battle, prevent it.', flavor: 'Mother-of-pearl remembers being soft.' },
       { id: 'abyssalFigurehead', name: 'Abyssal Figurehead', icon: 'GiShipWheel', tier: 'rare', text: 'Elite enemies drop an extra relic.' },
-      // ── Boss (choose one after each act boss) ──
-      { id: 'rustedHelm', name: 'Rusted Diving Helm', icon: 'GiDivingHelmet', tier: 'boss', text: '+1 Energy each turn. Take 3 damage at the start of each battle.' },
-      { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: '+1 Energy each turn. You can no longer heal at rest sites.' },
-      { id: 'pressureCrown', name: 'Pressure Crown', icon: 'GiCrown', tier: 'boss', text: '+1 Energy each turn. Draw 1 fewer card each turn.' },
+      { id: 'paleStarfish', name: 'Pale Starfish', icon: 'GiSeaStar', tier: 'rare', text: 'At the end of your turn, heal 2 HP if you lost no HP this turn.', flavor: 'It regrows what it is patient about.' },
+      { id: 'drownedCompass', name: 'Drowned Compass', icon: 'GiCompass', tier: 'rare', text: 'Each time the tide completes a full cycle, gain 1 Might and 1 Finesse.', flavor: 'It points down, which is forward.' },
+      // ── Treasure (chest-exclusive salvage — power with teeth) ──
+      { id: 'fangedLocket', name: 'Fanged Locket', icon: 'GiFangs', tier: 'treasure', text: 'Start each battle with 2 Might. Take 2 damage at the start of each battle.', flavor: 'It loves you back, mostly.' },
+      { id: 'leadenIdol', name: 'Leaden Idol', icon: 'GiAmmonite', tier: 'treasure', text: 'On pickup: gain 12 Max HP. Battles start at Low tide.', flavor: 'Heavy as a kept promise.' },
+      { id: 'barbedChain', name: 'Barbed Chain', icon: 'GiSpikedShell', tier: 'treasure', text: 'Start each battle with 10 Block. Lose 2 HP whenever you shuffle your deck.' },
+      { id: 'merchantsDebt', name: "Merchant's Debt", icon: 'GiCoinsPile', tier: 'treasure', text: 'On pickup: gain 60 gold. Gain 10 less gold after each battle.', flavor: 'The interest is due at the surface.' },
+      { id: 'bloodletterHook', name: 'Bloodletter Hook', icon: 'GiFishingHook', tier: 'treasure', text: 'Your first Attack each battle deals double damage. Lose 2 HP after each battle.' },
+      { id: 'widowsVeil', name: "Widow's Veil", icon: 'GiPoisonCloud', tier: 'treasure', text: 'Enemies start each battle with 2 Toxin. So do you.', flavor: 'Grief settles over everything evenly.' },
+      // ── Boss (choose one after each act boss — pure upside, each on its own axis) ──
+      { id: 'rustedHelm', name: 'Rusted Diving Helm', icon: 'GiDivingHelmet', tier: 'boss', text: '+1 Energy each turn.' },
+      { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: 'At the start of each battle, apply 2 Weakened and 2 Exposed to ALL enemies.', flavor: 'Its light arrives as hunger.' },
+      { id: 'pressureCrown', name: 'Pressure Crown', icon: 'GiCrown', tier: 'boss', text: 'Gain 1 Might at the start of each battle, and 1 more every 3rd turn.' },
       { id: 'heartOfMaelstrom', name: 'Heart of the Maelstrom', icon: 'GiTentacleHeart', tier: 'boss', text: 'Whenever the tide changes, gain 3 Block.', flavor: 'The churn shields those who ride it.' },
       { id: 'grimoireOfBrine', name: 'Grimoire of Brine', icon: 'GiSpellBook', tier: 'boss', text: 'Draw 1 extra card each turn.' },
-      { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: '+1 Energy each turn. At the start of each battle, lose 4 HP.', flavor: 'Sink faster. Arrive first.' },
+      { id: 'leviathansEye', name: "Leviathan's Eye", icon: 'GiBeastEye', tier: 'boss', text: 'At the start of each turn, apply 1 Toxin to ALL enemies.', flavor: 'It watched you the whole way down.' },
+      { id: 'stormglassJar', name: 'Stormglass Jar', icon: 'GiBatteries', tier: 'boss', char: 'voltaic', text: 'Gain 2 Charge at the start of each turn.', flavor: 'Weather, bottled at the moment of breaking.' },
+      { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: 'Start each battle with 8 Descent.', flavor: 'Sink faster. Arrive first.' },
     ] as RelicDef[]
   ).map((r) => [r.id, r]),
 );
 
-export function relicPool(tier: 'common' | 'uncommon' | 'rare' | 'boss', charId: CharacterId, owned: readonly string[], lockedIds: ReadonlySet<string>): RelicDef[] {
+export function relicPool(tier: 'common' | 'uncommon' | 'rare' | 'boss' | 'treasure', charId: CharacterId, owned: readonly string[], lockedIds: ReadonlySet<string>): RelicDef[] {
   return Object.values(RELICS).filter(
     (r) => r.tier === tier && (!r.char || r.char === charId) && !owned.includes(r.id) && !lockedIds.has(r.id),
   );

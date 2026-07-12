@@ -236,9 +236,14 @@ export function enterNode(run: RunState, row: number, col: number, emit: Emit): 
       return 'event';
     case 'treasure': {
       const { r, done } = runRng(run);
-      const tier = r.weighted([['common', 50], ['uncommon', 35], ['rare', 15]] as const);
       const locked = lockedContent(run.unlockedPacks).relics;
-      const pool = relicPool(tier, run.charId, run.relics, locked);
+      // chests hold cursed salvage: power with a drawback. Once every treasure
+      // relic is claimed, fall back to the ordinary pools.
+      let pool = relicPool('treasure', run.charId, run.relics, locked);
+      if (!pool.length) {
+        const tier = r.weighted([['common', 50], ['uncommon', 35], ['rare', 15]] as const);
+        pool = relicPool(tier, run.charId, run.relics, locked);
+      }
       const relic = pool.length ? r.pick(pool).id : null;
       done();
       run.reward = {
@@ -280,6 +285,7 @@ export function generateBattleReward(run: RunState): RewardState {
     source === 'elite' ? r.int(28, 40) :
     r.int(12, 18) + run.act * 2;
   if (run.relics.includes('ledgerOfTheDrowned')) gold += 8;
+  if (run.relics.includes('merchantsDebt')) gold = Math.max(0, gold - 10);
   if (run.daily?.mods.includes('richWaters')) gold = Math.round(gold * 1.5);
 
   const relics: string[] = [];
@@ -312,6 +318,14 @@ export function addRelic(run: RunState, relicId: string) {
   if (relicId === 'deepstoneIdol') {
     run.maxHp += 8;
     run.hp += 8;
+  }
+  if (relicId === 'leadenIdol') {
+    run.maxHp += 12;
+    run.hp += 12;
+  }
+  if (relicId === 'merchantsDebt') {
+    run.gold += 60;
+    run.stats.goldEarned += 60;
   }
 }
 
@@ -411,10 +425,6 @@ export function restHealAmount(run: RunState): number {
   let heal = Math.round(run.maxHp * frac);
   if (run.relics.includes('whaleOilFlask')) heal += 15;
   return heal;
-}
-
-export function canRestHeal(run: RunState): boolean {
-  return !run.relics.includes('blackPearl');
 }
 
 export function doRestHeal(run: RunState, emit: Emit) {

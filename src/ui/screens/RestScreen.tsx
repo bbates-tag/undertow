@@ -2,7 +2,7 @@
 
 import { Flame, Hammer } from 'lucide-react';
 import { useGame } from '../../state/store';
-import { canRestHeal, restHealAmount } from '../../engine/run';
+import { restHealAmount } from '../../engine/run';
 import { GoldChip, HpChip, Bubbles } from '../components/Bits';
 
 export function RestScreen() {
@@ -12,7 +12,6 @@ export function RestScreen() {
   const leaveNode = useGame((s) => s.leaveNode);
   if (!run) return null;
   const healAmt = restHealAmount(run);
-  const healOk = canRestHeal(run);
   const upgradable = run.deck.some((c) => !c.upgraded);
 
   return (
@@ -33,15 +32,13 @@ export function RestScreen() {
 
       <div className="flex gap-4 flex-wrap justify-center">
         <button
-          className={`panel p-5 w-[210px] text-center transition-transform hover:scale-[1.03] ${!healOk || run.hp >= run.maxHp ? 'opacity-45' : ''}`}
+          className={`panel p-5 w-[210px] text-center transition-transform hover:scale-[1.03] ${run.hp >= run.maxHp ? 'opacity-45' : ''}`}
           onClick={restHeal}
-          disabled={!healOk || run.hp >= run.maxHp}
+          disabled={run.hp >= run.maxHp}
         >
           <Flame size={36} className="mx-auto mb-2" style={{ color: 'var(--color-toxin)' }} />
           <div className="font-display font-bold mb-1">Bask</div>
-          <div className="text-xs text-(--color-mist)">
-            {healOk ? `Heal ${healAmt} HP.` : 'The Black Pearl forbids rest. (No healing.)'}
-          </div>
+          <div className="text-xs text-(--color-mist)">Heal {healAmt} HP.</div>
         </button>
 
         <button

@@ -101,8 +101,12 @@ export function calcAttack(base: number, attacker: CreatureState, defender: Crea
 }
 
 /** Full preview of what one hit of a player attack would deal to a target. */
-export function previewPlayerAttack(bs: BattleState, amount: Amount, target: EnemyState): number {
-  return calcAttack(resolveAmount(bs, amount, target), bs.player, target);
+export function previewPlayerAttack(run: RunState, bs: BattleState, amount: Amount, target: EnemyState): number {
+  let raw = resolveAmount(bs, amount, target);
+  if (target.block > 0 && run.relics.includes('harpoonersLine')) raw += 2;
+  let d = calcAttack(raw, bs.player, target);
+  if (!bs.counters.bloodletterUsed && run.relics.includes('bloodletterHook')) d *= 2;
+  return d;
 }
 
 export function previewEnemyMove(bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
@@ -152,6 +156,8 @@ function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
   run.stats.kills++;
   fx(emit, { kind: 'burst', target: enemyKey(e), color: 'ink', n: 18, shape: 'bubble' });
   sfx(emit, 'enemyDie');
+  // Gull Feather: something finished — the scavengers tell you where to look next
+  if (run.relics.includes('gullFeather')) drawCards(run, bs, 1, emit);
   // Depthless Hunger power
   for (const p of bs.powers) {
     if (p === 'hunger2' || p === 'hunger3') {
@@ -184,6 +190,7 @@ function losePlayerHp(
   if (hpLoss > 0) {
     p.hp = Math.max(0, p.hp - hpLoss);
     bs.battleDamageTaken += hpLoss;
+    bs.counters.hpLostTurn = bs.turn; // Pale Starfish reads this at turn end
     run.stats.damageTaken += hpLoss;
     fx(emit, { kind: 'dmg', target: 'player', amount: hpLoss });
     fx(emit, { kind: 'shake', strength: Math.min(1, hpLoss / 14) });
@@ -277,6 +284,15 @@ export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit,
     if (!silent) sfx(emit, 'tide');
     // Heart of the Maelstrom: the churn shields you
     if (run.relics.includes('heartOfMaelstrom')) gainPlayerBlock(run, bs, 3, emit, false);
+    // Drowned Compass: every completed cycle of the wheel sharpens you
+    if (run.relics.includes('drownedCompass')) {
+      bs.counters.compass = (bs.counters.compass ?? 0) + (((n % 4) + 4) % 4);
+      while (bs.counters.compass >= 4) {
+        bs.counters.compass -= 4;
+        applyStatusTo(run, bs, bs.player, 'might', 1, emit, 'player');
+        applyStatusTo(run, bs, bs.player, 'finesse', 1, emit, 'player');
+      }
+    }
     if (bs.tide === 2) onTideHigh(run, bs, emit);
   }
 }
@@ -309,6 +325,9 @@ export function drawCards(run: RunState, bs: BattleState, n: number, emit: Emit)
       // shuffle relics
       if (run.relics.includes('kelpWrap')) gainPlayerBlock(run, bs, 5, emit, false);
       if (run.relics.includes('capacitorCoil')) gainCharge(run, bs, 3, emit);
+      if (run.relics.includes('barbedChain')) {
+        losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Barbed Chain' });
+      }
     }
     const card = bs.drawPile.pop();
     if (card) bs.hand.push(card);
@@ -359,6 +378,9 @@ export function runOps(
         const times = op.times === 'charge' ? getStatus(bs.player, 'charge') : (op.times ?? 1);
         // Whetstone Coral: multi-hit attacks get +1 per hit
         const whetstone = times > 1 && run.relics.includes('whetstoneCoral') ? 1 : 0;
+        // Bloodletter Hook: the battle's first Attack card lands at double strength
+        // (flag is set after the card resolves, so every hit of it doubles)
+        const bloodletter = ctx.isAttackCard && !bs.counters.bloodletterUsed && run.relics.includes('bloodletterHook') ? 2 : 1;
         for (let i = 0; i < times; i++) {
           let victims: EnemyState[] = [];
           if (op.target === 'all') victims = living(bs);
@@ -374,8 +396,10 @@ export function runOps(
             if (t) victims = [t];
           }
           for (const v of victims) {
-            const raw = resolveAmount(bs, op.amount, v) + whetstone;
-            const dmg = calcAttack(raw, bs.player, v);
+            // Harpooner's Line: armor gives the barb something to hold
+            const line = v.block > 0 && run.relics.includes('harpoonersLine') ? 2 : 0;
+            const raw = resolveAmount(bs, op.amount, v) + whetstone + line;
+            const dmg = calcAttack(raw, bs.player, v) * bloodletter;
             damageEnemy(run, bs, v, dmg, emit, { pierce: op.pierce, fromAttack: true });
             fx(emit, { kind: 'burst', target: enemyKey(v), color: 'hit', n: 8, shape: 'spark' });
             // Spines on the victim retaliate per hit
@@ -427,6 +451,7 @@ export function runOps(
         break;
       case 'shift':
         shiftTide(run, bs, op.amount, emit);
+        if (run.relics.includes('oarfishRibbon')) gainPlayerBlock(run, bs, 2, emit, false);
         break;
       case 'gold':
         run.gold += op.amount;
@@ -486,10 +511,27 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
       case 'stormCore': gainCharge(run, bs, 3, emit); break;
       case 'spinedBracers': applyStatusTo(run, bs, bs.player, 'spines', 3, emit, 'player'); break;
       case 'sharktoothCharm': addStatus(bs.player, 'might', 1); break;
-      case 'rustedHelm': losePlayerHp(run, bs, 3, emit, { ignoreBlock: true, source: 'Rusted Diving Helm' }); break;
+      case 'pressureCrown': addStatus(bs.player, 'might', 1); break;
+      case 'blackPearl':
+        for (const e of living(bs)) {
+          applyStatusTo(run, bs, e, 'weakened', 2, emit, enemyKey(e));
+          applyStatusTo(run, bs, e, 'exposed', 2, emit, enemyKey(e));
+        }
+        break;
       case 'moonChart': bs.tide = 2; onTideHigh(run, bs, emit); break;
       case 'saltVein': gainDescent(run, bs, 3, emit); break;
-      case 'graveBallast': losePlayerHp(run, bs, 4, emit, { ignoreBlock: true, nonLethal: true, source: 'Grave Ballast' }); break;
+      case 'graveBallast': gainDescent(run, bs, 8, emit); break;
+      // treasure salvage — power with teeth (tide conflicts resolve in pickup order)
+      case 'fangedLocket':
+        addStatus(bs.player, 'might', 2);
+        losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Fanged Locket' });
+        break;
+      case 'leadenIdol': bs.tide = 0; break;
+      case 'barbedChain': gainPlayerBlock(run, bs, 10, emit, false); break;
+      case 'widowsVeil':
+        for (const e of living(bs)) applyStatusTo(run, bs, e, 'toxin', 2, emit, enemyKey(e));
+        applyStatusTo(run, bs, bs.player, 'toxin', 2, emit, 'player');
+        break;
     }
   }
   if (run.daily?.mods.includes('hardShell')) gainPlayerBlock(run, bs, 10, emit, false);
@@ -498,10 +540,21 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
 
 function relicsTurnStart(run: RunState, bs: BattleState, emit: Emit) {
   if (run.relics.includes('glassFloat') && bs.turn === 1) drawCards(run, bs, 2, emit);
+  // Pressure Crown: the deep squeezes you stronger — turns 3, 6, 9, …
+  if (run.relics.includes('pressureCrown') && bs.turn > 1 && bs.turn % 3 === 0) {
+    applyStatusTo(run, bs, bs.player, 'might', 1, emit, 'player');
+  }
+  if (run.relics.includes('leviathansEye')) {
+    for (const e of living(bs)) applyStatusTo(run, bs, e, 'toxin', 1, emit, enemyKey(e));
+  }
+  if (run.relics.includes('stormglassJar')) gainCharge(run, bs, 2, emit);
 }
 
 function relicsTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
   if (run.relics.includes('hermitShell')) gainPlayerBlock(run, bs, 2, emit, false);
+  if (run.relics.includes('paleStarfish') && bs.counters.hpLostTurn !== bs.turn) {
+    healPlayer(run, bs, 2, emit);
+  }
 }
 
 // ── Power hook sites ─────────────────────────────────────────────────────────
@@ -562,16 +615,13 @@ function powersTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
 
 export function maxEnergyFor(run: RunState): number {
   let e = 3;
-  for (const r of run.relics) {
-    if (r === 'rustedHelm' || r === 'blackPearl' || r === 'pressureCrown' || r === 'graveBallast') e += 1;
-  }
+  if (run.relics.includes('rustedHelm')) e += 1;
   if (run.daily?.mods.includes('glassCannon')) e += 1;
   return e;
 }
 
 function drawCountFor(run: RunState, bs: BattleState): number {
   let n = 5;
-  if (run.relics.includes('pressureCrown')) n -= 1;
   if (run.relics.includes('grimoireOfBrine')) n += 1;
   for (const p of bs.powers) {
     if (p === 'predatorsEye1') n += 1;
@@ -685,9 +735,11 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   bs.attacksPlayedThisTurn = 0;
 
   // block falls off unless anchored — BEFORE the tide advances, so block
-  // granted by tide-change effects (Heart of the Maelstrom) survives the turn
+  // granted by tide-change effects (Heart of the Maelstrom) survives the turn.
+  // Turn 1 is exempt: battle-start block (Barnacled Anchor, Barbed Chain,
+  // hard-shell daily) must survive into the first turn.
   if (getStatus(bs.player, 'anchor') > 0) addStatus(bs.player, 'anchor', -1);
-  else bs.player.block = 0;
+  else if (bs.turn > 1) bs.player.block = 0;
 
   // tide advances (after turn 1)
   if (bs.turn > 1) {
@@ -767,6 +819,10 @@ export function playCard(run: RunState, uid: number, targetUid: number | undefin
     bs.counters.venomGland = 1;
     const t = living(bs).find((e) => e.uid === targetUid) ?? living(bs)[0];
     if (t && bs.phase === 'player') applyStatusTo(run, bs, t, 'toxin', 3, emit, enemyKey(t));
+  }
+  // relic: Bloodletter Hook — the double-damage window closes once the first attack resolves
+  if (def.type === 'attack' && !bs.counters.bloodletterUsed && run.relics.includes('bloodletterHook')) {
+    bs.counters.bloodletterUsed = 1;
   }
 
   // powers reacting to card plays
@@ -985,6 +1041,8 @@ function checkVictory(run: RunState, bs: BattleState, emit: Emit) {
     // after-battle mending from starter relics
     if (run.relics.includes('livingCoral')) run.hp = Math.min(run.maxHp, run.hp + 5);
     if (run.relics.includes('barnacledHeart')) run.hp = Math.min(run.maxHp, run.hp + 4);
+    // …and the Bloodletter takes its cut (never fatally)
+    if (run.relics.includes('bloodletterHook')) run.hp = Math.max(1, run.hp - 2);
     if (bs.battleDamageTaken === 0) run.stats.battlesFlawless += 1;
     sfx(emit, 'victory');
   }
