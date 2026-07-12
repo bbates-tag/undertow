@@ -266,6 +266,15 @@ if (isMain) {
       const loopDist = Array.from({ length: maxLoop + 1 }, (_, l) => results.filter((r) => r.loop === l).length);
       console.log(`  reached endless: ${loopers.length}/${results.length}  |  deepest loop: ${maxLoop}`);
       console.log(`  died at loop: ${loopDist.map((n, l) => `L${l}=${n}`).join(' ')}`);
+      // what actually ends deep runs — stat walls read differently from bad rolls
+      for (let l = 1; l <= maxLoop; l++) {
+        const at = results.filter((r) => r.loop === l && r.killedBy);
+        if (!at.length) continue;
+        const k: Record<string, number> = {};
+        for (const r of at) k[r.killedBy!] = (k[r.killedBy!] ?? 0) + 1;
+        const top = Object.entries(k).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        console.log(`    L${l} killers: ${top.map(([n, v]) => `${n}×${v}`).join(', ')}`);
+      }
     } else {
       console.log(`  winrate: ${((wins / results.length) * 100).toFixed(1)}%  (bot is weak; human target ~2-3x)`);
     }

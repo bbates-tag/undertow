@@ -109,10 +109,11 @@ export function previewPlayerAttack(run: RunState, bs: BattleState, amount: Amou
   return d;
 }
 
-export function previewEnemyMove(bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
+export function previewEnemyMove(run: RunState, bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
   const mv = ENEMIES[e.defId].moves[e.moveId];
   if (!mv?.attack) return null;
-  return { dmg: calcAttack(mv.attack.amount, e, bs.player), times: mv.attack.times ?? 1 };
+  // include the ascension/endless damage bonus — telegraphs must not undersell
+  return { dmg: calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player), times: mv.attack.times ?? 1 };
 }
 
 export function blockGain(c: CreatureState, base: number): number {

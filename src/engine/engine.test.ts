@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, startBattle, stepEnemy,
+  ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
+  startBattle, stepEnemy,
 } from './battle';
 import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
 import { relicPool } from '../content/relics';
@@ -269,6 +270,17 @@ describe('tide', () => {
     runEnemyPhase(run);
     expect(getStatus(bs.player, 'toxin')).toBeGreaterThanOrEqual(1);
     void c;
+  });
+
+  it('enemy intent previews include the ascension/endless damage bonus', () => {
+    const run = battleRun();
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    const base = previewEnemyMove(run, bs, e);
+    run.loop = 2; // +4 enemy damage
+    const scaled = previewEnemyMove(run, bs, e);
+    if (base && scaled) expect(scaled.dmg - base.dmg).toBe(4);
+    else expect(base).toBe(scaled); // non-attack intent for both
   });
 
   it('endless: loop bosses spawn affixed, their minions stay clean', () => {

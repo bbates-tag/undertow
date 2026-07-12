@@ -22,10 +22,11 @@ const SIZE: Record<string, string> = {
 };
 
 function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
+  const run = useGame((s) => s.run);
   const def = ENEMIES[e.defId];
   const mv = def.moves[e.moveId];
-  if (!mv) return null;
-  const atk = previewEnemyMove(bs, e);
+  if (!mv || !run) return null;
+  const atk = previewEnemyMove(run, bs, e);
   const label = mv.name;
   const icons: Record<string, React.ReactNode> = {
     attack: <Swords size={13} />,
