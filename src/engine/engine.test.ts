@@ -5,7 +5,7 @@ import {
 import { generateMap, newRun, generateBattleReward, applyEventEffect, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop } from './run';
 import { relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
-import { threatCost } from './endless';
+import { generateBossSpec, threatCost } from './endless';
 import { ENEMIES } from '../content/enemies';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
@@ -203,7 +203,10 @@ describe('tide', () => {
     const fights = nodes.filter((n) => n.type === 'battle' || n.type === 'elite');
     expect(fights.length).toBeGreaterThan(0);
     expect(fights.every((n) => !!n.encounter)).toBe(true);
-    expect(nodes.find((n) => n.type === 'boss')!.encounter).toBeUndefined(); // bosses stay authored
+    // bosses keep the authored roster but spawn affixed
+    const bossSpec = nodes.find((n) => n.type === 'boss')!.encounter!;
+    expect(bossSpec.enemies.map((e) => e.defId)).toEqual(['sunkenKing']);
+    expect(bossSpec.enemies[0].affixes?.length).toBe(1);
 
     const MINIONS = ['tentacleSpawn', 'krakenArm', 'boneShoalMinion'];
     for (const n of fights) {
@@ -228,6 +231,55 @@ describe('tide', () => {
     startBattle(run, first, newEmit());
     expect(run.battle!.groupId).toBe(first.id);
     expect(run.battle!.enemies.length).toBe(first.enemies.length);
+  });
+
+  it('endless affixes: spawn effects apply, relentless revives once, venomous poisons', () => {
+    const run = testRun('affix');
+    run.loop = 1;
+    const spec = {
+      id: 'affix-test',
+      pool: 'easy' as const,
+      enemies: [
+        { defId: 'sardine', affixes: ['hulking', 'raging', 'spined', 'shielded'] },
+        { defId: 'sardine', affixes: ['relentless'] },
+        { defId: 'sardine', affixes: ['venomous'] },
+      ],
+    };
+    startBattle(run, spec, newEmit());
+    const bs = run.battle!;
+    const [a, b, c] = bs.enemies;
+    expect(a.maxHp).toBeGreaterThanOrEqual(14); // hulking on top of loop scaling
+    expect(getStatus(a, 'might')).toBe(3); // 2 raging + 1 loop
+    expect(getStatus(a, 'spines')).toBe(3);
+    expect(a.block).toBe(12);
+
+    // relentless: first kill revives at half, second kill sticks
+    giveHand(run, ['tideStrike', 'tideStrike']);
+    b.hp = 1;
+    b.block = 0;
+    playCard(run, 9000, b.uid, newEmit());
+    expect(b.dead).toBeUndefined();
+    expect(b.reanimated).toBe(true);
+    expect(b.hp).toBe(Math.floor(b.maxHp / 2));
+    b.hp = 1;
+    playCard(run, 9001, b.uid, newEmit());
+    expect(b.dead).toBe(true);
+
+    // venomous: after the enemy phase, its strike left toxin behind
+    runEnemyPhase(run);
+    expect(getStatus(bs.player, 'toxin')).toBeGreaterThanOrEqual(1);
+    void c;
+  });
+
+  it('endless: loop bosses spawn affixed, their minions stay clean', () => {
+    const rng = makeRng(hashSeed('boss-affix'));
+    const spec1 = generateBossSpec(rng, 2, 1, 'b1'); // kraken: arm, head, arm
+    const head = spec1.enemies.find((e) => e.defId === 'krakenHead')!;
+    const arms = spec1.enemies.filter((e) => e.defId === 'krakenArm');
+    expect(head.affixes?.length).toBe(1);
+    expect(arms.every((e) => !e.affixes)).toBe(true);
+    const spec3 = generateBossSpec(rng, 1, 3, 'b3');
+    expect(spec3.enemies[0].affixes?.length).toBe(2);
   });
 
   it('conditional text folds in when live: "Flood: Deal 12" at High tide, "+5" suffix otherwise', () => {

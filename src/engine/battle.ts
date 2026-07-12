@@ -143,7 +143,7 @@ function damageEnemy(
 
 function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
   const def = ENEMIES[e.defId];
-  if (def.reanimates && !e.reanimated) {
+  if ((def.reanimates || e.affixes?.includes('relentless')) && !e.reanimated) {
     e.reanimated = true;
     e.hp = Math.floor(e.maxHp / 2);
     e.statuses = {};
@@ -302,7 +302,7 @@ function onTideHigh(run: RunState, bs: BattleState, emit: Emit) {
     drawCards(run, bs, 1, emit);
   }
   for (const e of living(bs)) {
-    const t = ENEMIES[e.defId].tideTouched;
+    const t = (ENEMIES[e.defId].tideTouched ?? 0) + (e.affixes?.includes('tidetouched') ? 2 : 0);
     if (t) {
       addStatus(e, 'might', t);
       fx(emit, { kind: 'status', target: enemyKey(e), status: 'might', amount: t });
@@ -641,7 +641,7 @@ export function startBattle(run: RunState, encounter: string | EncounterSpec, em
     const def = ENEMIES[defId];
     let hp = r.int(def.hp[0], def.hp[1]);
     hp = Math.round(hp * ascHpScale(run));
-    return {
+    const st: EnemyState = {
       uid: i + 1,
       defId,
       hp,
@@ -652,6 +652,14 @@ export function startBattle(run: RunState, encounter: string | EncounterSpec, em
       history: [],
       ...(affixes?.length ? { affixes } : {}),
     };
+    // spawn-time affixes; relentless/tidetouched/venomous act at their hook sites
+    for (const a of affixes ?? []) {
+      if (a === 'hulking') { st.hp = st.maxHp = Math.round(st.hp * 1.35); }
+      else if (a === 'raging') addStatus(st, 'might', 2);
+      else if (a === 'spined') addStatus(st, 'spines', 3);
+      else if (a === 'shielded') st.block = 12;
+    }
+    return st;
   });
   const battleSeed = r.int(0, 2 ** 31);
   run.rng = r.state();
@@ -977,6 +985,10 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
       const spines = getStatus(bs.player, 'spines');
       if (spines > 0) damageEnemy(run, bs, e, spines, emit);
       if (bs.phase !== 'enemy' || e.dead) break;
+    }
+    // Venomous affix: the strike leaves poison behind (once per move, not per hit)
+    if (bs.phase === 'enemy' && !e.dead && e.affixes?.includes('venomous')) {
+      applyStatusTo(run, bs, bs.player, 'toxin', 2, emit, 'player');
     }
   }
   if (bs.phase !== 'enemy') return;

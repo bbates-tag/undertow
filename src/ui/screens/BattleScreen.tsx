@@ -81,8 +81,8 @@ export function BattleScreen() {
   const [ceremony, setCeremony] = useState(0);
   const handAreaRef = useRef<HTMLDivElement>(null);
   const [handMetrics, setHandMetrics] = useState({ avail: 0, cardW: 0 });
-  /** enemy defId whose dossier overlay is open (tap an enemy to inspect it) */
-  const [dossierId, setDossierId] = useState<string | null>(null);
+  /** enemy whose dossier overlay is open (tap an enemy to inspect it) */
+  const [dossier, setDossier] = useState<{ defId: string; affixes?: string[] } | null>(null);
 
   // measure the hand's real estate so the fan only overlaps as much as the
   // available width actually requires
@@ -282,7 +282,7 @@ export function BattleScreen() {
               previewTimes={previewDmg?.times ?? 1}
               onPick={() => playSelected(e.uid)}
               /* with a card selected, taps keep their play semantics — no dossier */
-              onInspect={selected || drag ? undefined : () => setDossierId(e.defId)}
+              onInspect={selected || drag ? undefined : () => setDossier({ defId: e.defId, affixes: e.affixes })}
               reduced={reduced}
             />
           ))}
@@ -539,7 +539,9 @@ export function BattleScreen() {
 
       {/* enemy dossier */}
       <AnimatePresence>
-        {dossierId && <EnemyDossier key={dossierId} defId={dossierId} onClose={() => setDossierId(null)} />}
+        {dossier && (
+          <EnemyDossier key={dossier.defId} defId={dossier.defId} affixes={dossier.affixes} onClose={() => setDossier(null)} />
+        )}
       </AnimatePresence>
 
       <StatusChipsGlossary />

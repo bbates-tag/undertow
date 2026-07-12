@@ -6,6 +6,7 @@
 import type { EncounterSpec, EnemyDef } from './types';
 import type { Rng } from '../lib/rng';
 import { ENEMIES, encounterPool } from '../content/enemies';
+import { AFFIXES } from '../content/affixes';
 
 /** summon-only creatures never spawn on their own */
 const MINIONS = new Set(['tentacleSpawn', 'krakenArm', 'boneShoalMinion']);
@@ -39,6 +40,20 @@ function loopBudget(base: number, loop: number): number {
   return base * Math.min(2, 1 + 0.12 * loop);
 }
 
+/** roll `count` distinct affixes that make sense on this enemy */
+function rollAffixes(rng: Rng, def: EnemyDef, count: number): string[] {
+  const hasAttack = Object.values(def.moves).some((m) => m.attack);
+  const pool = Object.keys(AFFIXES).filter((a) => {
+    if (a === 'venomous' && !hasAttack) return false; // toothless venom
+    if (a === 'relentless' && def.reanimates) return false; // already does
+    return true;
+  });
+  return rng.shuffle([...pool]).slice(0, Math.min(count, pool.length));
+}
+
+/** odds a normal enemy spawns affixed — climbs with depth */
+const affixChance = (loop: number) => Math.min(0.9, 0.25 + 0.15 * loop);
+
 const normals = (act?: 1 | 2 | 3): EnemyDef[] =>
   Object.values(ENEMIES).filter(
     (e) => e.tier === 'normal' && !MINIONS.has(e.id) && e.act > 0 && (act === undefined || e.act === act),
@@ -59,8 +74,9 @@ export function generateBattleSpec(
     const affordable = src.filter((e) => threatCost(e) <= budget - spent);
     if (!affordable.length) break;
     const def = rng.pick(affordable);
-    enemies.push({ defId: def.id });
-    spent += threatCost(def);
+    const affixes = rng.chance(affixChance(loop)) ? rollAffixes(rng, def, 1) : [];
+    enemies.push(affixes.length ? { defId: def.id, affixes } : { defId: def.id });
+    spent += threatCost(def) * (affixes.length ? 1.3 : 1); // affixes aren't free
     // within tolerance of the budget, sometimes stop early — variety in group size
     if (spent >= budget * 0.75 && rng.chance(0.55)) break;
   }
@@ -75,9 +91,25 @@ export function generateEliteSpec(rng: Rng, act: 1 | 2 | 3, loop: number, id: st
   );
   const anchor = rng.pick(elites);
   const budget = loopBudget(authoredBudget(act, 'elite'), loop);
-  const enemies: EncounterSpec['enemies'] = [{ defId: anchor.id }];
-  const remaining = budget - threatCost(anchor);
+  // the anchor always spawns affixed — two affixes past loop 2
+  const anchorAffixes = rollAffixes(rng, anchor, loop >= 3 ? 2 : 1);
+  const enemies: EncounterSpec['enemies'] = [{ defId: anchor.id, affixes: anchorAffixes }];
+  const remaining = budget - threatCost(anchor) * 1.3;
   const adjuncts = normals().filter((e) => threatCost(e) <= remaining);
   if (adjuncts.length && rng.chance(0.6)) enemies.push({ defId: rng.pick(adjuncts).id });
   return { id, enemies, pool: 'elite' };
+}
+
+/** loop boss: the authored encounter, but the boss-tier creature spawns affixed */
+export function generateBossSpec(rng: Rng, act: 1 | 2 | 3, loop: number, id: string): EncounterSpec {
+  const enc = encounterPool(act, 'boss')[0];
+  const count = loop >= 3 ? 2 : 1;
+  return {
+    id,
+    pool: 'boss',
+    enemies: enc.enemies.map((defId) => {
+      const def = ENEMIES[defId];
+      return def.tier === 'boss' ? { defId, affixes: rollAffixes(rng, def, count) } : { defId };
+    }),
+  };
 }

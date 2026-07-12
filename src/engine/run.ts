@@ -8,7 +8,7 @@ import { hashSeed, makeRng, type Rng } from '../lib/rng';
 import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
 import { CHARACTERS } from '../content/characters';
 import { RELICS, relicPool } from '../content/relics';
-import { generateBattleSpec, generateEliteSpec } from './endless';
+import { generateBattleSpec, generateBossSpec, generateEliteSpec } from './endless';
 import { EVENTS } from '../content/events';
 import { encounterPool } from '../content/enemies';
 import { lockedContent } from '../content/meta';
@@ -123,6 +123,8 @@ export function generateMap(rng: Rng, act: 1 | 2 | 3, loop = 0): GameMap {
         n.encounter = generateBattleSpec(rng, act, r <= 2 ? 'easy' : 'hard', loop, `endless-L${loop}-a${act}-${r}.${n.col}`);
       } else if (n.type === 'elite' && loop > 0) {
         n.encounter = generateEliteSpec(rng, act, loop, `endless-L${loop}-a${act}-${r}.${n.col}e`);
+      } else if (n.type === 'boss' && loop > 0) {
+        n.encounter = generateBossSpec(rng, act, loop, `endless-L${loop}-a${act}-boss`);
       } else if (n.type === 'battle') n.payload = pickEnc(r <= 2 ? easy : hard);
       else if (n.type === 'elite') n.payload = rng.pick(elitePool).id;
       else if (n.type === 'boss') n.payload = encounterPool(act, 'boss')[0].id;

@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ENEMIES } from '../../content/enemies';
+import { AFFIXES } from '../../content/affixes';
 import { ArtImage } from './Art';
+import { GameIcon } from '../icons';
 
 /** minions that reuse another enemy's art masters */
 const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal' };
@@ -19,7 +21,7 @@ const ACT_NAME: Record<number, string> = {
 
 const TIER_LABEL: Record<string, string> = { normal: 'Denizen', elite: 'Elite', boss: 'Boss', minion: 'Minion' };
 
-export function EnemyDossier({ defId, onClose }: { defId: string; onClose: () => void }) {
+export function EnemyDossier({ defId, affixes, onClose }: { defId: string; affixes?: string[]; onClose: () => void }) {
   const def = ENEMIES[defId];
 
   useEffect(() => {
@@ -97,6 +99,22 @@ export function EnemyDossier({ defId, onClose }: { defId: string; onClose: () =>
             <span className="chip text-(--color-dim)">{ACT_NAME[def.act]}</span>
           </div>
           {def.lore && <p className="text-sm leading-relaxed text-(--color-foam) mt-3">{def.lore}</p>}
+          {affixes && affixes.length > 0 && (
+            <div className="mt-3 border-t border-white/10 pt-2">
+              <div className="text-[10px] uppercase tracking-[0.16em] font-bold mb-1" style={{ color: 'var(--color-lure)' }}>
+                Abyssal affixes
+              </div>
+              {affixes.map((a) => {
+                const d = AFFIXES[a];
+                return d ? (
+                  <div key={a} className="flex items-center gap-1.5 text-xs text-(--color-mist) py-0.5">
+                    <span style={{ color: 'var(--color-lure)' }}><GameIcon id={d.icon} size={12} /></span>
+                    <b className="text-(--color-foam)">{d.name}</b> — {d.text}
+                  </div>
+                ) : null;
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
