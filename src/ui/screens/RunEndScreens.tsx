@@ -1,6 +1,6 @@
 // Victory & game-over: score breakdown, fathoms earned, unlocks, next steps.
 
-import { Anchor, Home, RotateCcw } from 'lucide-react';
+import { Anchor, ArrowDown, Home, RotateCcw } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { scoreRun } from '../../engine/run';
 import { CHARACTERS } from '../../content/characters';
@@ -21,7 +21,12 @@ function ScorePanel() {
     ['Gold purse', Math.round(run.gold / 5)],
   ];
   if (run.ascension > 0) rows.push([`Depth ${run.ascension} bravery`, run.ascension * 15]);
+  if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, run.loop * 100]);
   if (run.result === 'win') rows.push(['Survived the Drowned God', 150 + run.hp]);
+  // an endless death pays out only what was earned since the banked victory
+  const fathoms = run.result === 'loss' && run.loop > 0
+    ? Math.max(0, score - (run.endlessBanked ?? 0))
+    : score;
 
   return (
     <div className="panel p-4 w-[min(92vw,380px)] text-sm">
@@ -37,7 +42,7 @@ function ScorePanel() {
       </div>
       <div className="flex justify-between text-xs text-(--color-glow) mt-1">
         <span>Fathoms earned (unlock progress)</span>
-        <span>+{score}</span>
+        <span>+{fathoms}</span>
       </div>
       {newlyUnlocked.length > 0 && (
         <div className="mt-3 border-t border-(--color-abyss-600) pt-2">
@@ -77,6 +82,11 @@ export function GameOverScreen() {
       <p className="text-(--color-mist) text-sm italic -mt-2">
         {run.killedBy ? `Taken by ${run.killedBy}, ${run.floor * 15}m down.` : 'The trench keeps what it catches.'}
       </p>
+      {run.loop > 0 && (
+        <p className="text-xs font-bold -mt-1" style={{ color: 'var(--color-glow)' }}>
+          Deepest dive: Loop {run.loop + 1} · Depth {run.floor}
+        </p>
+      )}
       <ScorePanel />
       <p className="text-xs text-(--color-dim) max-w-[340px] text-center">
         Every dive earns fathoms — dead or alive. Spend nothing; unlocks are forever.
@@ -88,6 +98,7 @@ export function GameOverScreen() {
 
 export function VictoryScreen() {
   const run = useGame((s) => s.run);
+  const continueEndless = useGame((s) => s.continueEndless);
   if (!run) return null;
   const ch = CHARACTERS[run.charId];
   return (
@@ -101,6 +112,21 @@ export function VictoryScreen() {
       </p>
       <ScorePanel />
       <p className="text-xs text-(--color-gold) relative z-10">Depth {run.ascension + 1} is now open — a crueler trench awaits.</p>
+      {!run.daily && (
+        <div className="relative z-10 flex flex-col items-center gap-1.5">
+          <button
+            className="btn text-sm font-bold"
+            style={{ borderColor: 'rgba(255,93,162,0.55)', color: 'var(--color-lure)' }}
+            onClick={continueEndless}
+          >
+            <ArrowDown size={15} /> Descend Deeper
+          </button>
+          <p className="text-[11px] text-(--color-dim) max-w-[300px] text-center italic">
+            The sea has no bottom. Each loop the deep grows crueler — and only death ends the dive.
+            Your victory is already banked.
+          </p>
+        </div>
+      )}
       <EndButtons />
     </div>
   );

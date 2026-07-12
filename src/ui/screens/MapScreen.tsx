@@ -95,7 +95,10 @@ export function MapScreen() {
           <Layers size={11} /> {run.deck.length}
         </button>
         <div className="flex-1" />
-        <span className="text-[11px] font-display italic text-(--color-mist)">{ACT_NAMES[run.act]}</span>
+        <span className="text-[11px] font-display italic text-(--color-mist)">
+          {ACT_NAMES[run.act]}
+          {run.loop > 0 && <span className="font-bold not-italic" style={{ color: 'var(--color-lure)' }}> · LOOP {run.loop + 1}</span>}
+        </span>
       </div>
       <RelicBar relics={run.relics} />
       {run.daily && (
