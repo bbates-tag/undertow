@@ -277,6 +277,23 @@ describe('tide', () => {
     void c;
   });
 
+  it('summons surface with sickness: telegraph first, act only next phase', () => {
+    const run = battleRun('a2_elite_cultist');
+    const bs = run.battle!;
+    expect(bs.enemies[0].moveId).toBe('beckon'); // alone, the cultist calls the deep
+    const hp0 = bs.player.hp;
+    giveHand(run, []);
+    runEnemyPhase(run);
+    const tentacle = bs.enemies.find((e) => e.defId === 'tentacleSpawn')!;
+    expect(tentacle).toBeTruthy();
+    expect(bs.player.hp).toBe(hp0); // the fresh tentacle did NOT lash this phase
+    expect(tentacle.surfacing).toBeUndefined(); // sickness cleared at phase end…
+    expect(tentacle.moveId).toBe('lash'); // …and its intent is telegraphed
+    giveHand(run, []);
+    runEnemyPhase(run);
+    expect(hp0 - bs.player.hp).toBeGreaterThanOrEqual(6); // now the lash lands
+  });
+
   it('deep endless: boons replace a drained boss pool, and each boon works', () => {
     const run = battleRun('a1_boss');
     run.relics.push('rustedHelm', 'blackPearl', 'pressureCrown', 'heartOfMaelstrom', 'grimoireOfBrine', 'leviathansEye');
@@ -331,7 +348,7 @@ describe('tide', () => {
 
   it('endless: loop bosses spawn affixed, their minions stay clean', () => {
     const rng = makeRng(hashSeed('boss-affix'));
-    const spec1 = generateBossSpec(rng, 2, 1, 'b1'); // kraken: arm, head, arm
+    const spec1 = generateBossSpec(rng, 3, 1, 'b1'); // the act-3 kraken: arm, head, arm
     const head = spec1.enemies.find((e) => e.defId === 'krakenHead')!;
     const arms = spec1.enemies.filter((e) => e.defId === 'krakenArm');
     expect(head.affixes?.length).toBe(1);

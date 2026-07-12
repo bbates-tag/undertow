@@ -200,6 +200,8 @@ export interface EnemyState extends CreatureState {
   history: string[];
   /** endless affixes on this instance (see content/affixes.ts) */
   affixes?: string[];
+  /** summoned this enemy phase — telegraphs but doesn't act until next turn */
+  surfacing?: boolean;
   reanimated?: boolean;
   dead?: boolean; // kept in array for stable layout; filtered for logic
 }

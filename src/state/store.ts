@@ -508,9 +508,9 @@ export const useGame = create<GameStore>((set, get) => {
       commit(clone);
       playSfxList(['victory', 'gold']);
       if (reward.relics.length) playSfx('relicGet');
-      // boss achievements
+      // boss achievements (the Kraken is the act-3 finale; the Drowned God holds act 2)
       if (groupId === 'a1_boss') award('kingslayer');
-      if (groupId === 'a2_boss') award('krakenslayer');
+      if (groupId === 'a3_boss') award('krakenslayer');
       if (wasBoss && get().run!.battle === null && get().run!.stats.battlesFlawless > 0) {
         // flawless tracked per battle below
       }
