@@ -38,6 +38,8 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'glassFloat', name: 'Glass Float', icon: 'GiFloatingCrystal', tier: 'common', text: 'Draw 2 extra cards on your first turn each battle.' },
       { id: 'whaleOilFlask', name: 'Whale-Oil Flask', icon: 'GiSpermWhale', tier: 'common', text: 'Resting heals 15 extra HP.' },
       { id: 'saltVein', name: 'Salt Vein', icon: 'GiHeartDrop', tier: 'common', char: 'drowned', text: 'Start each battle with 3 Descent.' },
+      { id: 'gullFeather', name: 'Gull Feather', icon: 'GiFeather', tier: 'common', text: 'Whenever an enemy dies, draw 1 card.', flavor: 'Where gulls circle, something is being finished.' },
+      { id: 'oarfishRibbon', name: 'Oarfish Ribbon', icon: 'GiSeaSerpent', tier: 'common', text: 'Whenever you Shift the tide, gain 2 Block.' },
       // ── Uncommon / Rare ──
       { id: 'chumBucket', name: 'Chum Bucket', icon: 'GiCauldron', tier: 'uncommon', text: 'Enemies start each battle with 3 Toxin.' },
       { id: 'sirenScale', name: 'Siren Scale', icon: 'GiMusicalNotes', tier: 'uncommon', text: 'Whenever you play a Power, draw 2 cards.' },
@@ -45,8 +47,11 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'deepSextant', name: 'Deep Sextant', icon: 'GiSextant', tier: 'uncommon', text: 'Card removal at shops costs half.' },
       { id: 'bioBulb', name: 'Bioluminescent Bulb', icon: 'GiCandlebright', tier: 'uncommon', text: 'At the start of each battle, apply 1 Exposed to ALL enemies.' },
       { id: 'spinedBracers', name: 'Spined Bracers', icon: 'GiSpikedArmor', tier: 'uncommon', text: 'Start each battle with 3 Spines.' },
+      { id: 'harpoonersLine', name: "Harpooner's Line", icon: 'GiHarpoonTrident', tier: 'uncommon', text: 'Your Attacks deal +2 damage to enemies that have Block.', flavor: 'Armor just gives the barb something to hold.' },
       { id: 'nacreCharm', name: 'Nacre Charm', icon: 'GiCrystalShine', tier: 'rare', text: 'The first time you would lose HP each battle, prevent it.', flavor: 'Mother-of-pearl remembers being soft.' },
       { id: 'abyssalFigurehead', name: 'Abyssal Figurehead', icon: 'GiShipWheel', tier: 'rare', text: 'Elite enemies drop an extra relic.' },
+      { id: 'paleStarfish', name: 'Pale Starfish', icon: 'GiSeaStar', tier: 'rare', text: 'At the end of your turn, heal 2 HP if you lost no HP this turn.', flavor: 'It regrows what it is patient about.' },
+      { id: 'drownedCompass', name: 'Drowned Compass', icon: 'GiCompass', tier: 'rare', text: 'Each time the tide completes a full cycle, gain 1 Might and 1 Finesse.', flavor: 'It points down, which is forward.' },
       // ── Treasure (chest-exclusive salvage — power with teeth) ──
       { id: 'fangedLocket', name: 'Fanged Locket', icon: 'GiFangs', tier: 'treasure', text: 'Start each battle with 2 Might. Take 2 damage at the start of each battle.', flavor: 'It loves you back, mostly.' },
       { id: 'leadenIdol', name: 'Leaden Idol', icon: 'GiAmmonite', tier: 'treasure', text: 'On pickup: gain 12 Max HP. Battles start at Low tide.', flavor: 'Heavy as a kept promise.' },

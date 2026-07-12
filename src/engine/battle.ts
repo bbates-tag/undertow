@@ -102,7 +102,9 @@ export function calcAttack(base: number, attacker: CreatureState, defender: Crea
 
 /** Full preview of what one hit of a player attack would deal to a target. */
 export function previewPlayerAttack(run: RunState, bs: BattleState, amount: Amount, target: EnemyState): number {
-  let d = calcAttack(resolveAmount(bs, amount, target), bs.player, target);
+  let raw = resolveAmount(bs, amount, target);
+  if (target.block > 0 && run.relics.includes('harpoonersLine')) raw += 2;
+  let d = calcAttack(raw, bs.player, target);
   if (!bs.counters.bloodletterUsed && run.relics.includes('bloodletterHook')) d *= 2;
   return d;
 }
@@ -154,6 +156,8 @@ function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
   run.stats.kills++;
   fx(emit, { kind: 'burst', target: enemyKey(e), color: 'ink', n: 18, shape: 'bubble' });
   sfx(emit, 'enemyDie');
+  // Gull Feather: something finished — the scavengers tell you where to look next
+  if (run.relics.includes('gullFeather')) drawCards(run, bs, 1, emit);
   // Depthless Hunger power
   for (const p of bs.powers) {
     if (p === 'hunger2' || p === 'hunger3') {
@@ -186,6 +190,7 @@ function losePlayerHp(
   if (hpLoss > 0) {
     p.hp = Math.max(0, p.hp - hpLoss);
     bs.battleDamageTaken += hpLoss;
+    bs.counters.hpLostTurn = bs.turn; // Pale Starfish reads this at turn end
     run.stats.damageTaken += hpLoss;
     fx(emit, { kind: 'dmg', target: 'player', amount: hpLoss });
     fx(emit, { kind: 'shake', strength: Math.min(1, hpLoss / 14) });
@@ -279,6 +284,15 @@ export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit,
     if (!silent) sfx(emit, 'tide');
     // Heart of the Maelstrom: the churn shields you
     if (run.relics.includes('heartOfMaelstrom')) gainPlayerBlock(run, bs, 3, emit, false);
+    // Drowned Compass: every completed cycle of the wheel sharpens you
+    if (run.relics.includes('drownedCompass')) {
+      bs.counters.compass = (bs.counters.compass ?? 0) + (((n % 4) + 4) % 4);
+      while (bs.counters.compass >= 4) {
+        bs.counters.compass -= 4;
+        applyStatusTo(run, bs, bs.player, 'might', 1, emit, 'player');
+        applyStatusTo(run, bs, bs.player, 'finesse', 1, emit, 'player');
+      }
+    }
     if (bs.tide === 2) onTideHigh(run, bs, emit);
   }
 }
@@ -382,7 +396,9 @@ export function runOps(
             if (t) victims = [t];
           }
           for (const v of victims) {
-            const raw = resolveAmount(bs, op.amount, v) + whetstone;
+            // Harpooner's Line: armor gives the barb something to hold
+            const line = v.block > 0 && run.relics.includes('harpoonersLine') ? 2 : 0;
+            const raw = resolveAmount(bs, op.amount, v) + whetstone + line;
             const dmg = calcAttack(raw, bs.player, v) * bloodletter;
             damageEnemy(run, bs, v, dmg, emit, { pierce: op.pierce, fromAttack: true });
             fx(emit, { kind: 'burst', target: enemyKey(v), color: 'hit', n: 8, shape: 'spark' });
@@ -435,6 +451,7 @@ export function runOps(
         break;
       case 'shift':
         shiftTide(run, bs, op.amount, emit);
+        if (run.relics.includes('oarfishRibbon')) gainPlayerBlock(run, bs, 2, emit, false);
         break;
       case 'gold':
         run.gold += op.amount;
@@ -535,6 +552,9 @@ function relicsTurnStart(run: RunState, bs: BattleState, emit: Emit) {
 
 function relicsTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
   if (run.relics.includes('hermitShell')) gainPlayerBlock(run, bs, 2, emit, false);
+  if (run.relics.includes('paleStarfish') && bs.counters.hpLostTurn !== bs.turn) {
+    healPlayer(run, bs, 2, emit);
+  }
 }
 
 // ── Power hook sites ─────────────────────────────────────────────────────────

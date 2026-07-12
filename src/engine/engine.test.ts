@@ -208,6 +208,46 @@ describe('tide', () => {
     void hp1;
   });
 
+  it("Harpooner's Line only bites armored enemies; Oarfish Ribbon pays out per Shift", () => {
+    const run = battleRun();
+    run.relics.push('harpoonersLine', 'oarfishRibbon');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    giveHand(run, ['tideStrike', 'tideStrike', 'riptide']);
+    e.block = 0;
+    const hp0 = e.hp;
+    playCard(run, 9000, e.uid, newEmit());
+    expect(hp0 - e.hp).toBe(6); // no block, no bonus
+    e.block = 5;
+    playCard(run, 9001, e.uid, newEmit());
+    expect(e.block).toBe(0);
+    expect(hp0 - 6 - e.hp).toBe(8 - 5); // 6+2, 5 soaked by block
+    const blk0 = bs.player.block;
+    playCard(run, 9002, e.uid, newEmit()); // riptide: damage + Shift +1
+    expect(bs.player.block - blk0).toBe(2);
+  });
+
+  it('Pale Starfish heals bloodless turns; Gull Feather draws on kills', () => {
+    const run = battleRun();
+    run.relics.push('paleStarfish', 'gullFeather');
+    const bs = run.battle!;
+    bs.player.hp = 50;
+    giveHand(run, ['tideStrike']);
+    bs.enemies[0].hp = 1;
+    const hand0 = bs.hand.length;
+    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    expect(bs.phase).toBe('won'); // solo crab dies…
+    expect(bs.hand.length).toBe(hand0 - 1 + 1); // …and the feather still drew first
+    // starfish: end an untouched turn in a fresh battle
+    const run2 = battleRun('a1_moray');
+    run2.relics.push('paleStarfish');
+    const bs2 = run2.battle!;
+    bs2.player.hp = 40;
+    bs2.enemies[0].moveId = 'lurk'; // enemy blocks instead of attacking
+    endPlayerTurn(run2, newEmit());
+    expect(bs2.player.hp).toBeGreaterThanOrEqual(42 - 2); // healed 2 at turn end (before enemy act)
+  });
+
   it('Leaden Idol and Merchant\'s Debt pickup effects apply once', () => {
     const run = testRun('pickup');
     const hp = run.maxHp;
