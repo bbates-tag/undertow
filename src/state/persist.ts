@@ -46,6 +46,7 @@ export function loadSave(): SaveBlob | null {
     if (!raw) return null;
     const blob = JSON.parse(raw) as SaveBlob;
     if (!blob || blob.version !== 1 || !blob.meta) return null;
+    if (blob.run && blob.run.loop === undefined) blob.run.loop = 0; // pre-endless saves
     return blob;
   } catch {
     return null;

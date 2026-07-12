@@ -301,6 +301,8 @@ export interface RunState {
   unlockedPacks: string[];
   daily: { date: string; mods: string[] } | null;
   act: 1 | 2 | 3;
+  /** endless descents completed: 0 = the normal three acts, 1+ = loops past the Drowned God */
+  loop: number;
   map: GameMap;
   /** current position; null until the first node of the act is chosen */
   pos: { row: number; col: number } | null;
@@ -319,6 +321,8 @@ export interface RunState {
   stats: RunStats;
   result: 'win' | 'loss' | null;
   killedBy?: string;
+  /** score already paid out as fathoms at first victory — endless deaths award only the delta */
+  endlessBanked?: number;
 }
 
 // ── Meta / persistence ───────────────────────────────────────────────────────
@@ -334,6 +338,8 @@ export interface RunSummary {
   daily: boolean;
   killedBy?: string;
   fathoms: number;
+  /** deepest endless loop reached (absent for ordinary runs) */
+  loop?: number;
 }
 
 export interface DailyResult {
