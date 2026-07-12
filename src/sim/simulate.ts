@@ -7,8 +7,8 @@
 
 import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, startBattle } from '../engine/battle';
 import {
-  addRelic, applyEventEffect, beginLoop, buyRemoval, buyShopItem, descend, doRestHeal, enterNode,
-  generateBattleReward, generateShop, newRun, reachableNodes, scoreRun, completePick,
+  addRelic, applyBoon, applyEventEffect, beginLoop, buyRemoval, buyShopItem, descend, doRestHeal,
+  enterNode, generateBattleReward, generateShop, newRun, reachableNodes, scoreRun, completePick,
 } from '../engine/run';
 import type { CharacterId, MapNode, RunState } from '../engine/types';
 import { CARDS } from '../content/cards';
@@ -154,6 +154,7 @@ export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?
       run.gold += reward.gold;
       for (const relic of reward.relics) addRelic(run, relic);
       if (reward.bossRelics.length) addRelic(run, reward.bossRelics[Math.floor(rng() * reward.bossRelics.length)]);
+      else if (reward.bossBoons?.length) applyBoon(run, reward.bossBoons[Math.floor(rng() * reward.bossBoons.length)], newEmit());
       if (reward.cards.length) {
         const pick = [...reward.cards].sort((a, b) => draftScore(b.defId) - draftScore(a.defId))[0];
         const full = run.deck.length >= 22;
