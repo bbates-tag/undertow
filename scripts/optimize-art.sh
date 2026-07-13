@@ -15,9 +15,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 quality=82
-declare -A maxdim=( [cards]=640 [enemies]=640 [characters]=900 )
+declare -A maxdim=( [cards]=640 [enemies]=640 [characters]=900 [backgrounds]=1920 )
 
-for kind in cards enemies characters; do
+for kind in cards enemies characters backgrounds; do
   src="public/art/$kind"
   orig="art-originals/$kind"
   mkdir -p "$orig" "$src"

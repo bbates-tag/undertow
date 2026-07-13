@@ -25,6 +25,7 @@ import { CardBack, PileWidget } from '../components/CardBack';
 import { StatusChipsGlossary, useReducedMotion } from '../hooks';
 import { enemyUidAtPoint, fxTargetCenter, fxTargetRef, nearestEnemyUid } from '../fxRegistry';
 import { ArtImage } from '../components/Art';
+import { BattleBackdrop } from '../components/BattleBackdrop';
 
 /** minimum drag displacement (px, mostly upward) before releasing plays an untargeted card */
 const DRAG_PLAY_DIST = 120;
@@ -225,7 +226,8 @@ export function BattleScreen() {
     : [];
 
   return (
-    <div ref={shakeRef} className="h-dvh flex flex-col app-bg relative overflow-hidden" data-act={run.act} id="battle-root">
+    <div ref={shakeRef} className="h-dvh flex flex-col app-bg relative isolate overflow-hidden" data-act={run.act} id="battle-root">
+      <BattleBackdrop act={run.act} enemies={bs.enemies} />
       <FxLayer shakeTarget={shakeRef} reduced={reduced} />
 
       {/* top bar */}
@@ -256,7 +258,7 @@ export function BattleScreen() {
             <div className="font-display text-xl font-bold tracking-[0.3em] pl-[0.3em]" style={{ color: 'var(--color-lure)', textShadow: '0 0 30px currentColor' }}>
               {(enemies.find((e) => ENEMIES[e.defId].tier === 'boss') && ENEMIES[enemies.find((e) => ENEMIES[e.defId].tier === 'boss')!.defId].name) || 'BOSS'}
             </div>
-            <div className="text-xs text-(--color-dim) italic">
+            <div className="text-xs text-(--color-mist) italic on-art">
               {enemies.find((e) => ENEMIES[e.defId].tier === 'boss') ? ENEMIES[enemies.find((e) => ENEMIES[e.defId].tier === 'boss')!.defId].title : ''}
             </div>
           </motion.div>

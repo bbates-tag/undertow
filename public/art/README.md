@@ -6,6 +6,9 @@ Put generated **master** images here (any resolution), named by content id:
 public/art/cards/<cardId>.png        e.g. tideStrike.png, gigavolt.png
 public/art/enemies/<enemyId>.png     e.g. sunkenKing.png, jellyDrifter.png
 public/art/characters/<charId>.png   tidecaller.png, voltaic.png
+public/art/backgrounds/<id>.png      act1.png/act2.png/act3.png (depth art),
+                                     or a boss enemyId (sunkenKing.png,
+                                     drownedGod.png, krakenHead.png)
 ```
 
 Then run the optimizer:
