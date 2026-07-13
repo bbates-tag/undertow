@@ -189,7 +189,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
             style={{ width: `${hpFrac * 100}%` }}
           />
         </div>
-        <div className="flex items-center justify-center gap-1 text-[11px] font-bold mt-0.5">
+        <div className="flex items-center justify-center gap-1 text-[11px] font-bold mt-0.5 on-art">
           <span>{e.hp}/{e.maxHp}</span>
           {e.block > 0 && (
             <span className="chip" style={{ color: 'var(--color-shield)' }}>
@@ -216,7 +216,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
           })}
         </div>
       )}
-      <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-dim) font-semibold">{def.name}</div>
+      <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-mist) font-semibold on-art">{def.name}</div>
     </motion.div>
   );
 }
