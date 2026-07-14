@@ -25,6 +25,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'livingCoral', name: 'Living Coral', icon: 'GiCoral', tier: 'starter', char: 'tidecaller', text: 'Heal 5 HP after each battle.', flavor: 'It grew into the wound and stayed.' },
       { id: 'stormCore', name: 'Storm Core', icon: 'GiEnergyTank', tier: 'starter', char: 'voltaic', text: 'Start each battle with 3 Charge.', flavor: 'A heart, if a heart were weather.' },
       { id: 'barnacledHeart', name: 'Barnacled Heart', icon: 'GiChainedHeart', tier: 'starter', char: 'drowned', text: 'The first time you gain Descent each turn, gain 1 more. Heal 4 HP after each battle.', flavor: "It beats. That's not the worrying part." },
+      { id: 'weaversInstinct', name: "Weaver's Instinct", icon: 'GiSunkenEye', tier: 'starter', char: 'weaver', text: 'The first Read that comes true each turn draws a card.', flavor: 'She knew you would ask.' },
       // ── Common ──
       { id: 'sharktoothCharm', name: 'Sharktooth Charm', icon: 'GiFangsCircle', tier: 'common', text: 'Start each battle with 1 Might.' },
       { id: 'deepstoneIdol', name: 'Deepstone Idol', icon: 'GiDolmen', tier: 'common', text: 'On pickup: gain 8 Max HP.' },
@@ -42,6 +43,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'whaleOilFlask', name: 'Whale-Oil Flask', icon: 'GiSpermWhale', tier: 'common', text: 'Resting heals 15 extra HP.' },
       { id: 'saltVein', name: 'Salt Vein', icon: 'GiHeartDrop', tier: 'common', char: 'drowned', text: 'Start each battle with 3 Descent.' },
       { id: 'gullFeather', name: 'Gull Feather', icon: 'GiFeather', tier: 'common', text: 'Whenever an enemy dies, draw 1 card.', flavor: 'Where gulls circle, something is being finished.' },
+      { id: 'barometerShell', name: 'Barometer Shell', icon: 'GiSpiralShell', tier: 'common', char: 'weaver', text: 'Start each battle with 5 Block if any enemy opens with an attack.', flavor: 'It tightens before the weather does.' },
       { id: 'oarfishRibbon', name: 'Oarfish Ribbon', icon: 'GiSeaSerpent', tier: 'common', text: 'Whenever you Shift the tide, gain 2 Block.' },
       // ── Uncommon / Rare ──
       { id: 'chumBucket', name: 'Chum Bucket', icon: 'GiCauldron', tier: 'uncommon', text: 'Enemies start each battle with 3 Toxin.' },
@@ -51,6 +53,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'bioBulb', name: 'Bioluminescent Bulb', icon: 'GiCandlebright', tier: 'uncommon', text: 'At the start of each battle, apply 1 Exposed to ALL enemies.' },
       { id: 'spinedBracers', name: 'Spined Bracers', icon: 'GiSpikedArmor', tier: 'uncommon', text: 'Start each battle with 3 Spines.' },
       { id: 'harpoonersLine', name: "Harpooner's Line", icon: 'GiHarpoonTrident', tier: 'uncommon', text: 'Your Attacks deal +2 damage to enemies that have Block.', flavor: 'Armor just gives the barb something to hold.' },
+      { id: 'gyreCharts', name: 'Gyre Charts', icon: 'GiChart', tier: 'uncommon', char: 'weaver', text: 'Your Flood and Ebb effects also trigger when the matching tide is next.', flavor: 'The water tells her where it is going.' },
       { id: 'nacreCharm', name: 'Nacre Charm', icon: 'GiCrystalShine', tier: 'rare', text: 'The first time you would lose HP each battle, prevent it.', flavor: 'Mother-of-pearl remembers being soft.' },
       { id: 'abyssalFigurehead', name: 'Abyssal Figurehead', icon: 'GiShipWheel', tier: 'rare', text: 'Elite enemies drop an extra relic.' },
       { id: 'paleStarfish', name: 'Pale Starfish', icon: 'GiSeaStar', tier: 'rare', text: 'At the end of your turn, heal 2 HP if you lost no HP this turn.', flavor: 'It regrows what it is patient about.' },
@@ -71,6 +74,7 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'leviathansEye', name: "Leviathan's Eye", icon: 'GiBeastEye', tier: 'boss', text: 'At the start of each turn, apply 1 Toxin to ALL enemies.', flavor: 'It watched you the whole way down.' },
       { id: 'stormglassJar', name: 'Stormglass Jar', icon: 'GiBatteries', tier: 'boss', char: 'voltaic', text: 'Gain 2 Charge at the start of each turn.', flavor: 'Weather, bottled at the moment of breaking.' },
       { id: 'graveBallast', name: 'Grave Ballast', icon: 'GiWeight', tier: 'boss', char: 'drowned', text: 'Start each battle with 8 Descent.', flavor: 'Sink faster. Arrive first.' },
+      { id: 'eyeOfTheGyre', name: 'Eye of the Gyre', icon: 'GiVortex', tier: 'boss', char: 'weaver', text: 'At the start of each turn, apply 1 Exposed to every enemy intending an attack.', flavor: 'Everything that means you harm is already lit.' },
     ] as RelicDef[]
   ).map((r) => [r.id, r]),
 );

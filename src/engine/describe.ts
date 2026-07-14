@@ -1,8 +1,8 @@
 // Auto-generates rules text from a card's ops so all ~90 cards read
 // consistently, and so in-battle text shows live, modifier-adjusted numbers.
 
-import type { Amount, BattleState, CardDef, EnemyState, Op, PowerHookId, StatusId } from './types';
-import { calcAttack, resolveAmount } from './battle';
+import type { Amount, BattleState, CardDef, Cond, EnemyState, Op, PowerHookId, StatusId } from './types';
+import { anyEnemyIntends, calcAttack, resolveAmount } from './battle';
 
 export interface DescribeCtx {
   bs: BattleState;
@@ -12,7 +12,7 @@ export interface DescribeCtx {
 const STATUS_NAMES: Record<StatusId, string> = {
   toxin: 'Toxin', weakened: 'Weakened', exposed: 'Exposed', brittle: 'Brittle',
   might: 'Might', finesse: 'Finesse', spines: 'Spines', regen: 'Regen',
-  anchor: 'Anchor', charge: 'Charge', descent: 'Descent',
+  anchor: 'Anchor', charge: 'Charge', descent: 'Descent', marked: 'Marked',
 };
 
 const HOOK_TEXT: Record<PowerHookId, string> = {
@@ -47,7 +47,26 @@ const HOOK_TEXT: Record<PowerHookId, string> = {
   communion2: 'At the start of your turn, lose 2 HP and gain 2 Might.',
   communion3: 'At the start of your turn, lose 2 HP and gain 3 Might.',
   echoPain: 'Whenever you gain Descent, deal that much damage to a random enemy.',
+  weatherEye3: 'At the start of your turn, Read — any enemy intends to attack: gain 3 Block.',
+  weatherEye4: 'At the start of your turn, Read — any enemy intends to attack: gain 4 Block.',
+  apexEscort4: 'At the start of your turn, deal 4 damage to every enemy intending to attack.',
+  apexEscort5: 'At the start of your turn, deal 5 damage to every enemy intending to attack.',
+  grace3: 'The first enemy attack that hits you each turn deals 3 less damage.',
+  grace4: 'The first enemy attack that hits you each turn deals 4 less damage.',
+  perfectRead: 'Your Read effects always trigger.',
 };
+
+/** Read rider label for an intent condition. */
+function readLabel(cond: Extract<Cond, { intends: unknown }>): string {
+  const set = Array.isArray(cond.intends) ? cond.intends : [cond.intends];
+  const names: Record<string, string> = {
+    attacker: 'attack', schemer: 'buff, debuff, or summon', guarded: 'Block', dormant: 'sleep',
+  };
+  const what = set.map((c) => names[c]).join(' or ');
+  if (cond.who === 'target') return `Read — the target intends to ${what}`;
+  if (cond.who === 'anyOnYou') return `Read — any enemy intends to ${what}`;
+  return `Read — no enemy intends to ${what}`;
+}
 
 function amountClauses(a: Amount): string[] {
   const parts: string[] = [];
@@ -77,6 +96,10 @@ function opText(op: Op, ctx?: DescribeCtx): string {
     case 'damage': {
       const a = op.amount;
       const equalBlock = a.base === 0 && a.perBlock === 1;
+      if (a.perTelegraph && !ctx?.target) {
+        const mult = a.perTelegraph === 1 ? '' : `${a.perTelegraph}× `;
+        return `Deal damage equal to ${mult}the target's telegraphed attack (max 40).`;
+      }
       const n = dmgNumber(a, ctx);
       // when the tide bonus is live, the number already contains it — fold the
       // clause into a prefix instead of double-stating it as "+X"
@@ -158,8 +181,11 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       const alt = op.else?.length ? ` Otherwise: ${op.else.map((o) => opText(o, ctx)).join(' ')}` : '';
       if (op.cond === 'flood') return `Flood: ${inner}${alt}`;
       if (op.cond === 'ebb') return `Ebb: ${inner}${alt}`;
+      if (op.cond === 'floodSoon') return `Flood — now or next turn: ${inner}${alt}`;
+      if (op.cond === 'ebbSoon') return `Ebb — now or next turn: ${inner}${alt}`;
       if (op.cond === 'targetToxined') return `If the target has Toxin: ${inner}${alt}`;
       if (op.cond === 'targetBelowHalf') return `If the target is at half HP or less: ${inner}${alt}`;
+      if ('intends' in op.cond) return `${readLabel(op.cond)}: ${inner}${alt}`;
       if ('descentAtLeast' in op.cond) return `If you have ${op.cond.descentAtLeast}+ Descent: ${inner}${alt}`;
       return `If you have ${op.cond.chargeAtLeast}+ Charge: ${inner}${alt}`;
     }
@@ -181,8 +207,15 @@ export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleS
         const c = op.cond;
         if (c === 'flood') return bs.tide === 2;
         if (c === 'ebb') return bs.tide === 0;
+        if (c === 'floodSoon') return bs.tide === 2 || bs.tide === 1;
+        if (c === 'ebbSoon') return bs.tide === 0 || bs.tide === 3;
         if (typeof c === 'object' && 'descentAtLeast' in c) return (bs.player.statuses.descent ?? 0) >= c.descentAtLeast;
         if (typeof c === 'object' && 'chargeAtLeast' in c) return (bs.player.statuses.charge ?? 0) >= c.chargeAtLeast;
+        // Read riders that don't depend on a chosen target can glow
+        if (typeof c === 'object' && 'intends' in c && c.who !== 'target') {
+          const met = anyEnemyIntends(bs, c.intends);
+          return c.who === 'anyOnYou' ? met : !met;
+        }
         return false;
       }
       return false;

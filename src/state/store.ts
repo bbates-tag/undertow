@@ -215,6 +215,10 @@ export const useGame = create<GameStore>((set, get) => {
       meta.unlockedChars.push('drowned');
       unlocked.push('New character — The Drowned');
     }
+    if (run.stats.battlesFlawless >= 3 && !meta.unlockedChars.includes('weaver')) {
+      meta.unlockedChars.push('weaver');
+      unlocked.push('New character — The Wakeweaver');
+    }
     for (const pack of UNLOCK_PACKS) {
       if (meta.fathoms >= pack.atFathoms && !meta.unlockedPacks.includes(pack.id)) {
         meta.unlockedPacks.push(pack.id);

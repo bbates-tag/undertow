@@ -6,7 +6,7 @@
 
 import type {
   Amount, BattlePhase, BattleState, CardDef, CardInstance, Cond, CreatureState, EncounterSpec,
-  EnemyState, Fx, Op, PowerHookId, RunState, StatusId, Tide,
+  EnemyState, Fx, IntentKind, Op, PowerHookId, ReadClass, RunState, StatusId, Tide,
 } from './types';
 import { DEBUFFS } from './types';
 import { makeRng } from '../lib/rng';
@@ -88,8 +88,14 @@ export function resolveAmount(bs: BattleState, a: Amount, target?: EnemyState): 
   if (a.perDescent) n += a.perDescent * getStatus(bs.player, 'descent');
   if (a.perCardPlayed) n += a.perCardPlayed * bs.cardsPlayedThisTurn;
   if (a.perBlock) n += a.perBlock * bs.player.block;
-  if (a.flood && bs.tide === 2) n += a.flood;
-  if (a.ebb && bs.tide === 0) n += a.ebb;
+  const charts = !!bs.counters.gyreCharts;
+  if (a.flood && (bs.tide === 2 || (charts && (bs.tide + 1) % 4 === 2))) n += a.flood;
+  if (a.ebb && (bs.tide === 0 || (charts && (bs.tide + 1) % 4 === 0))) n += a.ebb;
+  if (a.perTelegraph && target) {
+    const mv = ENEMIES[target.defId].moves[target.moveId];
+    const tele = mv?.attack ? mv.attack.amount * (mv.attack.times ?? 1) : 0;
+    n += Math.min(40, a.perTelegraph * tele);
+  }
   return Math.max(0, n);
 }
 
@@ -159,6 +165,13 @@ function killEnemy(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) {
   sfx(emit, 'enemyDie');
   // Gull Feather: something finished — the scavengers tell you where to look next
   if (run.relics.includes('gullFeather')) drawCards(run, bs, 1, emit);
+  // Called Shot: she said exactly where, and exactly when
+  const mark = getStatus(e, 'marked');
+  if (mark > 0) {
+    bs.energy += 1 + mark;
+    drawCards(run, bs, 1 + mark, emit);
+    fx(emit, { kind: 'burst', target: 'player', color: 'glow', n: 10, shape: 'ring' });
+  }
   // Depthless Hunger power
   for (const p of bs.powers) {
     if (p === 'hunger2' || p === 'hunger3') {
@@ -338,11 +351,47 @@ export function drawCards(run: RunState, bs: BattleState, n: number, emit: Emit)
 
 // ── Ops interpreter ──────────────────────────────────────────────────────────
 
+/** Weaver Read: which class an enemy's telegraphed intent falls in. */
+export function readClassOf(intent: IntentKind): ReadClass {
+  switch (intent) {
+    case 'attack': case 'attackBlock': case 'attackDebuff': return 'attacker';
+    case 'buff': case 'debuff': case 'summon': return 'schemer';
+    case 'block': return 'guarded';
+    default: return 'dormant'; // sleep, unknown
+  }
+}
+
+function enemyReadClass(e: EnemyState): ReadClass {
+  return readClassOf(ENEMIES[e.defId].moves[e.moveId]?.intent ?? 'unknown');
+}
+
+/** Do any living enemies telegraph a move in the given Read classes? */
+export function anyEnemyIntends(bs: BattleState, classes: ReadClass | ReadClass[]): boolean {
+  const set = Array.isArray(classes) ? classes : [classes];
+  return living(bs).some((e) => set.includes(enemyReadClass(e)));
+}
+
+/** tide + gyre charts: 'soon' means now or after the next advance */
+function tideSoon(bs: BattleState, phase: Tide): boolean {
+  return bs.tide === phase || ((bs.tide + 1) % 4) === phase;
+}
+
 function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
-  if (cond === 'flood') return bs.tide === 2;
-  if (cond === 'ebb') return bs.tide === 0;
+  // Gyre Charts relic: Flood/Ebb also count when the phase is next
+  const charts = !!bs.counters.gyreCharts;
+  if (cond === 'flood') return charts ? tideSoon(bs, 2) : bs.tide === 2;
+  if (cond === 'ebb') return charts ? tideSoon(bs, 0) : bs.tide === 0;
+  if (cond === 'floodSoon') return tideSoon(bs, 2);
+  if (cond === 'ebbSoon') return tideSoon(bs, 0);
   if (cond === 'targetToxined') return !!target && getStatus(target, 'toxin') > 0;
   if (cond === 'targetBelowHalf') return !!target && target.hp <= target.maxHp / 2;
+  if ('intends' in cond) {
+    if (bs.powers.includes('perfectRead')) return true;
+    const set = Array.isArray(cond.intends) ? cond.intends : [cond.intends];
+    if (cond.who === 'target') return !!target && set.includes(enemyReadClass(target));
+    if (cond.who === 'anyOnYou') return anyEnemyIntends(bs, set);
+    return !anyEnemyIntends(bs, set); // 'none'
+  }
   if ('descentAtLeast' in cond) return getStatus(bs.player, 'descent') >= cond.descentAtLeast;
   return getStatus(bs.player, 'charge') >= cond.chargeAtLeast;
 }
@@ -492,9 +541,17 @@ export function runOps(
         }
         break;
       }
-      case 'if':
-        runOps(run, bs, condMet(bs, op.cond, target) ? op.then : (op.else ?? []), emit, ctx);
+      case 'if': {
+        const met = condMet(bs, op.cond, target);
+        // Weaver's Instinct: the first Read that comes true each turn draws a card
+        if (met && typeof op.cond === 'object' && 'intends' in op.cond && bs.phase === 'player'
+            && run.relics.includes('weaversInstinct') && !bs.counters.instinctUsed) {
+          bs.counters.instinctUsed = 1;
+          drawCards(run, bs, 1, emit);
+        }
+        runOps(run, bs, met ? op.then : (op.else ?? []), emit, ctx);
         break;
+      }
     }
   }
   checkVictory(run, bs, emit);
@@ -554,6 +611,12 @@ function relicsTurnStart(run: RunState, bs: BattleState, emit: Emit) {
     for (const e of living(bs)) applyStatusTo(run, bs, e, 'toxin', 1, emit, enemyKey(e));
   }
   if (run.relics.includes('stormglassJar')) gainCharge(run, bs, 2, emit);
+  // Eye of the Gyre: everything that means you harm is already lit
+  if (run.relics.includes('eyeOfTheGyre')) {
+    for (const e of living(bs).filter((x) => enemyReadClass(x) === 'attacker')) {
+      applyStatusTo(run, bs, e, 'exposed', 1, emit, enemyKey(e));
+    }
+  }
 }
 
 function relicsTurnEnd(run: RunState, bs: BattleState, emit: Emit) {
@@ -602,6 +665,14 @@ function powersTurnStart(run: RunState, bs: BattleState, emit: Emit) {
         const m = p === 'communion2' ? 2 : 3;
         addStatus(bs.player, 'might', m);
         fx(emit, { kind: 'status', target: 'player', status: 'might', amount: m });
+        break;
+      }
+      case 'weatherEye3': case 'weatherEye4':
+        if (anyEnemyIntends(bs, 'attacker')) gainPlayerBlock(run, bs, p === 'weatherEye3' ? 3 : 4, emit, false);
+        break;
+      case 'apexEscort4': case 'apexEscort5': {
+        const n = p === 'apexEscort4' ? 4 : 5;
+        for (const e of living(bs).filter((x) => enemyReadClass(x) === 'attacker')) damageEnemy(run, bs, e, n, emit);
         break;
       }
       default: break;
@@ -708,8 +779,13 @@ export function startBattle(run: RunState, encounter: string | EncounterSpec, em
   if (run.loop > 0) for (const e of living(bs)) addStatus(e, 'might', run.loop);
   if (run.daily?.mods.includes('toxicWaters')) for (const e of living(bs)) addStatus(e, 'toxin', 4);
 
+  if (run.relics.includes('gyreCharts')) bs.counters.gyreCharts = 1;
   relicsBattleStart(run, bs, emit);
   rollAllIntents(run, bs);
+  // Barometer Shell reads the opening telegraphs, so it hooks after the roll
+  if (run.relics.includes('barometerShell') && anyEnemyIntends(bs, 'attacker')) {
+    gainPlayerBlock(run, bs, 5, emit, false);
+  }
   startPlayerTurn(run, bs, emit);
   sfx(emit, bs.isBoss ? 'bossIntro' : 'battleStart');
 }
@@ -749,6 +825,18 @@ function rollIntent(_run: RunState, bs: BattleState, e: EnemyState) {
     tide: bs.tide,
     allyCount: living(bs).length,
   });
+  // Weaver Foresight: forecast the move AFTER this one by projecting the ai
+  // one turn further — rng is peeked, not consumed, so the battle stream and
+  // every seeded replay are untouched. hpFrac can't know future damage, so
+  // this is a forecast, not a promise (the UI ghosts it accordingly).
+  e.nextMoveId = def.ai({
+    turn: bs.turn + 2,
+    hpFrac: e.hp / e.maxHp,
+    history: [...e.history, e.moveId],
+    roll: makeRng(bs.rng).next(),
+    tide: ((bs.tide + 1) % 4) as Tide,
+    allyCount: living(bs).length,
+  });
 }
 
 export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
@@ -757,6 +845,11 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   bs.enemyActIdx = 0;
   bs.cardsPlayedThisTurn = 0;
   bs.attacksPlayedThisTurn = 0;
+  // Weaver per-turn windows close: Grace's veil re-weaves, Called Shot marks
+  // and the Instinct's first-read draw reset with the new telegraphs
+  bs.counters.graceUsed = 0;
+  bs.counters.instinctUsed = 0;
+  for (const e of living(bs)) if (getStatus(e, 'marked') > 0) setStatus(e, 'marked', 0);
 
   // block falls off unless anchored — BEFORE the tide advances, so block
   // granted by tide-change effects (Heart of the Maelstrom) survives the turn.
@@ -984,7 +1077,13 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
   if (mv.attack) {
     const times = mv.attack.times ?? 1;
     for (let i = 0; i < times; i++) {
-      const dmg = calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player);
+      let dmg = calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player);
+      // Weaver's Grace: the first blow each turn lands on the woven veil
+      const grace = bs.powers.includes('grace4') ? 4 : bs.powers.includes('grace3') ? 3 : 0;
+      if (grace > 0 && !bs.counters.graceUsed) {
+        bs.counters.graceUsed = 1;
+        dmg = Math.max(0, dmg - grace);
+      }
       losePlayerHp(run, bs, dmg, emit, { source: def.name });
       fx(emit, { kind: 'burst', target: 'player', color: 'hit', n: 7, shape: 'spark' });
       sfx(emit, 'enemyHit');

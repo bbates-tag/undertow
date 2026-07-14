@@ -5,7 +5,8 @@
 // The policy is deliberately mediocre (no tide timing, no synergy planning),
 // so target winrates here are LOW: a skilled human should roughly double it.
 
-import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, startBattle } from '../engine/battle';
+import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, readClassOf, startBattle } from '../engine/battle';
+import type { BattleState, CardInstance, EnemyState, Op } from '../engine/types';
 import {
   addRelic, applyBoon, applyEventEffect, beginLoop, buyCrate, buyDefang, buyRemoval, buyShopItem, buyWhetstone, defangEligible, descend, doRestHeal,
   enterNode, generateBattleReward, generateShop, newRun, reachableNodes, scoreRun, completePick,
@@ -58,12 +59,60 @@ function playBattle(run: RunState, rng: () => number): void {
     }
 
     const needBlock = incoming > bs.player.block + 3;
-    const score = (uid: number): number => {
+    // presumptive target for scoring conditional riders (same pick as playCard below)
+    const presumptiveTarget = [...living(bs)].sort((a, b) => a.hp - b.hp)[0];
+    const best = pickBestCard(bs, playable, needBlock, presumptiveTarget);
+    if (best.score <= 0.4 && !needBlock) {
+      endPlayerTurn(run, newEmit());
+      continue;
+    }
+    const target = presumptiveTarget;
+    const err = playCard(run, best.card.uid, cardDef(best.card).target === 'enemy' ? target?.uid : undefined, newEmit());
+    if (err) {
+      endPlayerTurn(run, newEmit());
+    }
+    void rng;
+  }
+}
+
+/** Resolve `if` ops against live state — the bot's whole Read heuristic:
+    conditions that are true right now count, ones that aren't don't. */
+function liveOps(bs: BattleState, ops: Op[], target?: EnemyState): Op[] {
+  const out: Op[] = [];
+  const classOf = (e: EnemyState) => readClassOf(ENEMIES[e.defId].moves[e.moveId]?.intent ?? 'unknown');
+  for (const op of ops) {
+    if (op.op !== 'if') { out.push(op); continue; }
+    const c = op.cond;
+    let met = false;
+    if (c === 'flood') met = bs.tide === 2;
+    else if (c === 'ebb') met = bs.tide === 0;
+    else if (c === 'floodSoon') met = bs.tide === 1 || bs.tide === 2;
+    else if (c === 'ebbSoon') met = bs.tide === 3 || bs.tide === 0;
+    else if (c === 'targetToxined') met = !!target && (target.statuses.toxin ?? 0) > 0;
+    else if (c === 'targetBelowHalf') met = !!target && target.hp <= target.maxHp / 2;
+    else if (typeof c === 'object' && 'intends' in c) {
+      const set = Array.isArray(c.intends) ? c.intends : [c.intends];
+      if (c.who === 'target') met = !!target && set.includes(classOf(target));
+      else {
+        const any = living(bs).some((e) => set.includes(classOf(e)));
+        met = c.who === 'anyOnYou' ? any : !any;
+      }
+    } else if (typeof c === 'object' && 'descentAtLeast' in c) met = (bs.player.statuses.descent ?? 0) >= c.descentAtLeast;
+    else if (typeof c === 'object' && 'chargeAtLeast' in c) met = (bs.player.statuses.charge ?? 0) >= c.chargeAtLeast;
+    out.push(...liveOps(bs, met ? op.then : (op.else ?? []), target));
+  }
+  return out;
+}
+
+function pickBestCard(
+  bs: BattleState, playable: CardInstance[], needBlock: boolean, presumptiveTarget?: EnemyState,
+): { card: CardInstance; score: number } {
+  const score = (uid: number): number => {
       const c = bs.hand.find((h) => h.uid === uid)!;
       const def = cardDef(c);
       const cost = Math.max(1, cardCost(c));
       let s = 0;
-      const ops = c.upgraded ? (def.opsUp ?? def.ops) : def.ops;
+      const ops = liveOps(bs, c.upgraded ? (def.opsUp ?? def.ops) : def.ops, presumptiveTarget);
       for (const op of ops) {
         if (op.op === 'damage') {
           const times = op.times === 'charge' ? (bs.player.statuses.charge ?? 0) : (op.times ?? 1);
@@ -92,23 +141,10 @@ function playBattle(run: RunState, rng: () => number): void {
       if (op0IsCharge(def) ) s *= 1.25;
       return s / cost;
     };
-    const op0IsCharge = (def: ReturnType<typeof cardDef>) =>
-      def.ops.some((o) => o.op === 'status' && o.target === 'self' && o.status === 'charge');
-
-    const best = [...playable].sort((a, b) => score(b.uid) - score(a.uid))[0];
-    if (score(best.uid) <= 0.4 && !needBlock) {
-      endPlayerTurn(run, newEmit());
-      continue;
-    }
-    // target: lowest-hp living enemy (finish kills)
-    const targets = living(bs);
-    const target = [...targets].sort((a, b) => a.hp - b.hp)[0];
-    const err = playCard(run, best.uid, cardDef(best).target === 'enemy' ? target?.uid : undefined, newEmit());
-    if (err) {
-      endPlayerTurn(run, newEmit());
-    }
-    void rng;
-  }
+  const op0IsCharge = (def: ReturnType<typeof cardDef>) =>
+    def.ops.some((o) => o.op === 'status' && o.target === 'self' && o.status === 'charge');
+  const bestCard = [...playable].sort((a, b) => score(b.uid) - score(a.uid))[0];
+  return { card: bestCard, score: score(bestCard.uid) };
 }
 
 // small helpers reading enemy content without importing UI
@@ -256,7 +292,7 @@ const isMain = typeof process !== 'undefined' && process.argv[1]?.includes('simu
 if (isMain) {
   const N = Number(process!.argv[2]) || 60;
   const endless = process!.argv.includes('--endless');
-  for (const charId of ['tidecaller', 'voltaic', 'drowned'] as CharacterId[]) {
+  for (const charId of ['tidecaller', 'voltaic', 'drowned', 'weaver'] as CharacterId[]) {
     const results: SimResult[] = [];
     const deaths: Record<string, number> = {};
     for (let i = 0; i < N; i++) {

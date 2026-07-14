@@ -4,12 +4,14 @@ import type { CardDef, CardInstance, CharacterId, Rarity } from '../engine/types
 import { TIDECALLER_CARDS } from './cards_tidecaller';
 import { VOLTAIC_CARDS } from './cards_voltaic';
 import { DROWNED_CARDS } from './cards_drowned';
+import { WEAVER_CARDS } from './cards_weaver';
 import { CURSE_CARDS, NEUTRAL_CARDS } from './cards_shared';
 
 export const ALL_CARDS: CardDef[] = [
   ...TIDECALLER_CARDS,
   ...VOLTAIC_CARDS,
   ...DROWNED_CARDS,
+  ...WEAVER_CARDS,
   ...NEUTRAL_CARDS,
   ...CURSE_CARDS,
 ];

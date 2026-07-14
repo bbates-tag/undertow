@@ -40,6 +40,8 @@ function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
     unknown: <HelpCircle size={13} />,
   };
   const isAttack = !!atk;
+  // Weaver Foresight: the move after this one, ghosted — a forecast, not a promise
+  const nextMv = run.charId === 'weaver' && e.nextMoveId ? def.moves[e.nextMoveId] : null;
   return (
     <div
       className="intent"
@@ -47,8 +49,8 @@ function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
         color: isAttack ? 'var(--color-danger)' : 'var(--color-mist)',
         borderColor: isAttack ? 'rgba(255,111,111,0.4)' : 'rgba(95,185,255,0.28)',
       }}
-      title={`Intent: ${label}`}
-      aria-label={`intent: ${label}${atk ? `, ${atk.dmg}${atk.times > 1 ? ` times ${atk.times}` : ''} damage` : ''}`}
+      title={`Intent: ${label}${nextMv ? ` — then likely ${nextMv.name}` : ''}`}
+      aria-label={`intent: ${label}${atk ? `, ${atk.dmg}${atk.times > 1 ? ` times ${atk.times}` : ''} damage` : ''}${nextMv ? `, then likely ${nextMv.name}` : ''}`}
     >
       {icons[mv.intent]}
       {atk ? (
@@ -60,6 +62,16 @@ function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
         <span className="text-[10px] font-bold tracking-wide">{mv.intent === 'sleep' || mv.intent === 'unknown' ? label : ''}</span>
       )}
       {(mv.intent === 'attackDebuff' || mv.intent === 'debuff') && <CloudFog size={11} className="opacity-70" />}
+      {nextMv && (
+        <span
+          className="flex items-center opacity-45 pl-1 ml-0.5 border-l"
+          style={{ color: 'var(--color-weaver)', borderColor: 'rgba(159,216,255,0.3)' }}
+          aria-hidden
+        >
+          {icons[nextMv.intent]}
+          <span className="text-[9px] font-bold">~</span>
+        </span>
+      )}
     </div>
   );
 }

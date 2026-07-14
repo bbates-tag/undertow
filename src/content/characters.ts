@@ -54,4 +54,22 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     mechanic: 'Descent — HP lost on your turn becomes Descent. Cards grow with it; Surface cards cash it in.',
     lockText: 'Defeat two act bosses in one dive. The sea returns what it takes.',
   },
+  weaver: {
+    id: 'weaver',
+    name: 'The Wakeweaver',
+    title: 'Never Once Bitten',
+    icon: 'GiFishEscape',
+    color: 'var(--color-weaver)',
+    maxHp: 68,
+    starterRelic: 'weaversInstinct',
+    starterDeck: [
+      { card: 'needleJab', count: 4 },
+      { card: 'slipAside', count: 4 },
+      { card: 'readTheWater', count: 1 },
+      { card: 'undertowFeint', count: 1 },
+    ],
+    blurb: 'Reads the wakes things leave in the water — and is simply never where the teeth arrive.',
+    mechanic: 'Read — cards that trigger off enemy telegraphs. Foresight shows every intent one move further ahead.',
+    lockText: 'End three battles untouched in a single dive. Nothing has ever touched her.',
+  },
 };
