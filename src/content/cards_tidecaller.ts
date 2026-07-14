@@ -142,8 +142,11 @@ export const TIDECALLER_CARDS: CardDef[] = [
   {
     id: 'tidepool', name: 'Tidepool', char: 'tidecaller', type: 'skill', rarity: 'common',
     cost: 0, target: 'none', icon: 'GiDroplets',
+    // exhaust: a 0-cost self-replacing shifter loops the whole deck otherwise
+    // (see docs/BALANCE_TIDEPOOL_LOOP.md)
     ops: [{ op: 'shift', amount: 1 }, { op: 'draw', amount: 1 }],
     opsUp: [{ op: 'shift', amount: 1 }, { op: 'draw', amount: 2 }],
+    exhaust: true,
   },
 
   // ── Uncommon attacks ──────────────────────────────────────────────────────

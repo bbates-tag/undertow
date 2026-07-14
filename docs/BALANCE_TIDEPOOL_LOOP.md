@@ -1,6 +1,7 @@
 # Balance: the Tidepool infinite (Oarfish Ribbon → Hull Ram)
 
-*Branch `balance/tide-shift-block-combo` — analysis only, no code changes yet.*
+*Branch `balance/tide-shift-block-combo` — the recommended package (A1 + B1 + B2 + B3,
+plus the King Tide × Ribbon fix) is implemented on this branch.*
 
 ## The reported combo
 

@@ -288,27 +288,37 @@ export function gainCharge(run: RunState, bs: BattleState, n: number, emit: Emit
   }
 }
 
-export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit, silent = false) {
-  if (bs.powers.includes('kingTide')) return;
+/** Move the tide n phases. Returns whether the tide actually changed
+    (King Tide locks it). Per-turn caps on the tide-change relics below are
+    the loop dampeners from docs/BALANCE_TIDEPOOL_LOOP.md. */
+export function shiftTide(run: RunState, bs: BattleState, n: number, emit: Emit, silent = false): boolean {
+  if (bs.powers.includes('kingTide')) return false;
   const before = bs.tide;
   bs.tide = (((bs.tide + n) % 4) + 4) % 4 as Tide;
-  if (bs.tide !== before) {
-    // card-driven shifts get the water-sweep visual; the quiet natural advance doesn't
-    fx(emit, { kind: 'tide', tide: bs.tide, sweep: !silent });
-    if (!silent) sfx(emit, 'tide');
-    // Heart of the Maelstrom: the churn shields you
-    if (run.relics.includes('heartOfMaelstrom')) gainPlayerBlock(run, bs, 3, emit, false);
-    // Drowned Compass: every completed cycle of the wheel sharpens you
-    if (run.relics.includes('drownedCompass')) {
-      bs.counters.compass = (bs.counters.compass ?? 0) + (((n % 4) + 4) % 4);
-      while (bs.counters.compass >= 4) {
-        bs.counters.compass -= 4;
+  if (bs.tide === before) return false;
+  // card-driven shifts get the water-sweep visual; the quiet natural advance doesn't
+  fx(emit, { kind: 'tide', tide: bs.tide, sweep: !silent });
+  if (!silent) sfx(emit, 'tide');
+  // Heart of the Maelstrom: the churn shields you — first 3 changes each turn
+  if (run.relics.includes('heartOfMaelstrom') && (bs.counters.maelstromTriggers ?? 0) < 3) {
+    bs.counters.maelstromTriggers = (bs.counters.maelstromTriggers ?? 0) + 1;
+    gainPlayerBlock(run, bs, 3, emit, false);
+  }
+  // Drowned Compass: every completed cycle of the wheel sharpens you,
+  // but only the first cycle each turn — extra cycles fizzle, not bank
+  if (run.relics.includes('drownedCompass')) {
+    bs.counters.compass = (bs.counters.compass ?? 0) + (((n % 4) + 4) % 4);
+    while (bs.counters.compass >= 4) {
+      bs.counters.compass -= 4;
+      if ((bs.counters.compassGrants ?? 0) < 1) {
+        bs.counters.compassGrants = 1;
         applyStatusTo(run, bs, bs.player, 'might', 1, emit, 'player');
         applyStatusTo(run, bs, bs.player, 'finesse', 1, emit, 'player');
       }
     }
-    if (bs.tide === 2) onTideHigh(run, bs, emit);
   }
+  if (bs.tide === 2) onTideHigh(run, bs, emit);
+  return true;
 }
 
 function onTideHigh(run: RunState, bs: BattleState, emit: Emit) {
@@ -499,10 +509,16 @@ export function runOps(
         healPlayer(run, bs, resolveAmount(bs, op.amount), emit);
         sfx(emit, 'heal');
         break;
-      case 'shift':
-        shiftTide(run, bs, op.amount, emit);
-        if (run.relics.includes('oarfishRibbon')) gainPlayerBlock(run, bs, 2, emit, false);
+      case 'shift': {
+        // Oarfish Ribbon: only real shifts pay out (King Tide mutes it),
+        // and only the first 3 each turn
+        const changed = shiftTide(run, bs, op.amount, emit);
+        if (changed && run.relics.includes('oarfishRibbon') && (bs.counters.ribbonTriggers ?? 0) < 3) {
+          bs.counters.ribbonTriggers = (bs.counters.ribbonTriggers ?? 0) + 1;
+          gainPlayerBlock(run, bs, 2, emit, false);
+        }
         break;
+      }
       case 'gold':
         run.gold += op.amount;
         run.stats.goldEarned += op.amount;
@@ -849,6 +865,11 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   // and the Instinct's first-read draw reset with the new telegraphs
   bs.counters.graceUsed = 0;
   bs.counters.instinctUsed = 0;
+  // tide-relic per-turn windows reopen (before the natural advance below,
+  // which deliberately consumes one Heart of the Maelstrom trigger)
+  bs.counters.ribbonTriggers = 0;
+  bs.counters.maelstromTriggers = 0;
+  bs.counters.compassGrants = 0;
   for (const e of living(bs)) if (getStatus(e, 'marked') > 0) setStatus(e, 'marked', 0);
 
   // block falls off unless anchored — BEFORE the tide advances, so block
