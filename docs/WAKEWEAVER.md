@@ -1,4 +1,4 @@
-# The Pilot — character design doc
+# The Wakeweaver — character design doc
 
 *"She has swum beside every jaw in the ocean. None has closed on her."*
 
@@ -8,9 +8,11 @@ where they need sim/playtest pressure. Companion to the character roster in
 
 ## Fantasy
 
-A pilot-fish rider — a wiry navigator who survives the open ocean not by armor
-or venom but by *knowing what everything intends before it moves*. She is the
-character who plays the game's own core pillar as a weapon: every enemy
+A net-maker who learned her trade watching wakes instead of thread — every
+moving thing in the ocean leaves one, and she reads them the way sailors read
+sky. She survives the open water not by armor or venom but by *knowing what
+everything intends before it moves*, weaving herself through the gaps. She is
+the character who plays the game's own core pillar as a weapon: every enemy
 telegraphs, and she is the one diver who really listens.
 
 Player fantasy in one sentence: **read the room, then be somewhere else.**
@@ -19,17 +21,17 @@ Player fantasy in one sentence: **read the room, then be somewhere else.**
 
 | | |
 | --- | --- |
-| id | `pilot` |
-| Name / title | The Pilot — *Never Once Bitten* |
+| id | `weaver` |
+| Name / title | The Wakeweaver — *Never Once Bitten* |
 | HP | **68** (middle-light: she expects not to be hit) |
-| Color | a pale sight-line silver-blue (new `--color-pilot`, e.g. `#9fd8ff`) |
-| Icon | `GiDoubleFish` or `GiFishEscape` (pilot fish + escort fantasy) |
-| Starter relic | *Pilot's Instinct* |
+| Color | a pale sight-line silver-blue (new `--color-weaver`, e.g. `#9fd8ff`) |
+| Icon | `GiFishEscape` (threading through jaws) |
+| Starter relic | *Weaver's Instinct* |
 | Unlock | `battlesFlawless`-based (see Unlock) |
 
 **Mechanical axis vs the roster:** Tidecaller owns *timing a shared clock*,
 Voltaic owns *banking a private resource*, the Drowned owns *spending flesh*.
-The Pilot owns ***information*** — conditions on what enemies are about to do.
+The Wakeweaver owns ***information*** — conditions on what enemies are about to do.
 No other character's cards ever read the intent line.
 
 ## Core mechanic 1 — Read
@@ -64,7 +66,7 @@ the kit leans on Block, Spines, Weakened, Exposed, Finesse.
 
 ## Core mechanic 2 — Foresight
 
-The Pilot sees **one move further ahead**: enemy intent pills show next turn's
+The Wakeweaver sees **one move further ahead**: enemy intent pills show next turn's
 move in a smaller ghosted chip beside the current one (her runs only).
 
 - Enemy move selection is seeded and pattern-based, so the next move is
@@ -88,7 +90,7 @@ UI cost is paid once and every card in the pool gets smarter for it.
 
 | Card | Count | Cost | Text |
 | --- | --- | --- | --- |
-| **Pilot Jab** | ×4 | 1⚡ | Attack. Deal 5. Read (attacker): deal 8. |
+| **Needle Jab** | ×4 | 1⚡ | Attack. Deal 5. Read (attacker): deal 8. |
 | **Slip Aside** | ×4 | 1⚡ | Skill. Gain 4 Block. Read (anyOnYou): gain 7. |
 | **Read the Water** | ×1 | 0⚡ | Skill. Draw 1. Read (none): draw 2. |
 | **Undertow Feint** | ×1 | 1⚡ | Attack. Deal 4. Read (schemer): deal 10. |
@@ -121,7 +123,7 @@ the likely balance hotspots.
 6. *Bait the Lunge* — 1⚡ S: Gain 3 (4) Spines. Read (2+ attackers): gain 5 (7) instead.
 7. *Future Swell* — 1⚡ S: Gain 8 (10) Block. Flood — now or next turn: draw 2.
 8. *Pinpoint* — 1⚡ A: Deal 8 (11). Read (guarded): pierce (ignores Block). (strike where the shell isn't)
-9. *Pilot's Grace* — 1⚡ P: The first attack that hits you each turn deals 3 (4) less.
+9. *Weaver's Grace* — 1⚡ P: The first attack that hits you each turn deals 3 (4) less.
 
 **Rare (6)**
 1. *Called Shot* — 1⚡ S: Choose an enemy. If it dies this turn, gain 2⚡ (3⚡) and draw 2 (3). (kill-sequencing payoff)
@@ -135,7 +137,7 @@ the likely balance hotspots.
 
 | Relic | Tier | Text |
 | --- | --- | --- |
-| **Pilot's Instinct** | starter | The first Read rider that triggers each turn draws a card. |
+| **Weaver's Instinct** | starter | The first Read rider that triggers each turn draws a card. |
 | *Barometer Shell* | common (char) | Battles start with 5 Block if any enemy opens with an attack. |
 | *Gyre Charts* | uncommon (char) | Your Flood and Ebb effects also trigger when the matching phase is **next**. (⚠ effectively doubles tide uptime — maybe rare) |
 | *Eye of the Gyre* | boss (char) | At the start of each turn, apply Exposed 1 to every enemy intending an attack. `unknown` intents are always revealed to you. |
@@ -152,7 +154,7 @@ other char unlocks (Voltaic: act-1 boss; Drowned: two act bosses in one dive).
 
 ## Balance risks & guardrails
 
-- **Turtle assembly** (Weather Eye + Apex Escort + Pilot's Grace): passive value
+- **Turtle assembly** (Weather Eye + Apex Escort + Weaver's Grace): passive value
   that plays itself. Guardrails: all three are per-*turn* not per-attack, Toxin
   and mines ignore the whole plan, and Act III's schemer-heavy pools starve
   attacker-Reads.
@@ -177,22 +179,21 @@ other char unlocks (Voltaic: act-1 boss; Drowned: two act bosses in one dive).
 1. **Engine** (small): `intends`/`floodSoon` conds in `types.ts` + `condMet`;
    `nextMoveId` queue in enemy state + roll-ahead in the turn loop; describe.ts
    text for the new conds. Save-compat: backfill `nextMoveId` on load.
-2. **Content**: `cards_pilot.ts` (28), `characters.ts` entry, relics, keywords
+2. **Content**: `cards_weaver.ts` (28), `characters.ts` entry, relics, keywords
    (`read` classes + `foresight`), unlock check, ART_PROMPTS section.
-3. **UI**: ghost intent chip (next move) on EnemyView for `charId === 'pilot'`;
+3. **UI**: ghost intent chip (next move) on EnemyView for `charId === 'weaver'`;
    `~` variant when the forecast can break; glossary entries.
 4. **Balance**: bestiary intent-mix audit script; sim run; Depth 1–10 pass.
 
 Rough order: engine + a 10-card starter slice first, playable behind the
 existing character-selection unlock gating, then fill the pool.
 
-## Open questions
+## Decisions (2026-07-13)
 
-- Should Foresight be innate (current design) or a starter-relic effect the
-  player can lose/trade? Innate is cleaner to teach; relic-based is more
-  roguelite. **Leaning innate.**
-- Does the ghost intent chip fit on mobile at `size: 'sm'` enemies, or does
-  next-move preview live in the tap-to-inspect dossier instead? (Dossier-only
-  is a fine v1.)
-- Name check: "The Pilot" vs "The Pilotfish" vs "The Lookout" — current pick
-  is The Pilot with the fish in the art, not the name.
+- **Foresight is innate**, not relic-granted — cleaner to teach, and every card
+  in the pool is designed assuming the information is always there.
+- **Next-move preview renders as a ghosted chip** beside the current intent
+  pill; if `size: 'sm'` enemies prove too cramped on phones during the build,
+  fall back to dossier-only without redesigning the mechanic.
+- **Name: The Wakeweaver** (was working-titled The Pilot) — she reads the
+  wakes things leave in the water. id `weaver`, cards/relics renamed to match.
