@@ -11,7 +11,7 @@ import { useGame } from '../../state/store';
 import { CHARACTERS } from '../../content/characters';
 import { ENEMIES } from '../../content/enemies';
 import { ALL_CARDS, CARDS } from '../../content/cards';
-import { RELICS } from '../../content/relics';
+import { RELICS, type RelicDef, type RelicTier } from '../../content/relics';
 import { KEYWORDS, KEYWORD_PATTERN, keywordIdFor } from '../../content/keywords';
 import { describeCard } from '../../engine/describe';
 import type { CardDef, CharacterId } from '../../engine/types';
@@ -21,7 +21,16 @@ import { EnemyDossier, ART_ALIAS } from '../components/EnemyDossier';
 import { GameIcon } from '../icons';
 import { Shell } from './MetaScreens';
 
-type Tab = 'characters' | 'enemies' | 'cards';
+type Tab = 'characters' | 'enemies' | 'cards' | 'relics';
+
+const RELIC_TIERS: { tier: RelicTier; label: string }[] = [
+  { tier: 'starter', label: 'Starter' },
+  { tier: 'common', label: 'Common' },
+  { tier: 'uncommon', label: 'Uncommon' },
+  { tier: 'rare', label: 'Rare' },
+  { tier: 'boss', label: 'Boss' },
+  { tier: 'treasure', label: 'Treasure' },
+];
 
 const ACT_LABEL: Record<number, string> = {
   1: 'Act I — The Sunlit Shallows',
@@ -56,17 +65,19 @@ export function CompendiumScreen() {
   const [enemyOpen, setEnemyOpen] = useState<string | null>(null);
   const [cardOpen, setCardOpen] = useState<string | null>(null);
   const [charOpen, setCharOpen] = useState<CharacterId | null>(null);
+  const [relicOpen, setRelicOpen] = useState<string | null>(null);
 
   const counts: Record<Tab, string> = {
     characters: `${meta.unlockedChars.length}/${Object.keys(CHARACTERS).length}`,
     enemies: `${Object.keys(ENEMIES).filter((id) => meta.seenEnemies?.[id]).length}/${Object.keys(ENEMIES).length}`,
     cards: `${ALL_CARDS.filter((c) => meta.seenCards?.[c.id]).length}/${ALL_CARDS.length}`,
+    relics: `${Object.keys(RELICS).filter((id) => meta.seenRelics?.[id]).length}/${Object.keys(RELICS).length}`,
   };
 
   return (
     <Shell title="Compendium">
-      <div className="grid grid-cols-3 gap-2">
-        {(['characters', 'enemies', 'cards'] as const).map((t) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {(['characters', 'enemies', 'cards', 'relics'] as const).map((t) => (
           <button key={t} className={`btn text-sm !flex-col !gap-0 ${tab === t ? 'btn-primary' : ''}`} onClick={() => setTab(t)}>
             <span className="capitalize">{t}</span>
             <span className="text-[10px] opacity-70">{counts[t]}</span>
@@ -77,11 +88,13 @@ export function CompendiumScreen() {
       {tab === 'characters' && <CharactersTab onOpen={setCharOpen} />}
       {tab === 'enemies' && <EnemiesTab onOpen={setEnemyOpen} />}
       {tab === 'cards' && <CardsTab onOpen={setCardOpen} />}
+      {tab === 'relics' && <RelicsTab onOpen={setRelicOpen} />}
 
       <AnimatePresence>
         {enemyOpen && <EnemyDossier key={enemyOpen} defId={enemyOpen} onClose={() => setEnemyOpen(null)} />}
         {cardOpen && <CardZoom key={cardOpen} defId={cardOpen} onClose={() => setCardOpen(null)} />}
         {charOpen && <CharacterDossier key={charOpen} charId={charOpen} onClose={() => setCharOpen(null)} />}
+        {relicOpen && <RelicZoom key={relicOpen} relicId={relicOpen} onClose={() => setRelicOpen(null)} />}
       </AnimatePresence>
     </Shell>
   );
@@ -257,6 +270,93 @@ function CardsTab({ onOpen }: { onOpen: (id: string) => void }) {
         );
       })}
     </>
+  );
+}
+
+// ── Relics ───────────────────────────────────────────────────────────────────
+
+function RelicsTab({ onOpen }: { onOpen: (id: string) => void }) {
+  const meta = useGame((s) => s.meta);
+  return (
+    <>
+      {RELIC_TIERS.map(({ tier, label }) => {
+        const relics = Object.values(RELICS)
+          .filter((r) => r.tier === tier)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        if (!relics.length) return null;
+        const found = relics.filter((r) => meta.seenRelics?.[r.id]).length;
+        return (
+          <section key={tier}>
+            <h2 className="font-bold text-sm text-(--color-mist) mb-2">
+              {label} <span className="text-(--color-dim) font-normal">{found}/{relics.length}</span>
+            </h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {relics.map((r) => {
+                const seen = !!meta.seenRelics?.[r.id];
+                return (
+                  <button
+                    key={r.id}
+                    disabled={!seen}
+                    onClick={() => onOpen(r.id)}
+                    className={`panel p-2 flex flex-col items-center gap-1 ${seen ? 'hover:scale-[1.03] transition-all' : 'opacity-60'}`}
+                    aria-label={seen ? `${r.name}, view relic` : 'Undiscovered relic'}
+                  >
+                    <div className="w-11 h-11 rounded-full bg-(--color-abyss-800) flex items-center justify-center">
+                      {seen
+                        ? <GameIcon id={r.icon} size={26} />
+                        : <span className="font-display text-lg text-(--color-dim)">?</span>}
+                    </div>
+                    <div className="text-[11px] font-bold truncate w-full text-center">{seen ? r.name : '???'}</div>
+                    {r.char && (
+                      <div className="text-[9px] uppercase tracking-wider text-(--color-dim)">
+                        {seen ? CHARACTERS[r.char]?.name.replace(/^The /, '') : 'character'}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
+function RelicZoom({ relicId, onClose }: { relicId: string; onClose: () => void }) {
+  const r: RelicDef | undefined = RELICS[relicId];
+  useEscape(onClose);
+  if (!r) return null;
+  const tierColor = r.tier === 'boss' ? 'var(--color-lure)' : r.tier === 'rare' || r.tier === 'treasure' ? 'var(--color-gold)' : 'var(--color-mist)';
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[88] bg-black/75 backdrop-blur-md flex items-center justify-center"
+      style={{ padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))' }}
+      onClick={onClose} role="dialog" aria-modal="true" aria-label={`${r.name} relic`}
+    >
+      <motion.div
+        initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        className="panel relative w-[min(94vw,360px)] p-5 flex flex-col items-center gap-3 text-center"
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div className="w-20 h-20 rounded-full bg-(--color-abyss-800) flex items-center justify-center">
+          <GameIcon id={r.icon} size={44} />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold">{r.name}</h2>
+          <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: tierColor }}>
+            {r.tier}{r.char ? ` · ${CHARACTERS[r.char]?.name}` : ''}
+          </div>
+        </div>
+        <p className="text-sm text-(--color-foam)">{r.text}</p>
+        {r.defangedText && (
+          <p className="text-[11px] text-(--color-mist)">✦ The Bazaar's Defang service cleans this up to: “{r.defangedText}”</p>
+        )}
+        {r.flavor && <p className="text-xs italic text-(--color-mist)">“{r.flavor}”</p>}
+      </motion.div>
+    </motion.div>
   );
 }
 
