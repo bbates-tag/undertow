@@ -32,6 +32,7 @@ Nano Banana works best with flowing natural-language paragraphs, not keyword sou
 6. **When the character should NOT appear** (object/scene cards, marked *no figure* when the card list lands), say "no human figures" explicitly — with a character reference attached, Nano Banana loves sneaking them in.
 7. Nano Banana renders text very eagerly. The "no text, no lettering" clause in the style block matters more here than on other generators — keep it even when trimming.
 8. **Two-figure scenes need explicit staging.** With her reference attached, the model defaults her to a camera-facing hero pose — so for any card where she interacts with an enemy, state each figure's screen position, facing, and which limbs are where ("the cultist faces the viewer; only her arms reach around it from behind"). Avoid implying spatial relationships through a single word ("garrote", "behind"). And never describe a state by its absence — "guttering out" reads as *lit*; say "burned down to a last dying ember trailing smoke."
+9. **One action per frame.** If a scene needs pose + geometry + physics to all be true at once (arched under closing jaws while thread braces the gap), the model renders each ingredient separately and collages them. Pick the single image that carries the card's meaning, make it big, and shrink everything else — the propped-open jaws huge, her small and already leaving.
 
 ---
 
@@ -109,7 +110,8 @@ A fisherman's glass float suspended in dark water, silver thread wound around it
 The Wakeweaver's hand closing around a kraken-cultist's raised ritual lantern at the peak of its invocation, snuffing the light between her fingers — her small smile the only bright thing left in the frame.
 
 **Slip the Jaws — `slipTheJaws` (skill)** · *character featured*
-The Wakeweaver arched impossibly backward beneath the closing teeth of an anglerfish's mouth, a bridge of taut glowing thread strung between the jaws holding them one hand's width apart as she slides through the gap.
+Extreme close-up: an anglerfish's jaws fill the frame from top and bottom like a sprung bear-trap, rows of needle teeth stopped just one hand's width apart — held open by a single cord of glowing silver-blue thread strung straight and rigid as a steel bar between one upper fang and one lower fang, shedding tiny sparks of strain-light at both anchor points. Through the narrow gap between the tooth rows, small in the middle distance, the Wakeweaver glides calmly away from the viewer, trailing the thread's loose end from one hand, unhurried. The anglerfish's lure-light burns furious white at the top of frame; her thread is the coldest, brightest line in the image.
+*(v1 asked for her arched under closing teeth while thread braced the gap — four spatial constraints at once; the model collaged them into her looking caught. One action per frame.)*
 
 **Dead Reckoning — `deadReckoning` (skill)** · *character featured*
 The Wakeweaver reclining at ease along the deck-rail of a sunken wreck, ankles crossed, plotting a course with thread stretched between her fingers and constellations of bioluminescence for a chart. Nothing is hunting her tonight.
