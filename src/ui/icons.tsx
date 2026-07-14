@@ -35,6 +35,8 @@ import {
   GiInnerSelf, GiLungs, GiBoneGnawer, GiSeaStar, GiCandleSkull, GiOldLantern, GiGraveyard,
   GiCoffin, GiHeartOrgan, GiSpectre, GiKrakenTentacle, GiHeavyFall, GiSinkingShip, GiHighTide,
   GiBrokenHeart, GiChainedHeart, GiHeartDrop,
+  // The Wakeweaver
+  GiSewingNeedle, GiCrosshair, GiSpyglass,
 } from 'react-icons/gi';
 
 const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number | string }>> = {
@@ -68,6 +70,7 @@ const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number
   GiInnerSelf, GiLungs, GiBoneGnawer, GiSeaStar, GiCandleSkull, GiOldLantern, GiGraveyard,
   GiCoffin, GiHeartOrgan, GiSpectre, GiKrakenTentacle, GiHeavyFall, GiSinkingShip, GiHighTide,
   GiBrokenHeart, GiChainedHeart, GiHeartDrop,
+  GiSewingNeedle, GiCrosshair, GiSpyglass,
 };
 
 export function GameIcon({ id, className, size }: { id: string; className?: string; size?: number | string }) {
@@ -88,4 +91,5 @@ export const STATUS_META: Record<string, { icon: string; color: string; name: st
   anchor: { icon: 'GiAnchor', color: 'var(--color-shield)', name: 'Anchor' },
   charge: { icon: 'GiElectric', color: 'var(--color-volt)', name: 'Charge' },
   descent: { icon: 'GiDrowning', color: 'var(--color-drowned)', name: 'Descent' },
+  marked: { icon: 'GiCrosshair', color: 'var(--color-weaver)', name: 'Marked' },
 };

@@ -11,7 +11,8 @@ import { ENEMIES } from '../content/enemies';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
-import { CARDS } from '../content/cards';
+import { ALL_CARDS, CARDS } from '../content/cards';
+import { CHARACTERS } from '../content/characters';
 import { EVENTS } from '../content/events';
 
 const ALL_PACKS = UNLOCK_PACKS.map((p) => p.id);
@@ -779,6 +780,69 @@ describe('run layer', () => {
     // starter relic is pawnable — cheap, but allowed
     expect(pawnRelic(run, 'livingCoral')).toBeNull();
     expect(run.gold).toBe(55 + 25);
+  });
+
+  it('weaver: read riders key off the target telegraph', () => {
+    const run = battleRun('a1_crab', 'weaver');
+    const bs = run.battle!;
+    const crab = bs.enemies[0];
+    giveHand(run, ['needleJab', 'needleJab']);
+
+    crab.moveId = 'pinch'; // attack intent → the rider triggers
+    const hpBefore = crab.hp;
+    playCard(run, bs.hand[0].uid, crab.uid, newEmit());
+    expect(hpBefore - crab.hp).toBe(8);
+
+    crab.moveId = 'shellWall'; // block intent → base damage only
+    bs.energy = 3;
+    const hp2 = crab.hp;
+    playCard(run, bs.hand[0].uid, crab.uid, newEmit());
+    expect(hp2 - crab.hp).toBe(5);
+  });
+
+  it('weaver: foresight forecasts a valid next move for every enemy', () => {
+    const run = battleRun('a1_crab', 'weaver');
+    for (const e of run.battle!.enemies) {
+      expect(e.nextMoveId).toBeTruthy();
+      expect(ENEMIES[e.defId].moves[e.nextMoveId!]).toBeDefined();
+    }
+  });
+
+  it('weaver: never bitten scales with the telegraph, called shot pays on death', () => {
+    const run = battleRun('a1_crab', 'weaver');
+    const bs = run.battle!;
+    const crab = bs.enemies[0];
+    giveHand(run, ['neverBitten', 'calledShot']);
+    bs.energy = 5;
+
+    crab.moveId = 'crush'; // telegraphs an 11 attack → 2× = 22
+    crab.hp = crab.maxHp = 100;
+    playCard(run, bs.hand.find((c) => c.defId === 'neverBitten')!.uid, crab.uid, newEmit());
+    expect(100 - crab.hp).toBe(22);
+
+    playCard(run, bs.hand.find((c) => c.defId === 'calledShot')!.uid, crab.uid, newEmit());
+    const energyBefore = bs.energy;
+    const handBefore = bs.hand.length;
+    crab.hp = 1;
+    giveHand(run, ['needleJab', ...bs.hand.map(() => 'needleJab')].slice(0, 1)); // keep a card to kill with
+    bs.energy = energyBefore;
+    crab.moveId = 'pinch';
+    playCard(run, bs.hand[0].uid, crab.uid, newEmit());
+    expect(crab.dead).toBe(true);
+    // marked 1 → +2 energy, +2 cards (hand had 1 card which was played → 2 drawn)
+    expect(bs.energy).toBe(energyBefore - 1 + 2);
+    expect(bs.hand.length).toBe(2);
+    void handBefore;
+  });
+
+  it('weaver: unlock content is wired (28 cards, char entry, relics)', () => {
+    const pool = ALL_CARDS.filter((c) => c.char === 'weaver');
+    expect(pool.length).toBe(28);
+    expect(CHARACTERS.weaver.starterRelic).toBe('weaversInstinct');
+    expect(RELICS.weaversInstinct.char).toBe('weaver');
+    expect(RELICS.eyeOfTheGyre.tier).toBe('boss');
+    // starter deck ids all resolve
+    for (const s of CHARACTERS.weaver.starterDeck) expect(CARDS[s.card]).toBeDefined();
   });
 
   it('events: effects and deck picks apply', () => {

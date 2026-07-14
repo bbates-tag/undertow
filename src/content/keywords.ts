@@ -30,11 +30,14 @@ export const KEYWORDS: Record<string, KeywordDef> = {
   unplayable: { id: 'unplayable', name: 'Unplayable', text: 'This card cannot be played. It clogs your hand.' },
   pierce: { id: 'pierce', name: 'Pierce', text: 'This damage ignores Block.' },
   intent: { id: 'intent', name: 'Intent', text: 'The icon above an enemy telegraphs its next move — attack numbers shown are final (buffs included).' },
+  read: { id: 'read', name: 'Read', text: 'A bonus that triggers off what enemies telegraph: attack, Block, or scheming (buff / debuff / summon).' },
+  foresight: { id: 'foresight', name: 'Foresight', text: 'The Wakeweaver sees each enemy’s move one turn further ahead — the small ghosted icon. A forecast, not a promise: wounds and summons can change a mind.' },
+  marked: { id: 'marked', name: 'Marked', text: 'If a Marked enemy dies this turn, gain Energy and draw cards (1 + Marked of each). Marks fade at the start of your next turn.' },
 };
 
 /** Order matters: longer names first so e.g. "Weakened" matches before "Weak". */
 export const KEYWORD_PATTERN = new RegExp(
-  `\\b(${['Discharge', 'Unplayable', 'Weakened', 'Conduct', 'Descent', 'Exhaust', 'Surface', 'Brittle', 'Exposed', 'Finesse', 'Anchor', 'Charge', 'Spines', 'Toxin', 'Might', 'Regen', 'Block', 'Flood', 'Pierce', 'Shift', 'Ebb'].join('|')})\\b`,
+  `\\b(${['Discharge', 'Unplayable', 'Weakened', 'Conduct', 'Descent', 'Exhaust', 'Surface', 'Brittle', 'Exposed', 'Finesse', 'Anchor', 'Charge', 'Marked', 'Spines', 'Toxin', 'Might', 'Regen', 'Block', 'Flood', 'Pierce', 'Shift', 'Read', 'Ebb'].join('|')})\\b`,
   'g',
 );
 

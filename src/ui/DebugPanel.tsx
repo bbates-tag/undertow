@@ -43,7 +43,7 @@ export function DebugPanel() {
             className="btn !py-1"
             onClick={() => {
               const meta = deepClone(useGame.getState().meta);
-              meta.unlockedChars = ['tidecaller', 'voltaic', 'drowned'];
+              meta.unlockedChars = ['tidecaller', 'voltaic', 'drowned', 'weaver'];
               meta.unlockedPacks = UNLOCK_PACKS.map((p) => p.id);
               meta.fathoms += 2000;
               meta.ascension = { tidecaller: 10, voltaic: 10, drowned: 10 };

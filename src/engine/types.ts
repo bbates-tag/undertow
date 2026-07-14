@@ -5,7 +5,7 @@
 // a page refresh. Content defs (cards/enemies/relics) are looked up by id.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CharacterId = 'tidecaller' | 'voltaic' | 'drowned';
+export type CharacterId = 'tidecaller' | 'voltaic' | 'drowned' | 'weaver';
 export type CardType = 'attack' | 'skill' | 'power' | 'curse';
 export type Rarity = 'starter' | 'common' | 'uncommon' | 'rare' | 'special';
 
@@ -24,7 +24,8 @@ export type StatusId =
   | 'regen' // heal N at end of turn, then reduce by 1
   | 'anchor' // block is not removed at the start of your next turn (consumed)
   | 'charge' // Voltaic resource; spent by Discharge cards
-  | 'descent'; // Drowned resource; grows when the player loses HP on their own turn
+  | 'descent' // Drowned resource; grows when the player loses HP on their own turn
+  | 'marked'; // Weaver's Called Shot: if the bearer dies this turn, the player profits
 
 export const DEBUFFS: StatusId[] = ['toxin', 'weakened', 'exposed', 'brittle'];
 
@@ -47,17 +48,29 @@ export interface Amount {
   flood?: number;
   /** flat bonus while the tide is Low */
   ebb?: number;
+  /** + n × the target's telegraphed attack total (amount × hits, pre-buff);
+      0 against non-attackers. The contribution is capped at 40 so ascension
+      damage inflation can't run away with it. */
+  perTelegraph?: number;
 }
 
 export type OpTarget = 'target' | 'all' | 'self' | 'random';
 
+/** Weaver Read classes — intent kinds grouped for card conditions. */
+export type ReadClass = 'attacker' | 'schemer' | 'guarded' | 'dormant';
+
 export type Cond =
   | 'flood' // tide is High
   | 'ebb' // tide is Low
+  | 'floodSoon' // tide is High now OR will be next turn
+  | 'ebbSoon' // tide is Low now OR will be next turn
   | 'targetToxined'
   | 'targetBelowHalf'
   | { chargeAtLeast: number }
-  | { descentAtLeast: number };
+  | { descentAtLeast: number }
+  /** Weaver Read riders: what the telegraphs say. who 'target' reads the
+      card's target, 'anyOnYou' any living enemy, 'none' no living enemy. */
+  | { intends: ReadClass | ReadClass[]; who: 'target' | 'anyOnYou' | 'none' };
 
 export type Op =
   | { op: 'damage'; amount: Amount; times?: number | 'charge'; target?: 'target' | 'all' | 'random'; pierce?: boolean }
@@ -125,7 +138,11 @@ export type PowerHookId =
   | 'weepingHull4' | 'weepingHull6' // turn start: lose 1 HP, gain N block
   | 'marrowBloom2' | 'marrowBloom3' // on Descent gain: gain N block
   | 'communion2' | 'communion3' // turn start: lose 2 HP, gain N Might
-  | 'echoPain'; // on Descent gain: deal that much dmg to a random enemy
+  | 'echoPain' // on Descent gain: deal that much dmg to a random enemy
+  | 'weatherEye3' | 'weatherEye4' // turn start: if any enemy intends an attack, gain N block
+  | 'apexEscort4' | 'apexEscort5' // turn start: deal N to every enemy intending an attack
+  | 'grace3' | 'grace4' // the first enemy attack hit each turn deals N less
+  | 'perfectRead'; // Read riders always count as met
 
 export interface CardInstance {
   uid: number;
@@ -197,6 +214,9 @@ export interface EnemyState extends CreatureState {
   uid: number;
   defId: string;
   moveId: string; // current telegraphed intent
+  /** Weaver Foresight: best-effort forecast of the move after this one —
+      recomputed at each intent roll; a forecast, not a promise */
+  nextMoveId?: string;
   history: string[];
   /** endless affixes on this instance (see content/affixes.ts) */
   affixes?: string[];
