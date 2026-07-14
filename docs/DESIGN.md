@@ -64,6 +64,41 @@ One `@theme` token block in `src/index.css` defines the palette (abyss navies, b
 - **Boss relics are the only "energy+" sources** — energy inflation is the classic balance leak.
 - **Howler.js skipped** — all audio is synthesized, so Web Audio direct (explicitly permitted by the brief) avoids shipping a player for files that don't exist.
 
+## The Barnacle Bazaar (v2 rework)
+
+*Problem:* v1 shops were a vending machine for loot you already get free — 5 cards from the same reward pool (a post-battle pick costs nothing), relics priced at most of an act's income (~250–300g), and exactly one thing worth crossing the map for (removal). Gold had no other sink, so it accumulated with nothing to want.
+
+*Identity:* the proprietor is a salvager and butcher. The Bazaar sells **services, not stock** — things get cut, filed, and polished here, and nowhere else.
+
+**Stock (cut from 5 cards to 3):** slot 1 is a guaranteed **rare**, slots 2–3 roll the existing shop rarity weights; one of the three is half price. Fewer, better cards — each slot reads as curated, not filler. Relic slots unchanged (2). Prices per rarity unchanged.
+
+**Services (one use each per shop):**
+
+| Service | Does | Price |
+| --- | --- | --- |
+| Fillet (existing) | Remove a card from the deck | 75 + 25 per removal bought this run; Deep Sextant halves |
+| **Whetstone** | Upgrade a card | 90 + 30 per whetstone bought this run |
+| **Defang** | Permanently remove the downside of one owned two-edged (treasure) relic | 140 flat |
+
+- **Whetstone** relieves the rest-site heal/upgrade tension without removing it: the upgrade is buyable, but costs most of an act's normal-battle gold, and escalation stops it from replacing vents wholesale. Deliberately *not* discounted by Deep Sextant.
+- **Defang** targets the treasure tier's "power with teeth": Fanged Locket, Leaden Idol, Barbed Chain, Bloodletter Hook, Widow's Veil. A defanged relic shows a ✦ and its cleaned-up text. Second-order effect: treasure chests get better too — you can grab a risky relic planning to defang it later. **Merchant's Debt is excluded** (defanging −10g/battle is just buying gold; also: "that one's a debt, not a defect"). The service greys out with nothing eligible — visible early, so players learn it exists before they can use it.
+- Engine shape: `run.defanged: string[]` checked at the same hook sites as the relic ids; `defangedText` on the relic def replaces the display text. Ascension 8's ×1.2 price scale applies to everything above.
+
+**Salvage crate (one per shop):** a mystery relic, sight unseen, for **85g** — cheaper than any known relic, no tier promise. Tier roll: common 50 / uncommon 35 / rare 15, drawn from the same pool rules as relic stock (never owned, never a duplicate of the shop's open stock). Rolled at shop generation on the seeded run stream — Daily Dive players all open the same crate. If the pool is dry (deep endless), the crate simply isn't on the shelf.
+
+**Pawn counter (unlimited per shop):** sell an owned relic back to the proprietor at roughly 40% of tier value — flat prices, and deliberately *not* raised by the Ascension 8 scale:
+
+| starter | common | uncommon | rare | treasure | boss |
+| --- | --- | --- | --- | --- | --- |
+| 25g | 40g | 60g | 95g | 55g | 110g |
+
+- Anything can be pawned — selling your starter relic or a boss relic is a real (usually bad, occasionally brilliant) decision. On-pickup effects already banked (Max HP, gold) are kept; the sell price is low enough to price that in.
+- **Merchant's Debt is the designed escape valve:** pickup pays 60g, pawning it later pays 55g and ends the −10g/battle bleed — breakeven around eleven battles, so holding it is still usually right. The proprietor buying back a debt is exactly her kind of business.
+- Pawning a defanged relic just works (the `defanged` entry is cleaned up with it); you're forfeiting the 140g polish, which the picker makes visible with the ✦.
+- Second-order effect: dead relics (a tide relic when the tide is locked, char-specific leftovers) become ~half a service voucher, and the pawn→defang loop gives late shops something to do with gold surplus.
+
+*Deferred to a later slice:* chum specials (cheap next-battle-only blessings) — wait for a playtest of the four-sink economy first; same for the uncommon relic price trim (145–170 → ~120–140).
+
 ## Tuning knobs (where to reach first)
 
 | Feels wrong | Reach for |

@@ -3,7 +3,7 @@ import {
   ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, completePick, buyShopItem, generateShop, scoreRun, addRelic, beginLoop, restHealAmount } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount } from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard } from './describe';
 import { generateBossSpec, threatCost } from './endless';
@@ -679,6 +679,106 @@ describe('run layer', () => {
     run.gold = 0;
     const other = run.shop.items.findIndex((i) => !i.sold);
     expect(buyShopItem(run, other)).toBe('gold');
+  });
+
+  it('shop: stock is 3 cards with a guaranteed rare + 2 relics + services', () => {
+    const run = testRun('shop-stock');
+    run.shop = generateShop(run);
+    const cards = run.shop.items.filter((i) => i.kind === 'card');
+    expect(cards.length).toBe(3);
+    expect(cards.some((c) => c.kind === 'card' && CARDS[c.card.defId].rarity === 'rare')).toBe(true);
+    expect(run.shop.items.filter((i) => i.kind === 'relic').length).toBe(2);
+    expect(run.shop.whetstonePrice).toBe(90);
+    expect(run.shop.defangPrice).toBe(140);
+  });
+
+  it('shop: whetstone upgrades a card, escalates, and respects limits', () => {
+    const run = testRun('whetstone');
+    run.gold = 500;
+    run.shop = generateShop(run);
+    const card = run.deck.find((c) => !c.upgraded)!;
+    expect(buyWhetstone(run, card.uid)).toBeNull();
+    expect(card.upgraded).toBe(true);
+    expect(run.gold).toBe(500 - 90);
+    // one per shop
+    const other = run.deck.find((c) => !c.upgraded)!;
+    expect(buyWhetstone(run, other.uid)).toBe('none');
+    // escalation: next shop charges more
+    run.shop = generateShop(run);
+    expect(run.shop.whetstonePrice).toBe(120);
+    // can't sharpen an already-upgraded card
+    expect(buyWhetstone(run, card.uid)).toBe('none');
+  });
+
+  it('shop: defang strips a treasure relic downside for good', () => {
+    const run = testRun('defang');
+    run.gold = 500;
+    addRelic(run, 'fangedLocket');
+    run.shop = generateShop(run);
+    expect(defangEligible(run)).toEqual(['fangedLocket']);
+
+    // with teeth: battle start costs 2 HP (alongside the 2 Might)
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.player.hp).toBe(run.hp - 2);
+    expect(run.battle!.player.statuses.might).toBe(2);
+    run.battle = null;
+
+    expect(buyDefang(run, 'fangedLocket')).toBeNull();
+    expect(run.gold).toBe(500 - 140);
+    expect(defangEligible(run)).toEqual([]);
+    expect(buyDefang(run, 'fangedLocket')).toBe('none'); // no double-dipping
+
+    // defanged: the might stays, the bite is gone
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.player.hp).toBe(run.hp);
+    expect(run.battle!.player.statuses.might).toBe(2);
+  });
+
+  it("shop: merchant's debt cannot be defanged", () => {
+    const run = testRun('debt');
+    run.gold = 500;
+    addRelic(run, 'merchantsDebt');
+    run.shop = generateShop(run);
+    expect(defangEligible(run)).toEqual([]);
+    expect(buyDefang(run, 'merchantsDebt')).toBe('none');
+  });
+
+  it('shop: salvage crate holds a valid unowned relic and buying reveals it', () => {
+    const run = testRun('crate');
+    run.gold = 500;
+    run.shop = generateShop(run);
+    const id = run.shop.crateRelicId!;
+    expect(id).toBeTruthy();
+    expect(RELICS[id]).toBeDefined();
+    expect(run.relics.includes(id)).toBe(false);
+    // never a duplicate of the open relic stock
+    const offered = run.shop.items.filter((i) => i.kind === 'relic').map((i) => i.kind === 'relic' && i.relicId);
+    expect(offered.includes(id)).toBe(false);
+    expect(run.shop.cratePrice).toBe(85);
+
+    expect(buyCrate(run)).toBeNull();
+    expect(run.relics.includes(id)).toBe(true);
+    expect(run.gold).toBe(500 - 85);
+    expect(buyCrate(run)).toBe('none'); // one crate per shop
+  });
+
+  it('shop: pawn counter pays tier value and forgets the defang', () => {
+    const run = testRun('pawn');
+    run.gold = 0;
+    addRelic(run, 'fangedLocket');
+    run.defanged = ['fangedLocket'];
+    run.shop = generateShop(run);
+
+    expect(sellPrice('fangedLocket')).toBe(55);
+    expect(pawnRelic(run, 'fangedLocket')).toBeNull();
+    expect(run.gold).toBe(55);
+    expect(run.relics.includes('fangedLocket')).toBe(false);
+    expect(run.defanged.includes('fangedLocket')).toBe(false);
+    // can't pawn what you don't own
+    expect(pawnRelic(run, 'fangedLocket')).toBe('none');
+    // starter relic is pawnable — cheap, but allowed
+    expect(pawnRelic(run, 'livingCoral')).toBeNull();
+    expect(run.gold).toBe(55 + 25);
   });
 
   it('events: effects and deck picks apply', () => {

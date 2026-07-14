@@ -243,7 +243,7 @@ export function BattleScreen() {
           <BookOpen size={15} />
         </button>
       </div>
-      <RelicBar relics={run.relics} />
+      <RelicBar relics={run.relics} defanged={run.defanged} />
 
       {/* boss banner */}
       <AnimatePresence>
