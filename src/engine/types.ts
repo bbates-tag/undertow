@@ -411,6 +411,7 @@ export interface MetaState {
   /** compendium discovery — def ids the player has actually encountered */
   seenEnemies: Record<string, true>;
   seenCards: Record<string, true>;
+  seenRelics: Record<string, true>;
   runHistory: RunSummary[];
   dailyHistory: DailyResult[];
   bestScore: number;

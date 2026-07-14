@@ -8,7 +8,7 @@ import type { MetaState, RunState, ShopState } from '../engine/types';
 
 const baseMeta = (over: Partial<MetaState> = {}) => ({
   version: 1, fathoms: 0, unlockedChars: ['tidecaller'], unlockedPacks: [],
-  ascension: {}, wins: {}, runsPlayed: 0, achievements: {}, seenEnemies: {}, seenCards: {},
+  ascension: {}, wins: {}, runsPlayed: 0, achievements: {}, seenEnemies: {}, seenCards: {}, seenRelics: {},
   runHistory: [], dailyHistory: [], bestScore: 0, tutorialSeen: false, ...over,
 }) as MetaState;
 
@@ -41,6 +41,24 @@ describe('compendium discovery', () => {
     const next = withSeen(baseMeta(), run);
     expect(next!.seenCards.depthCharge).toBe(true);
     expect(next!.seenCards.maelstrom).toBe(true);
+  });
+
+  it('relics: owned, shop stock, and boss choices count — the salvage crate stays secret', () => {
+    const run = freshRun();
+    run.relics.push('oarfishRibbon');
+    run.reward = { gold: 0, cards: [], relics: ['nacreCharm'], bossRelics: ['rustedHelm'], taken: {}, source: 'boss' };
+    run.shop = {
+      items: [{ kind: 'relic', relicId: 'kelpWrap', price: 150 }],
+      removalPrice: 75, removalsLeft: 1,
+      crateRelicId: 'drownedCompass', cratePrice: 85,
+    } as ShopState;
+    const next = withSeen(baseMeta(), run);
+    expect(next!.seenRelics.livingCoral).toBe(true); // unlocked starter relic
+    expect(next!.seenRelics.oarfishRibbon).toBe(true);
+    expect(next!.seenRelics.nacreCharm).toBe(true);
+    expect(next!.seenRelics.rustedHelm).toBe(true);
+    expect(next!.seenRelics.kelpWrap).toBe(true);
+    expect(next!.seenRelics.drownedCompass).toBeUndefined(); // sight-unseen until bought
   });
 
   it('saves from before seen-tracking (fields missing) are treated as empty', () => {

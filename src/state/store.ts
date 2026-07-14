@@ -60,6 +60,7 @@ export const defaultMeta = (): MetaState => ({
   achievements: {},
   seenEnemies: {},
   seenCards: {},
+  seenRelics: {},
   runHistory: [],
   dailyHistory: [],
   bestScore: 0,
