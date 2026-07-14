@@ -31,6 +31,7 @@ Nano Banana works best with flowing natural-language paragraphs, not keyword sou
 5. **Work in one chat session** so style context carries, but don't rely on chat memory for the character — re-attach the reference every time.
 6. **When the character should NOT appear** (object/scene cards, marked *no figure* when the card list lands), say "no human figures" explicitly — with a character reference attached, Nano Banana loves sneaking them in.
 7. Nano Banana renders text very eagerly. The "no text, no lettering" clause in the style block matters more here than on other generators — keep it even when trimming.
+8. **Two-figure scenes need explicit staging.** With her reference attached, the model defaults her to a camera-facing hero pose — so for any card where she interacts with an enemy, state each figure's screen position, facing, and which limbs are where ("the cultist faces the viewer; only her arms reach around it from behind"). Avoid implying spatial relationships through a single word ("garrote", "behind"). And never describe a state by its absence — "guttering out" reads as *lit*; say "burned down to a last dying ember trailing smoke."
 
 ---
 
@@ -70,7 +71,7 @@ The Wakeweaver leaning back like a dancer beneath the sweep of a huge crab claw,
 Close-up: the Wakeweaver's face in profile, eyes half-lidded and lit pale silver-blue, one finger raised to her lips, as luminous ripple-lines cross the darkness in front of her like lines of text only she can read.
 
 **Undertow Feint — `undertowFeint` (attack)** · *character featured*
-The Wakeweaver already standing behind a robed kraken-cultist whose ritual light is guttering out — glowing thread pulled garrote-taut between her fists, the interrupted spell dying like a snuffed candle, her expression politely apologetic.
+Centered in the frame: a hooded kraken-cultist facing the viewer, its face lost in shadow under the hood. The Wakeweaver is BEHIND the cultist and mostly hidden by its bulk — only her two arms reach around it from behind, pulling her glowing silver-blue thread taut in a straight line across the front of the cultist's throat, and her face leans out past its shoulder with a small, politely apologetic smile. In the cultist's raised hand, its ritual flame has burned down to a last dying ember trailing a curl of smoke up through the dark water. Cold moonlight from above; her thread is the brightest line in the frame.
 
 ### Commons
 
