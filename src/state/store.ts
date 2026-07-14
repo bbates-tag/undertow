@@ -25,7 +25,7 @@ import { CHARACTERS } from '../content/characters';
 import { playSfx, playSfxList, setSfxEnabled } from '../audio/sfx';
 import { music } from '../audio/music';
 import { setMasterVolume } from '../audio/zzfx';
-import { loadSave, persist, wipeSave } from './persist';
+import { loadSave, parseSaveBlob, persist, wipeSave, writeSaveNow } from './persist';
 
 export type Screen =
   | 'menu' | 'newRun' | 'map' | 'battle' | 'reward' | 'shop' | 'rest' | 'event'
@@ -132,6 +132,8 @@ interface GameStore {
 
   setSettings(p: Partial<Settings>): void;
   resetSave(): void;
+  /** replace all progress with an exported save; false = invalid/unwritable, nothing changed */
+  importSave(raw: string): boolean;
   advanceTutorial(): void;
 
   clearFxBefore(id: number): void;
@@ -306,8 +308,6 @@ export const useGame = create<GameStore>((set, get) => {
     boot() {
       const saved = loadSave();
       if (saved) {
-        // migrate older saves missing the unlock snapshot
-        if (saved.run && !saved.run.unlockedPacks) saved.run.unlockedPacks = saved.meta?.unlockedPacks ?? [];
         set({
           meta: { ...defaultMeta(), ...saved.meta },
           settings: { ...defaultSettings(), ...saved.settings },
@@ -772,6 +772,17 @@ export const useGame = create<GameStore>((set, get) => {
         toasts: [],
       });
       applyAudioSettings(get().settings);
+    },
+
+    importSave(raw) {
+      const blob = parseSaveBlob(raw);
+      if (!blob || !writeSaveNow(blob)) return false;
+      // boot() re-hydrates from storage — same migrations and screen resume
+      // as a fresh page load, so a mid-battle import lands back in the fight
+      set({ run: null, screen: 'menu' });
+      get().boot();
+      get().toast('Save imported');
+      return true;
     },
 
     advanceTutorial() {
