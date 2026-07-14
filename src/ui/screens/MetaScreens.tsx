@@ -2,7 +2,9 @@
 // how-to-play, and credits.
 
 import { ArrowLeft } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useGame, type Screen } from '../../state/store';
+import { buildSaveBlob, parseSaveBlob, type SaveBlob } from '../../state/persist';
 import { ACHIEVEMENTS, ASCENSIONS } from '../../content/meta';
 import { CHARACTERS } from '../../content/characters';
 import { KEYWORDS } from '../../content/keywords';
@@ -111,6 +113,128 @@ export function AchievementsScreen() {
   );
 }
 
+/** export/import save data — insurance against cleared browsing data, and
+    device-to-device transfer. Import is staged behind an explicit confirm
+    that summarizes what the file contains before anything is replaced. */
+function SaveDataPanel() {
+  const importSave = useGame((s) => s.importSave);
+  const toast = useGame((s) => s.toast);
+  const [pending, setPending] = useState<{ raw: string; blob: SaveBlob } | null>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // serialize from the live store, not localStorage — persist() is debounced,
+  // so storage can be a beat behind the last action
+  const exportText = () => {
+    const { meta, settings, run } = useGame.getState();
+    return JSON.stringify(buildSaveBlob({ meta, settings, run }));
+  };
+
+  const downloadSave = () => {
+    const url = URL.createObjectURL(new Blob([exportText()], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `undertow-save-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Save exported');
+  };
+
+  const copySave = async () => {
+    try {
+      await navigator.clipboard.writeText(exportText());
+      toast('Save copied to clipboard');
+    } catch {
+      toast('Clipboard blocked — use Export file instead');
+    }
+  };
+
+  const stageImport = (raw: string) => {
+    const blob = parseSaveBlob(raw);
+    if (!blob) {
+      toast('Not a valid UNDERTOW save');
+      return;
+    }
+    setPending({ raw, blob });
+    setPasteOpen(false);
+    setPasteText('');
+  };
+
+  const pasteImport = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      stageImport(text);
+    } catch {
+      // Firefox has no readText; Safari/Chrome may deny — fall back to a paste box
+      setPending(null);
+      setPasteOpen(true);
+    }
+  };
+
+  const confirmImport = () => {
+    if (pending && !importSave(pending.raw)) toast('Import failed — nothing was changed');
+    setPending(null);
+  };
+
+  const b = pending?.blob;
+  const trophies = b ? Object.keys(b.meta.achievements ?? {}).length : 0;
+  const runLine = b?.run
+    ? `${CHARACTERS[b.run.charId].name} run in progress (Act ${b.run.act}${b.run.loop ? `, loop ${b.run.loop}` : ''})`
+    : 'no run in progress';
+  const when = b?.savedAt ? new Date(b.savedAt).toLocaleDateString() : 'an unknown date';
+
+  return (
+    <div className="panel p-4 flex flex-col gap-2">
+      <h2 className="font-bold text-sm">Save data</h2>
+      <p className="text-xs text-(--color-mist)">
+        Your progress lives in this browser. Export a copy before clearing browsing data, or to move it to another device.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button className="btn" onClick={downloadSave}>Export file</button>
+        <button className="btn" onClick={() => void copySave()}>Copy to clipboard</button>
+        <button className="btn" onClick={() => fileRef.current?.click()}>Import file</button>
+        <button className="btn" onClick={() => void pasteImport()}>Paste &amp; import</button>
+      </div>
+      <input
+        ref={fileRef} type="file" accept=".json,application/json" className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = ''; // re-picking the same file should fire again
+          if (f) void f.text().then(stageImport);
+        }}
+      />
+      {pasteOpen && (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            placeholder="Paste your exported save here"
+            aria-label="Pasted save data"
+            className="bg-(--color-abyss-800) border border-(--color-abyss-600) rounded-lg p-2 text-xs font-mono h-24 resize-none"
+          />
+          <div className="flex gap-2">
+            <button className="btn" disabled={!pasteText.trim()} onClick={() => stageImport(pasteText)}>Import pasted save</button>
+            <button className="btn" onClick={() => { setPasteOpen(false); setPasteText(''); }}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {pending && (
+        <div className="border border-(--color-danger) rounded-lg p-3 flex flex-col gap-2">
+          <p className="text-xs">
+            Save from <b>{when}</b> — {trophies} {trophies === 1 ? 'trophy' : 'trophies'}, {runLine}.
+            Importing replaces <b>all</b> current progress.
+          </p>
+          <div className="flex gap-2">
+            <button className="btn btn-danger" onClick={confirmImport}>Replace my progress</button>
+            <button className="btn" onClick={() => setPending(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SettingsScreen() {
   const settings = useGame((s) => s.settings);
   const setSettings = useGame((s) => s.setSettings);
@@ -169,6 +293,8 @@ export function SettingsScreen() {
           <ConfirmButton label="Abandon run" confirmLabel="Really abandon? Counts as a loss" onConfirm={() => { abandonRun(); go('menu'); }} className="btn-danger self-start" />
         </div>
       )}
+
+      <SaveDataPanel />
 
       <div className="panel p-4 flex flex-col gap-2">
         <h2 className="font-bold text-sm text-(--color-danger)">Danger zone</h2>
