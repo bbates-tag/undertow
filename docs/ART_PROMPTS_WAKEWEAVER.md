@@ -71,7 +71,8 @@ The Wakeweaver leaning back like a dancer beneath the sweep of a huge crab claw,
 Close-up: the Wakeweaver's face in profile, eyes half-lidded and lit pale silver-blue, one finger raised to her lips, as luminous ripple-lines cross the darkness in front of her like lines of text only she can read.
 
 **Undertow Feint — `undertowFeint` (attack)** · *character featured*
-Centered in the frame: a hooded kraken-cultist facing the viewer, its face lost in shadow under the hood. The Wakeweaver is BEHIND the cultist and mostly hidden by its bulk — only her two arms reach around it from behind, pulling her glowing silver-blue thread taut in a straight line across the front of the cultist's throat, and her face leans out past its shoulder with a small, politely apologetic smile. In the cultist's raised hand, its ritual flame has burned down to a last dying ember trailing a curl of smoke up through the dark water. Cold moonlight from above; her thread is the brightest line in the frame.
+Center-left: a hooded kraken-cultist lunging with clawed hand and cold ritual flame at a translucent, dissolving afterimage of the Wakeweaver — a ghost of her woven from faint silver-blue thread-lines, already unraveling where the claws pass straight through it. The real Wakeweaver is at the right edge of the frame in profile, one step past the cultist, needle-blade trailing a line of silver light behind her, smiling slightly without looking back. Cold moonlight from above, the afterimage the brightest thing in the frame as it comes apart into drifting threads.
+*(v1 was a garrote-from-behind scene; the model stages it fine but softens the taut wire into slack thread every time — interpersonal-violence smoothing. The feint reads better and renders reliably.)*
 
 ### Commons
 
