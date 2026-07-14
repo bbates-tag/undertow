@@ -12,7 +12,7 @@ import { GameIcon, STATUS_META } from '../icons';
 import { ConfirmButton } from '../components/Bits';
 import { highlightText } from '../components/CardView';
 
-function Shell({ title, children, back = 'menu' }: { title: string; children: React.ReactNode; back?: Screen }) {
+export function Shell({ title, children, back = 'menu' }: { title: string; children: React.ReactNode; back?: Screen }) {
   const go = useGame((s) => s.go);
   return (
     <div className="min-h-dvh app-bg flex flex-col items-center p-4 gap-4 overflow-y-auto">

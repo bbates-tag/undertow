@@ -1,6 +1,6 @@
 // UNDERTOW service worker — cache-first for same-origin assets so the game
 // keeps working fully offline after the first load. Bump VERSION on deploys.
-const VERSION = 'undertow-v20';
+const VERSION = 'undertow-v21';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

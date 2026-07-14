@@ -14,6 +14,7 @@ import { RestScreen } from './ui/screens/RestScreen';
 import { EventScreen } from './ui/screens/EventScreen';
 import { GameOverScreen, VictoryScreen } from './ui/screens/RunEndScreens';
 import { AchievementsScreen, CreditsScreen, HowToPlayScreen, SettingsScreen, StatsScreen } from './ui/screens/MetaScreens';
+import { CompendiumScreen } from './ui/screens/CompendiumScreen';
 import { DeckOverlay } from './ui/components/DeckOverlay';
 import { Toasts } from './ui/components/Bits';
 import { DebugPanel } from './ui/DebugPanel';
@@ -34,6 +35,7 @@ const SCREENS = {
   credits: CreditsScreen,
   settings: SettingsScreen,
   howToPlay: HowToPlayScreen,
+  compendium: CompendiumScreen,
 } as const;
 
 export default function App() {
