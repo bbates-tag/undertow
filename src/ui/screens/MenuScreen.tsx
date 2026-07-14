@@ -1,6 +1,6 @@
 // Title screen: wordmark, light rays, bubbles, and the main navigation.
 
-import { Anchor, BookOpen, ChartColumn, Info, Play, Settings as SettingsIcon, Sun, Trophy } from 'lucide-react';
+import { Anchor, BookMarked, BookOpen, ChartColumn, Info, Play, Settings as SettingsIcon, Sun, Trophy } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { todayKey } from '../../lib/util';
 import { Bubbles } from '../components/Bits';
@@ -60,6 +60,9 @@ export function MenuScreen() {
             <SettingsIcon size={14} /> Settings
           </button>
         </div>
+        <button className="btn text-sm" onClick={() => go('compendium')}>
+          <BookMarked size={14} /> Compendium
+        </button>
         <button className="text-(--color-dim) text-xs underline mx-auto mt-1" onClick={() => go('credits')}>
           <Info size={11} className="inline mr-1" />
           credits & licenses

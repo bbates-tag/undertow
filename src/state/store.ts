@@ -26,10 +26,11 @@ import { playSfx, playSfxList, setSfxEnabled } from '../audio/sfx';
 import { music } from '../audio/music';
 import { setMasterVolume } from '../audio/zzfx';
 import { loadSave, parseSaveBlob, persist, wipeSave, writeSaveNow } from './persist';
+import { withSeen } from './seen';
 
 export type Screen =
   | 'menu' | 'newRun' | 'map' | 'battle' | 'reward' | 'shop' | 'rest' | 'event'
-  | 'gameover' | 'victory' | 'stats' | 'achievements' | 'credits' | 'settings' | 'howToPlay';
+  | 'gameover' | 'victory' | 'stats' | 'achievements' | 'credits' | 'settings' | 'howToPlay' | 'compendium';
 
 export type Overlay = 'none' | 'deck' | 'drawPile' | 'discardPile' | 'exhaustPile' | 'glossary' | 'settings';
 
@@ -57,6 +58,8 @@ export const defaultMeta = (): MetaState => ({
   wins: { tidecaller: 0, voltaic: 0 },
   runsPlayed: 0,
   achievements: {},
+  seenEnemies: {},
+  seenCards: {},
   runHistory: [],
   dailyHistory: [],
   bestScore: 0,
@@ -326,6 +329,13 @@ export const useGame = create<GameStore>((set, get) => {
         else if (run.eventId) set({ screen: 'event' });
         else if (run.reward) set({ screen: 'reward' });
         else set({ screen: 'map' });
+      }
+      // seed discovery on load: covers fresh profiles (unlocked starters)
+      // and profiles from before seen-tracking existed
+      const seen = withSeen(get().meta, get().run);
+      if (seen) {
+        set({ meta: seen });
+        persist(get());
       }
     },
 
@@ -800,6 +810,19 @@ export const useGame = create<GameStore>((set, get) => {
       set((st) => ({ fx: st.fx.filter((f) => f.id > id) }));
     },
   };
+});
+
+// Compendium discovery: whenever the run changes, union anything newly
+// visible (battle enemies incl. summons, deck/reward/shop/pile cards) into
+// meta.seen*. One hook site catches every code path that mutates the run;
+// the setState below only touches meta, so it can't re-trigger itself.
+useGame.subscribe((st, prev) => {
+  if (st.run === prev.run) return;
+  const next = withSeen(st.meta, st.run);
+  if (next) {
+    useGame.setState({ meta: next });
+    persist(useGame.getState());
+  }
 });
 
 /** flawless-battle achievement hook: called from BattleScreen when a battle is won */

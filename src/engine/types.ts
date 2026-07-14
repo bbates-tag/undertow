@@ -408,6 +408,9 @@ export interface MetaState {
   wins: Record<string, number>;
   runsPlayed: number;
   achievements: Record<string, string>; // id -> ISO date earned
+  /** compendium discovery — def ids the player has actually encountered */
+  seenEnemies: Record<string, true>;
+  seenCards: Record<string, true>;
   runHistory: RunSummary[];
   dailyHistory: DailyResult[];
   bestScore: number;
