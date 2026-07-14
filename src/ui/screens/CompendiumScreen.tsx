@@ -138,7 +138,10 @@ function CharacterDossier({ charId, onClose }: { charId: CharacterId; onClose: (
         className="panel relative w-[min(94vw,420px)] max-h-full overflow-y-auto overflow-x-hidden"
         onClick={(ev) => ev.stopPropagation()}
       >
-        <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full aspect-[4/3] object-cover object-top" iconSize={64} alt={ch.name} />
+        {/* near-full portrait: clip only a sliver off the bottom (art is ~4:5) */}
+        <div className="overflow-hidden">
+          <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full block -mb-[4%]" iconSize={64} alt={ch.name} />
+        </div>
         <div className="p-4 flex flex-col gap-2">
           <div>
             <h2 className="font-display text-xl font-bold">{ch.name}</h2>
