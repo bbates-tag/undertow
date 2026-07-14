@@ -13,6 +13,9 @@ export interface RelicDef {
   text: string;
   char?: CharacterId; // character-specific pool
   flavor?: string;
+  /** replacement text once the Bazaar's Defang service removes the downside;
+      presence of this field is what marks a relic as defangable */
+  defangedText?: string;
 }
 
 export const RELICS: Record<string, RelicDef> = Object.fromEntries(
@@ -53,12 +56,12 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
       { id: 'paleStarfish', name: 'Pale Starfish', icon: 'GiSeaStar', tier: 'rare', text: 'At the end of your turn, heal 2 HP if you lost no HP this turn.', flavor: 'It regrows what it is patient about.' },
       { id: 'drownedCompass', name: 'Drowned Compass', icon: 'GiCompass', tier: 'rare', text: 'Each time the tide completes a full cycle, gain 1 Might and 1 Finesse.', flavor: 'It points down, which is forward.' },
       // ── Treasure (chest-exclusive salvage — power with teeth) ──
-      { id: 'fangedLocket', name: 'Fanged Locket', icon: 'GiFangs', tier: 'treasure', text: 'Start each battle with 2 Might. Take 2 damage at the start of each battle.', flavor: 'It loves you back, mostly.' },
-      { id: 'leadenIdol', name: 'Leaden Idol', icon: 'GiAmmonite', tier: 'treasure', text: 'On pickup: gain 12 Max HP. Battles start at Low tide.', flavor: 'Heavy as a kept promise.' },
-      { id: 'barbedChain', name: 'Barbed Chain', icon: 'GiSpikedShell', tier: 'treasure', text: 'Start each battle with 10 Block. Lose 2 HP whenever you shuffle your deck.' },
+      { id: 'fangedLocket', name: 'Fanged Locket', icon: 'GiFangs', tier: 'treasure', text: 'Start each battle with 2 Might. Take 2 damage at the start of each battle.', flavor: 'It loves you back, mostly.', defangedText: 'Start each battle with 2 Might.' },
+      { id: 'leadenIdol', name: 'Leaden Idol', icon: 'GiAmmonite', tier: 'treasure', text: 'On pickup: gain 12 Max HP. Battles start at Low tide.', flavor: 'Heavy as a kept promise.', defangedText: 'On pickup: gain 12 Max HP.' },
+      { id: 'barbedChain', name: 'Barbed Chain', icon: 'GiSpikedShell', tier: 'treasure', text: 'Start each battle with 10 Block. Lose 2 HP whenever you shuffle your deck.', defangedText: 'Start each battle with 10 Block.' },
       { id: 'merchantsDebt', name: "Merchant's Debt", icon: 'GiCoinsPile', tier: 'treasure', text: 'On pickup: gain 60 gold. Gain 10 less gold after each battle.', flavor: 'The interest is due at the surface.' },
-      { id: 'bloodletterHook', name: 'Bloodletter Hook', icon: 'GiFishingHook', tier: 'treasure', text: 'Your first Attack each battle deals double damage. Lose 2 HP after each battle.' },
-      { id: 'widowsVeil', name: "Widow's Veil", icon: 'GiPoisonCloud', tier: 'treasure', text: 'Enemies start each battle with 2 Toxin. So do you.', flavor: 'Grief settles over everything evenly.' },
+      { id: 'bloodletterHook', name: 'Bloodletter Hook', icon: 'GiFishingHook', tier: 'treasure', text: 'Your first Attack each battle deals double damage. Lose 2 HP after each battle.', defangedText: 'Your first Attack each battle deals double damage.' },
+      { id: 'widowsVeil', name: "Widow's Veil", icon: 'GiPoisonCloud', tier: 'treasure', text: 'Enemies start each battle with 2 Toxin. So do you.', flavor: 'Grief settles over everything evenly.', defangedText: 'Enemies start each battle with 2 Toxin.' },
       // ── Boss (choose one after each act boss — pure upside, each on its own axis) ──
       { id: 'rustedHelm', name: 'Rusted Diving Helm', icon: 'GiDivingHelmet', tier: 'boss', text: '+1 Energy each turn.' },
       { id: 'blackPearl', name: 'Black Pearl', icon: 'GiEclipseFlare', tier: 'boss', text: 'At the start of each battle, apply 2 Weakened and 2 Exposed to ALL enemies.', flavor: 'Its light arrives as hunger.' },
@@ -71,6 +74,15 @@ export const RELICS: Record<string, RelicDef> = Object.fromEntries(
     ] as RelicDef[]
   ).map((r) => [r.id, r]),
 );
+
+/** ids of relics the Bazaar's Defang service can clean up */
+export const DEFANGABLE = Object.values(RELICS).filter((r) => r.defangedText).map((r) => r.id);
+
+/** display text for a relic, honoring a defang */
+export function relicText(id: string, defanged: readonly string[] | undefined): string {
+  const def = RELICS[id];
+  return defanged?.includes(id) && def.defangedText ? def.defangedText : def.text;
+}
 
 export function relicPool(tier: 'common' | 'uncommon' | 'rare' | 'boss' | 'treasure', charId: CharacterId, owned: readonly string[], lockedIds: ReadonlySet<string>): RelicDef[] {
   return Object.values(RELICS).filter(

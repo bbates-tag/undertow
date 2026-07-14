@@ -273,6 +273,16 @@ export interface ShopState {
   items: ShopItem[];
   removalPrice: number;
   removalsLeft: number;
+  /** services below are absent on saves from before the Bazaar rework */
+  whetstonePrice?: number;
+  whetstonesLeft?: number;
+  defangPrice?: number;
+  defangsLeft?: number;
+  /** salvage crate: a mystery relic rolled at generation, hidden until bought;
+      absent when the relic pool is dry */
+  crateRelicId?: string;
+  cratePrice?: number;
+  crateSold?: boolean;
 }
 
 export interface RewardState {
@@ -333,6 +343,10 @@ export interface RunState {
   shop: ShopState | null;
   eventId: string | null;
   removalsBought: number;
+  /** whetstone (shop upgrade) escalation — absent on pre-rework saves */
+  whetstonesBought?: number;
+  /** two-edged relics whose downside has been removed at the Bazaar */
+  defanged?: string[];
   stats: RunStats;
   result: 'win' | 'loss' | null;
   killedBy?: string;

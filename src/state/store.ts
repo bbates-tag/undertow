@@ -14,8 +14,9 @@ import {
   canPlay, cardExhausts, endPlayerTurn, getStatus, newEmit, playCard, stepEnemy, type Emit,
 } from '../engine/battle';
 import {
-  addCardToDeck, addRelic, applyBoon, applyEventEffect, beginLoop, buyRemoval, buyShopItem, completePick, descend,
-  doRestHeal, enterNode, generateBattleReward, newRun, scoreRun, type PendingPick,
+  addCardToDeck, addRelic, applyBoon, applyEventEffect, beginLoop, buyCrate, buyDefang, buyRemoval, buyShopItem,
+  buyWhetstone, completePick, descend, doRestHeal, enterNode, generateBattleReward, newRun, pawnRelic, scoreRun,
+  sellPrice, type PendingPick,
 } from '../engine/run';
 import { EVENTS } from '../content/events';
 import { RELICS } from '../content/relics';
@@ -116,6 +117,10 @@ interface GameStore {
 
   shopBuy(i: number): void;
   shopStartRemoval(): void;
+  shopStartWhetstone(): void;
+  shopDefang(relicId: string): void;
+  shopBuyCrate(): void;
+  shopPawn(relicId: string): void;
   restHeal(): void;
   restStartUpgrade(): void;
   leaveNode(): void;
@@ -628,6 +633,55 @@ export const useGame = create<GameStore>((set, get) => {
       set({ pendingPick: { kind: 'remove', from: 'shop' }, overlay: 'deck' });
     },
 
+    shopStartWhetstone() {
+      const run = get().run;
+      if (!run?.shop || (run.shop.whetstonesLeft ?? 0) <= 0 || run.shop.whetstonePrice == null) return;
+      if (run.gold < run.shop.whetstonePrice) {
+        get().toast('Not enough gold');
+        playSfx('error');
+        return;
+      }
+      set({ pendingPick: { kind: 'upgrade', from: 'shop' }, overlay: 'deck' });
+    },
+
+    shopDefang(relicId) {
+      const run = deepClone(get().run!);
+      const err = buyDefang(run, relicId);
+      if (err === 'gold') {
+        get().toast('Not enough gold');
+        playSfx('error');
+        return;
+      }
+      if (err) return;
+      playSfx('upgrade');
+      commit(run);
+      get().toast(`${RELICS[relicId].name} defanged. Pure upside now.`);
+    },
+
+    shopBuyCrate() {
+      const run = deepClone(get().run!);
+      const relicId = run.shop?.crateRelicId;
+      const err = buyCrate(run);
+      if (err === 'gold') {
+        get().toast('Not enough gold');
+        playSfx('error');
+        return;
+      }
+      if (err) return;
+      playSfx('buy');
+      commit(run);
+      get().toast(`Inside: ${RELICS[relicId!].name}!`, 'relic');
+    },
+
+    shopPawn(relicId) {
+      const run = deepClone(get().run!);
+      const err = pawnRelic(run, relicId);
+      if (err) return;
+      playSfx('buy');
+      commit(run);
+      get().toast(`Pawned ${RELICS[relicId].name} for ${sellPrice(relicId)} gold.`);
+    },
+
     restHeal() {
       const run = deepClone(get().run!);
       const emit = newEmit();
@@ -670,12 +724,12 @@ export const useGame = create<GameStore>((set, get) => {
       if (!pick) return;
       const run = deepClone(st.run!);
       if (pick.from === 'shop') {
-        const err = buyRemoval(run, uid);
+        const err = pick.kind === 'upgrade' ? buyWhetstone(run, uid) : buyRemoval(run, uid);
         if (err) {
           playSfx('error');
           return;
         }
-        playSfx('buy');
+        playSfx(pick.kind === 'upgrade' ? 'upgrade' : 'buy');
         commit(run);
         set({ pendingPick: null, overlay: 'none' });
         return;

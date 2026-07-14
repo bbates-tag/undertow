@@ -7,7 +7,7 @@
 
 import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, startBattle } from '../engine/battle';
 import {
-  addRelic, applyBoon, applyEventEffect, beginLoop, buyRemoval, buyShopItem, descend, doRestHeal,
+  addRelic, applyBoon, applyEventEffect, beginLoop, buyCrate, buyDefang, buyRemoval, buyShopItem, buyWhetstone, defangEligible, descend, doRestHeal,
   enterNode, generateBattleReward, generateShop, newRun, reachableNodes, scoreRun, completePick,
 } from '../engine/run';
 import type { CharacterId, MapNode, RunState } from '../engine/types';
@@ -177,6 +177,17 @@ export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?
         const strike = run.deck.find((c) => CARDS[c.defId].rarity === 'starter' && CARDS[c.defId].type === 'attack');
         if (strike) buyRemoval(run, strike.uid);
       }
+      // defang first (pure upside), then whetstone if there's spare coin
+      if (run.shop.defangPrice != null && run.gold >= run.shop.defangPrice + 60) {
+        const tooth = defangEligible(run)[0];
+        if (tooth) buyDefang(run, tooth);
+      }
+      if (run.shop.whetstonePrice != null && run.gold >= run.shop.whetstonePrice + 60) {
+        const cand = run.deck.find((c) => !c.upgraded && CARDS[c.defId].type !== 'curse' && draftScore(c.defId) >= 3);
+        if (cand) buyWhetstone(run, cand.uid);
+      }
+      // gamble on the crate only with a deep purse
+      if (run.shop.cratePrice != null && run.gold >= run.shop.cratePrice + 150) buyCrate(run);
       for (let b = 0; b < 2; b++) {
         const buyIdx = run.shop.items.findIndex(
           (i) => !i.sold && i.price <= run.gold - 40 && (i.kind === 'relic' || (i.kind === 'card' && draftScore(i.card.defId) >= 3)),

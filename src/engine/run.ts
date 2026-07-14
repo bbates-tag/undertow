@@ -7,7 +7,7 @@ import type {
 import { hashSeed, makeRng, type Rng } from '../lib/rng';
 import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
 import { CHARACTERS } from '../content/characters';
-import { RELICS, relicPool } from '../content/relics';
+import { DEFANGABLE, RELICS, relicPool } from '../content/relics';
 import { BOONS } from '../content/boons';
 import { generateBattleSpec, generateBossSpec, generateEliteSpec } from './endless';
 import { EVENTS } from '../content/events';
@@ -194,6 +194,8 @@ export function newRun(opts: {
     shop: null,
     eventId: null,
     removalsBought: 0,
+    whetstonesBought: 0,
+    defanged: [],
     stats: {
       floorsClimbed: 0, kills: 0, elitesKilled: 0, bossesKilled: 0, damageDealt: 0,
       damageTaken: 0, goldEarned: 0, cardsPlayed: 0, maxToxinApplied: 0, maxCharge: 0,
@@ -405,11 +407,11 @@ export function generateShop(run: RunState): ShopState {
   const items: ShopState['items'] = [];
   const locked = lockedContent(run.unlockedPacks);
 
-  // 5 cards
+  // 3 cards — fewer, better: slot 0 is a guaranteed rare, the rest roll the weights
   const pool = rewardableCards(run.charId, locked.cards);
   const chosen = new Set<string>();
-  for (let i = 0; i < 5; i++) {
-    const rarity = r.weighted(RARITY_WEIGHTS.shop);
+  for (let i = 0; i < 3; i++) {
+    const rarity = i === 0 ? 'rare' : r.weighted(RARITY_WEIGHTS.shop);
     let candidates = pool.filter((c) => c.rarity === rarity && !chosen.has(c.id));
     if (!candidates.length) candidates = pool.filter((c) => !chosen.has(c.id));
     if (!candidates.length) break;
@@ -441,11 +443,100 @@ export function generateShop(run: RunState): ShopState {
       break;
     }
   }
+  // salvage crate — a mystery relic rolled here on the seeded stream so the
+  // Daily Dive stays identical for everyone; skipped when the pool is dry
+  let crateRelicId: string | undefined;
+  {
+    const offered = items.filter((x): x is Extract<typeof x, { kind: 'relic' }> => x.kind === 'relic').map((x) => x.relicId);
+    const rolled = r.weighted([['common', 50], ['uncommon', 35], ['rare', 15]] as const);
+    const tiers: ('common' | 'uncommon' | 'rare')[] = [rolled, 'uncommon', 'common'];
+    for (const tier of tiers) {
+      const rp = relicPool(tier, run.charId, [...run.relics, ...offered], locked.relics);
+      if (!rp.length) continue;
+      crateRelicId = r.pick(rp).id;
+      break;
+    }
+  }
   done();
 
   let removalPrice = 75 + run.removalsBought * 25;
   if (run.relics.includes('deepSextant')) removalPrice = Math.floor(removalPrice / 2);
-  return { items, removalPrice: Math.round(removalPrice * scale), removalsLeft: 1 };
+  // whetstone escalates like removal so it relieves the rest-site trade-off
+  // without replacing it; deliberately not discounted by the Sextant
+  const whetstonePrice = 90 + (run.whetstonesBought ?? 0) * 30;
+  return {
+    items,
+    removalPrice: Math.round(removalPrice * scale),
+    removalsLeft: 1,
+    whetstonePrice: Math.round(whetstonePrice * scale),
+    whetstonesLeft: 1,
+    defangPrice: Math.round(140 * scale),
+    defangsLeft: 1,
+    ...(crateRelicId ? { crateRelicId, cratePrice: Math.round(85 * scale) } : {}),
+  };
+}
+
+/** two-edged relics the player owns whose teeth are still attached */
+export function defangEligible(run: RunState): string[] {
+  return run.relics.filter((id) => DEFANGABLE.includes(id) && !(run.defanged ?? []).includes(id));
+}
+
+export function buyWhetstone(run: RunState, cardUid: number): ShopError | null {
+  const shop = run.shop;
+  if (!shop || (shop.whetstonesLeft ?? 0) <= 0 || shop.whetstonePrice == null) return 'none';
+  if (run.gold < shop.whetstonePrice) return 'gold';
+  const card = run.deck.find((c) => c.uid === cardUid);
+  if (!card || card.upgraded || CARDS[card.defId].type === 'curse') return 'none';
+  run.gold -= shop.whetstonePrice;
+  card.upgraded = true;
+  run.whetstonesBought = (run.whetstonesBought ?? 0) + 1;
+  shop.whetstonesLeft = (shop.whetstonesLeft ?? 1) - 1;
+  return null;
+}
+
+export function buyCrate(run: RunState): ShopError | null {
+  const shop = run.shop;
+  if (!shop || !shop.crateRelicId || shop.crateSold || shop.cratePrice == null) return 'none';
+  if (run.gold < shop.cratePrice) return 'gold';
+  run.gold -= shop.cratePrice;
+  shop.crateSold = true;
+  addRelic(run, shop.crateRelicId);
+  return null;
+}
+
+/** what the pawn counter pays — flat ~40% of tier value, never ascension-scaled */
+export function sellPrice(relicId: string): number {
+  switch (RELICS[relicId]?.tier) {
+    case 'starter': return 25;
+    case 'common': return 40;
+    case 'uncommon': return 60;
+    case 'rare': return 95;
+    case 'treasure': return 55;
+    case 'boss': return 110;
+    default: return 0;
+  }
+}
+
+export function pawnRelic(run: RunState, relicId: string): ShopError | null {
+  if (!run.shop) return 'none';
+  const idx = run.relics.indexOf(relicId);
+  if (idx < 0) return 'none';
+  run.relics.splice(idx, 1);
+  if (run.defanged?.includes(relicId)) run.defanged = run.defanged.filter((id) => id !== relicId);
+  run.gold += sellPrice(relicId);
+  run.stats.goldEarned += sellPrice(relicId);
+  return null;
+}
+
+export function buyDefang(run: RunState, relicId: string): ShopError | null {
+  const shop = run.shop;
+  if (!shop || (shop.defangsLeft ?? 0) <= 0 || shop.defangPrice == null) return 'none';
+  if (!defangEligible(run).includes(relicId)) return 'none';
+  if (run.gold < shop.defangPrice) return 'gold';
+  run.gold -= shop.defangPrice;
+  run.defanged = [...(run.defanged ?? []), relicId];
+  shop.defangsLeft = (shop.defangsLeft ?? 1) - 1;
+  return null;
 }
 
 export type ShopError = 'gold' | 'sold' | 'none';

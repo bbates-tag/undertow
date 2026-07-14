@@ -326,7 +326,7 @@ export function drawCards(run: RunState, bs: BattleState, n: number, emit: Emit)
       // shuffle relics
       if (run.relics.includes('kelpWrap')) gainPlayerBlock(run, bs, 5, emit, false);
       if (run.relics.includes('capacitorCoil')) gainCharge(run, bs, 3, emit);
-      if (run.relics.includes('barbedChain')) {
+      if (hasTooth(run, 'barbedChain')) {
         losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Barbed Chain' });
       }
     }
@@ -502,6 +502,11 @@ export function runOps(
 
 // ── Relic hook sites ─────────────────────────────────────────────────────────
 
+/** a two-edged relic keeps its downside only until the Bazaar defangs it */
+function hasTooth(run: RunState, relicId: string): boolean {
+  return run.relics.includes(relicId) && !(run.defanged ?? []).includes(relicId);
+}
+
 function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
   for (const r of run.relics) {
     switch (r) {
@@ -525,13 +530,13 @@ function relicsBattleStart(run: RunState, bs: BattleState, emit: Emit) {
       // treasure salvage — power with teeth (tide conflicts resolve in pickup order)
       case 'fangedLocket':
         addStatus(bs.player, 'might', 2);
-        losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Fanged Locket' });
+        if (hasTooth(run, r)) losePlayerHp(run, bs, 2, emit, { ignoreBlock: true, nonLethal: true, source: 'Fanged Locket' });
         break;
-      case 'leadenIdol': bs.tide = 0; break;
+      case 'leadenIdol': if (hasTooth(run, r)) bs.tide = 0; break;
       case 'barbedChain': gainPlayerBlock(run, bs, 10, emit, false); break;
       case 'widowsVeil':
         for (const e of living(bs)) applyStatusTo(run, bs, e, 'toxin', 2, emit, enemyKey(e));
-        applyStatusTo(run, bs, bs.player, 'toxin', 2, emit, 'player');
+        if (hasTooth(run, r)) applyStatusTo(run, bs, bs.player, 'toxin', 2, emit, 'player');
         break;
     }
   }
@@ -1070,7 +1075,7 @@ function checkVictory(run: RunState, bs: BattleState, emit: Emit) {
     if (run.relics.includes('livingCoral')) run.hp = Math.min(run.maxHp, run.hp + 5);
     if (run.relics.includes('barnacledHeart')) run.hp = Math.min(run.maxHp, run.hp + 4);
     // …and the Bloodletter takes its cut (never fatally)
-    if (run.relics.includes('bloodletterHook')) run.hp = Math.max(1, run.hp - 2);
+    if (hasTooth(run, 'bloodletterHook')) run.hp = Math.max(1, run.hp - 2);
     if (bs.battleDamageTaken === 0) run.stats.battlesFlawless += 1;
     sfx(emit, 'victory');
   }
