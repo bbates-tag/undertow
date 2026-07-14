@@ -129,22 +129,31 @@ describe('tide', () => {
     expect(bs.tide).toBe(2); // no natural advance either
   });
 
-  it('Heart of the Maelstrom: block on every tide change, natural cadence untouched', () => {
+  it('Heart of the Maelstrom: block per tide change, capped at 3 changes a turn', () => {
     const run = battleRun();
     run.relics.push('heartOfMaelstrom');
     const bs = run.battle!;
+    const e = bs.enemies[0];
+    e.hp = 999;
+    e.maxHp = 999;
     expect(bs.tide).toBe(1); // Rising
 
-    // card-driven shift grants block
-    giveHand(run, ['riptide']);
-    playCard(run, 9000, bs.enemies[0].uid, newEmit());
+    // card-driven shifts grant block — but only the first 3 changes each turn
+    giveHand(run, ['riptide', 'riptide', 'riptide', 'riptide']);
+    playCard(run, 9000, e.uid, newEmit());
     expect(bs.tide).toBe(2);
     expect(bs.player.block).toBe(3);
+    playCard(run, 9001, e.uid, newEmit());
+    playCard(run, 9002, e.uid, newEmit());
+    expect(bs.player.block).toBe(9);
+    playCard(run, 9003, e.uid, newEmit()); // 4th change this turn: no payout
+    expect(bs.player.block).toBe(9);
 
     // next turn: tide advances exactly one step (no extra relic shift)…
     runEnemyPhase(run);
-    expect(bs.tide).toBe(3); // Falling — natural +1 only
+    expect(bs.tide).toBe(2); // full cycle back to High — natural +1 only
     // …and the natural change's block survives the start-of-turn reset
+    // (the advance consumes one of the fresh turn's 3 triggers)
     expect(bs.player.block).toBe(3);
   });
 
@@ -452,6 +461,56 @@ describe('tide', () => {
     const blk0 = bs.player.block;
     playCard(run, 9002, e.uid, newEmit()); // riptide: damage + Shift +1
     expect(bs.player.block - blk0).toBe(2);
+  });
+
+  it('Tidepool exhausts instead of discarding', () => {
+    const run = battleRun();
+    const bs = run.battle!;
+    giveHand(run, ['tidepool']);
+    playCard(run, 9000, undefined, newEmit());
+    expect(bs.exhaustPile.some((c) => c.defId === 'tidepool')).toBe(true);
+    expect(bs.discardPile.some((c) => c.defId === 'tidepool')).toBe(false);
+  });
+
+  it('Oarfish Ribbon: first 3 Shifts a turn pay out, the window reopens next turn', () => {
+    const run = battleRun();
+    run.relics.push('oarfishRibbon');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    e.hp = 999;
+    e.maxHp = 999;
+    giveHand(run, ['riptide', 'riptide', 'riptide', 'riptide']);
+    for (let i = 0; i < 4; i++) playCard(run, 9000 + i, e.uid, newEmit());
+    expect(bs.player.block).toBe(6); // 3 × 2 — the 4th shift pays nothing
+    runEnemyPhase(run);
+    giveHand(run, ['riptide']);
+    playCard(run, 9000, e.uid, newEmit());
+    expect(bs.player.block).toBe(2); // fresh turn, fresh window
+  });
+
+  it('Oarfish Ribbon stays quiet while King Tide locks the tide', () => {
+    const run = battleRun();
+    run.relics.push('oarfishRibbon');
+    const bs = run.battle!;
+    giveHand(run, ['kingTide', 'riptide']);
+    playCard(run, 9000, undefined, newEmit()); // lock the tide at High
+    const blk = bs.player.block;
+    playCard(run, 9001, bs.enemies[0].uid, newEmit()); // Shift op, no real shift
+    expect(bs.player.block).toBe(blk);
+  });
+
+  it('Drowned Compass sharpens once per turn — extra cycles fizzle, not bank', () => {
+    const run = battleRun();
+    run.relics.push('drownedCompass');
+    const bs = run.battle!;
+    const e = bs.enemies[0];
+    e.hp = 999;
+    e.maxHp = 999;
+    giveHand(run, Array.from({ length: 8 }, () => 'riptide'));
+    for (let i = 0; i < 8; i++) playCard(run, 9000 + i, e.uid, newEmit());
+    expect(getStatus(bs.player, 'might')).toBe(1); // two full cycles, one grant
+    expect(getStatus(bs.player, 'finesse')).toBe(1);
+    expect(bs.counters.compass).toBe(0);
   });
 
   it('Pale Starfish heals bloodless turns; Gull Feather draws on kills', () => {
