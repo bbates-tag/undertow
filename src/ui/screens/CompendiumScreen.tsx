@@ -411,8 +411,10 @@ function CardZoom({ defId, onClose }: { defId: string; onClose: () => void }) {
         initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 28 }}
         /* pt-6/px-6 keep the cost orb (which pops above the frame) inside the
-           scroll container's clip box */
-        className="flex flex-col items-center gap-3 max-h-full overflow-y-auto pt-6 px-6 pb-2"
+           scroll container's clip box; overflow-x-hidden because the zoomed
+           subtree reports a few phantom px of scrollable overflow that would
+           otherwise mint a horizontal scrollbar (hidden blocks all user pan) */
+        className="flex flex-col items-center gap-3 max-h-full overflow-y-auto overflow-x-hidden pt-6 px-6 pb-2"
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="card-zoom-stage">
@@ -427,7 +429,9 @@ function CardZoom({ defId, onClose }: { defId: string; onClose: () => void }) {
         <div className="text-[11px] text-(--color-mist) capitalize">{def.rarity} {def.type}</div>
         {def.flavor && <p className="text-xs italic text-(--color-mist) text-center max-w-64">“{def.flavor}”</p>}
         {keywordIds.length > 0 && (
-          <div className="panel p-3 flex flex-col gap-1 w-[min(94vw,340px)]">
+          /* 84vw: fits inside the column's px-6 on a 375px phone — 94vw
+             overflowed and minted a horizontal scrollbar */
+          <div className="panel p-3 flex flex-col gap-1 w-[min(84vw,340px)]">
             {keywordIds.map((k) => (
               <p key={k} className="text-[11px] text-(--color-mist)">
                 <b className="text-(--color-foam)">{KEYWORDS[k].name}</b> — {KEYWORDS[k].text}

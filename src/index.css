@@ -230,6 +230,16 @@ body {
    uniformly — zoom keeps text crisp where transform-scale leaves layout gaps */
 .card-zoom-stage { zoom: 2.4; }
 @media (max-width: 420px) { .card-zoom-stage { zoom: 2.1; } }
+/* at zoom scale the full-size orb balloons into the title and overhangs the
+   container padding (horizontal scrollbar) — shrink it relative to the card */
+.card-zoom-stage .card-cost {
+  top: -5px;
+  left: -5px;
+  width: 19px;
+  height: 19px;
+  font-size: 10px;
+  border-width: 1px;
+}
 .card-frame:focus-visible { outline-offset: 0; }
 
 /* a conditional effect (Flood/Ebb/Charge/Descent/Read) is live right now —
