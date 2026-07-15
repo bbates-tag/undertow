@@ -212,7 +212,7 @@ body {
   cursor: pointer;
   flex-shrink: 0;
 }
-.card-frame[data-type="attack"] { --card-tint: rgba(255, 111, 111, 0.16); --card-border: rgba(255, 111, 111, 0.4); }
+.card-frame[data-type="attack"] { --card-tint: rgba(255, 111, 111, 0.16); --card-border: rgba(255, 111, 111, 0.4); --cond-glow: var(--color-danger); }
 .card-frame[data-type="skill"] { --card-tint: rgba(95, 185, 255, 0.16); --card-border: rgba(95, 185, 255, 0.4); }
 .card-frame[data-type="power"] { --card-tint: rgba(180, 143, 255, 0.18); --card-border: rgba(180, 143, 255, 0.45); }
 .card-frame[data-type="curse"] { --card-tint: rgba(126, 242, 154, 0.08); --card-border: rgba(126, 242, 154, 0.28); filter: saturate(0.7); }
@@ -227,20 +227,24 @@ body {
 .card-frame.unaffordable { filter: grayscale(0.45) brightness(0.75); }
 .card-frame:focus-visible { outline-offset: 0; }
 
-/* a conditional effect (Flood/Ebb/Charge/Descent) is live right now — the
-   card's number already includes the bonus, and the frame says so */
-.card-frame.cond-active:not(.selected):not(.armed) {
-  border-color: color-mix(in srgb, var(--color-glow) 70%, transparent);
+/* a conditional effect (Flood/Ebb/Charge/Descent/Read) is live right now —
+   the card's number already includes the bonus, and the frame says so.
+   Attacks glow their own red (--cond-glow set per data-type above).
+   Unaffordable cards never glow: the condPulse animation animates `filter`,
+   which would override .unaffordable's dimming and make a dead card look
+   playable. */
+.card-frame.cond-active:not(.selected):not(.armed):not(.unaffordable) {
+  border-color: color-mix(in srgb, var(--cond-glow, var(--color-glow)) 70%, transparent);
   box-shadow:
-    0 0 0 1.5px color-mix(in srgb, var(--color-glow) 80%, transparent),
-    0 0 16px rgba(56, 225, 211, 0.4),
+    0 0 0 1.5px color-mix(in srgb, var(--cond-glow, var(--color-glow)) 80%, transparent),
+    0 0 16px color-mix(in srgb, var(--cond-glow, var(--color-glow)) 40%, transparent),
     0 6px 18px rgba(2, 6, 14, 0.55),
     inset 0 0 22px rgba(2, 8, 18, 0.5);
   animation: condPulse 2.4s ease-in-out infinite;
 }
 @keyframes condPulse {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(56, 225, 211, 0.25)); }
-  50% { filter: drop-shadow(0 0 9px rgba(56, 225, 211, 0.55)); }
+  0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--cond-glow, var(--color-glow)) 25%, transparent)); }
+  50% { filter: drop-shadow(0 0 9px color-mix(in srgb, var(--cond-glow, var(--color-glow)) 55%, transparent)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-frame.cond-active:not(.selected):not(.armed) { animation: none; }
