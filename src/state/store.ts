@@ -34,7 +34,7 @@ export type Screen =
   | 'gameover' | 'victory' | 'stats' | 'achievements' | 'credits' | 'settings' | 'howToPlay' | 'compendium'
   | 'pressureChoice';
 
-export type Overlay = 'none' | 'deck' | 'drawPile' | 'discardPile' | 'exhaustPile' | 'glossary' | 'settings';
+export type Overlay = 'none' | 'deck' | 'drawPile' | 'discardPile' | 'exhaustPile' | 'glossary' | 'settings' | 'hold';
 
 export interface Toast {
   id: number;

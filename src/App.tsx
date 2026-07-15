@@ -17,6 +17,7 @@ import { GameOverScreen, VictoryScreen } from './ui/screens/RunEndScreens';
 import { AchievementsScreen, CreditsScreen, HowToPlayScreen, SettingsScreen, StatsScreen } from './ui/screens/MetaScreens';
 import { CompendiumScreen } from './ui/screens/CompendiumScreen';
 import { DeckOverlay } from './ui/components/DeckOverlay';
+import { HoldOverlay } from './ui/components/HoldOverlay';
 import { Toasts } from './ui/components/Bits';
 import { DebugPanel } from './ui/DebugPanel';
 
@@ -73,7 +74,10 @@ export default function App() {
   return (
     <div className={motionClass} data-reduced={reduced}>
       <ScreenComponent />
-      <AnimatePresence>{overlay !== 'none' && overlay !== 'glossary' && <DeckOverlay key="deck-overlay" />}</AnimatePresence>
+      <AnimatePresence>
+        {overlay !== 'none' && overlay !== 'glossary' && overlay !== 'hold' && <DeckOverlay key="deck-overlay" />}
+        {overlay === 'hold' && <HoldOverlay key="hold-overlay" />}
+      </AnimatePresence>
       {screen !== 'battle' && <StatusChipsGlossary />}
       <Toasts />
       <DebugPanel />

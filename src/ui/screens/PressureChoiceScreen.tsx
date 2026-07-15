@@ -26,9 +26,9 @@ export function PressureChoiceScreen() {
           <Layers size={11} /> {run.deck.length}
         </button>
       </div>
-      {run.relics.length > 0 && (
+      {(run.relics.length > 0 || run.pressures.length > 0) && (
         <div className="w-full max-w-2xl -mt-1">
-          <RelicBar relics={run.relics} defanged={run.defanged} />
+          <RelicBar relics={run.relics} defanged={run.defanged} pressures={run.pressures} />
         </div>
       )}
 

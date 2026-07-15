@@ -18,7 +18,6 @@ import { EnemyDossier } from '../components/EnemyDossier';
 import { EnemyView } from '../components/EnemyView';
 import { FxLayer } from '../components/FxLayer';
 import { RelicBar } from '../components/RelicBar';
-import { PressureBar } from '../components/PressureBar';
 import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip } from '../components/Bits';
@@ -233,8 +232,7 @@ export function BattleScreen() {
           <BookOpen size={15} />
         </button>
       </div>
-      <RelicBar relics={run.relics} defanged={run.defanged} />
-      <PressureBar pressures={run.pressures} />
+      <RelicBar relics={run.relics} defanged={run.defanged} pressures={run.pressures} />
 
       {/* boss banner */}
       <AnimatePresence>
