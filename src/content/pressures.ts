@@ -11,7 +11,7 @@ export interface PressureDef {
 }
 
 export const PRESSURES: Record<string, PressureDef> = {
-  crushingDepth: { id: 'crushingDepth', name: 'Crushing Depth', icon: 'GiWeightCrush', text: 'Lose 3 Max HP each time you descend to a new act.' },
+  crushingDepth: { id: 'crushingDepth', name: 'Crushing Depth', icon: 'GiWeightCrush', text: 'Lose 3 Max HP each time you descend to a new act (never below 15).' },
   deepDemands: { id: 'deepDemands', name: 'The Deep Demands', icon: 'GiKrakenTentacle', text: 'You cannot play more than 12 cards in a turn.' },
   siltLungs: { id: 'siltLungs', name: 'Silt in the Lungs', icon: 'GiLungs', text: 'Battles begin with a Waterlogged shuffled into your draw pile.' },
   dimmingLight: { id: 'dimmingLight', name: 'Dimming Light', icon: 'GiEclipse', text: 'Draw 1 fewer card on your first turn of battle.' },
