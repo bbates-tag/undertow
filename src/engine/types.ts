@@ -8,6 +8,7 @@
 export type CharacterId = 'tidecaller' | 'voltaic' | 'drowned' | 'weaver';
 export type CardType = 'attack' | 'skill' | 'power' | 'curse';
 export type Rarity = 'starter' | 'common' | 'uncommon' | 'rare' | 'special';
+export type Act = 1 | 2 | 3 | 4;
 
 /** Tide phases cycle Low → Rising → High → Falling → Low… advancing each turn. */
 export type Tide = 0 | 1 | 2 | 3;
@@ -192,7 +193,7 @@ export interface EnemyDef {
   icon: string;
   hp: [number, number];
   tier: 'normal' | 'elite' | 'boss' | 'minion';
-  act: 0 | 1 | 2 | 3;
+  act: 0 | 1 | 2 | 3 | 4;
   moves: Record<string, MoveDef>;
   ai: (ctx: EnemyAiCtx) => string; // returns move id
   startStatuses?: Partial<Record<StatusId, number>>;
@@ -285,7 +286,7 @@ export interface MapNode {
 }
 
 export interface GameMap {
-  act: 1 | 2 | 3;
+  act: Act;
   rows: MapNode[][]; // row 0 = surface-most; boss at last row
 }
 
@@ -349,8 +350,8 @@ export interface RunState {
   /** snapshot of meta unlocks at run start — gates reward/shop/event pools */
   unlockedPacks: string[];
   daily: { date: string; mods: string[] } | null;
-  act: 1 | 2 | 3;
-  /** endless descents completed: 0 = the normal three acts, 1+ = loops past the Drowned God */
+  act: Act;
+  /** endless descents completed: 0 = the normal four acts, 1+ = loops past What Dreams Beneath */
   loop: number;
   map: GameMap;
   /** current position; null until the first node of the act is chosen */

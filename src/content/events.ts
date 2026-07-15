@@ -1,5 +1,7 @@
 // Random "?" node events. Choices are resolved in engine/run.ts by effect tag.
 
+import type { Act } from '../engine/types';
+
 export interface EventChoice {
   id: string;
   label: string;
@@ -28,7 +30,7 @@ export interface EventDef {
   id: string;
   name: string;
   icon: string;
-  act?: 1 | 2 | 3;
+  act?: Act;
   text: string;
   choices: EventChoice[];
 }

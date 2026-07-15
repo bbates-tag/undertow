@@ -37,6 +37,9 @@ import {
   GiBrokenHeart, GiChainedHeart, GiHeartDrop,
   // The Wakeweaver
   GiSewingNeedle, GiCrosshair, GiSpyglass,
+  // Act 4 — The Dreaming Dark
+  GiEchoRipples, GiNightSleep, GiLeechingWorm, GiShamblingZombie, GiKingJuMask, GiScreaming,
+  GiWeightCrush, GiThirdEye,
 } from 'react-icons/gi';
 
 const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number | string }>> = {
@@ -71,6 +74,8 @@ const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number
   GiCoffin, GiHeartOrgan, GiSpectre, GiKrakenTentacle, GiHeavyFall, GiSinkingShip, GiHighTide,
   GiBrokenHeart, GiChainedHeart, GiHeartDrop,
   GiSewingNeedle, GiCrosshair, GiSpyglass,
+  GiEchoRipples, GiNightSleep, GiLeechingWorm, GiShamblingZombie, GiKingJuMask, GiScreaming,
+  GiWeightCrush, GiThirdEye,
 };
 
 export function GameIcon({ id, className, size }: { id: string; className?: string; size?: number | string }) {

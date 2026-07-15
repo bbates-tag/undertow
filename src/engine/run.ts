@@ -2,7 +2,7 @@
 // deck manipulation, act transitions, scoring. Battle combat lives in battle.ts.
 
 import type {
-  CardInstance, CharacterId, GameMap, MapNode, NodeType, RewardState, RunState, ShopState,
+  Act, CardInstance, CharacterId, GameMap, MapNode, NodeType, RewardState, RunState, ShopState,
 } from './types';
 import { hashSeed, makeRng, type Rng } from '../lib/rng';
 import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
@@ -20,7 +20,7 @@ export const MAP_COLS = 6;
 
 // ── Map generation ───────────────────────────────────────────────────────────
 
-export function generateMap(rng: Rng, act: 1 | 2 | 3, loop = 0): GameMap {
+export function generateMap(rng: Rng, act: Act, loop = 0): GameMap {
   const rows: MapNode[][] = [];
 
   for (let r = 0; r < ACT_ROWS; r++) {
@@ -720,11 +720,11 @@ export function completePick(run: RunState, kind: NonNullable<PendingPick>['kind
 
 /** After the boss reward is resolved: descend to the next act or win. */
 export function descend(run: RunState, emit: Emit): 'nextAct' | 'victory' {
-  if (run.act >= 3) {
+  if (run.act >= 4) {
     run.result = 'win';
     return 'victory';
   }
-  run.act = (run.act + 1) as 2 | 3;
+  run.act = (run.act + 1) as 2 | 3 | 4;
   const { r, done } = runRng(run);
   run.map = generateMap(r, run.act, run.loop);
   done();

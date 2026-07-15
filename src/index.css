@@ -120,6 +120,11 @@ body {
     radial-gradient(120% 70% at 50% -10%, rgba(255, 93, 162, 0.05), transparent 55%),
     linear-gradient(180deg, #050813 0%, #02040a 100%);
 }
+.app-bg[data-act="4"] {
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(150, 90, 255, 0.06), transparent 55%),
+    linear-gradient(180deg, #08051a 0%, #030109 100%);
+}
 
 .font-display {
   font-family: var(--font-display);

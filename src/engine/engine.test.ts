@@ -3,11 +3,11 @@ import {
   ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount } from './run';
+import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount, descend } from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard, previewDamageOp } from './describe';
 import { generateBossSpec, threatCost } from './endless';
-import { ENEMIES } from '../content/enemies';
+import { ENEMIES, ENCOUNTERS, encounterPool } from '../content/enemies';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -219,7 +219,7 @@ describe('tide', () => {
     expect(bossSpec.enemies.map((e) => e.defId)).toEqual(['sunkenKing']);
     expect(bossSpec.enemies[0].affixes?.length).toBe(1);
 
-    const MINIONS = ['tentacleSpawn', 'krakenArm', 'boneShoalMinion'];
+    const MINIONS = ['tentacleSpawn', 'krakenArm', 'boneShoalMinion', 'chorusEcho'];
     for (const n of fights) {
       const spec = n.encounter!;
       expect(spec.enemies.length).toBeGreaterThanOrEqual(1);
@@ -782,6 +782,69 @@ describe('map generation', () => {
       expect(elites.length).toBeGreaterThanOrEqual(1);
       expect(map.rows.flat().filter((n) => n.type === 'battle' || n.type === 'elite').every((n) => n.payload)).toBe(true);
     }
+  });
+
+  it('act 4 generates the same way and lands on the Act IV boss', () => {
+    const rng = makeRng(hashSeed('act4-seed'));
+    const map = generateMap(rng, 4);
+    expect(map.rows[11][0].type).toBe('boss');
+    expect(map.rows[11][0].payload).toBe('a4_boss');
+    expect(map.rows.flat().filter((n) => n.type === 'battle' || n.type === 'elite').every((n) => n.payload)).toBe(true);
+  });
+});
+
+describe('act 4 — the dreaming dark', () => {
+  it('every act-4 encounter references real enemy ids in the right pools', () => {
+    for (const enc of Object.values(ENCOUNTERS).filter((e) => e.act === 4)) {
+      for (const defId of enc.enemies) expect(ENEMIES[defId]).toBeDefined();
+    }
+    expect(encounterPool(4, 'easy').length).toBeGreaterThan(0);
+    expect(encounterPool(4, 'hard').length).toBeGreaterThan(0);
+    expect(encounterPool(4, 'elite').length).toBeGreaterThanOrEqual(3);
+    expect(encounterPool(4, 'boss').length).toBe(1);
+  });
+
+  it('every act-4 enemy AI only ever returns one of its own move ids', () => {
+    for (const def of Object.values(ENEMIES).filter((e) => e.act === 4 || ['dreamsBeneath', 'chorusEcho', 'thePressure', 'nightmareKing', 'chorus'].includes(e.id))) {
+      const moveIds = Object.keys(def.moves);
+      for (let turn = 0; turn < 12; turn++) {
+        const history: string[] = [];
+        for (let step = 0; step < 8; step++) {
+          for (const roll of [0.05, 0.3, 0.5, 0.7, 0.95]) {
+            for (const tide of [0, 1, 2, 3] as const) {
+              for (const allyCount of [1, 2, 3]) {
+                const move = def.ai({ turn, hpFrac: 1 - step / 8, history, roll, tide, allyCount });
+                expect(moveIds).toContain(move);
+              }
+            }
+          }
+          history.push(def.ai({ turn, hpFrac: 0.5, history, roll: 0.5, tide: 0, allyCount: 2 }));
+        }
+      }
+    }
+  });
+
+  it('descend() reaches act 4 after act 3, then victory after act 4', () => {
+    const run = testRun('descend-a4');
+    run.act = 3;
+    const emit = newEmit();
+    expect(descend(run, emit)).toBe('nextAct');
+    expect(run.act).toBe(4);
+    expect(descend(run, emit)).toBe('victory');
+    expect(run.result).toBe('win');
+  });
+
+  it('What Dreams Beneath goes lucid at half HP and locks in Nightmare Surge on High tide', () => {
+    const boss = ENEMIES.dreamsBeneath;
+    expect(boss.ai({ turn: 1, hpFrac: 0.5, history: [], roll: 0.5, tide: 0, allyCount: 1 })).toBe('wake');
+    expect(boss.ai({ turn: 1, hpFrac: 0.9, history: ['wake'], roll: 0.5, tide: 0, allyCount: 1 })).toBe('crushingLucidity');
+    expect(boss.ai({ turn: 1, hpFrac: 0.9, history: [], roll: 0.5, tide: 2, allyCount: 1 })).toBe('nightmareSurge');
+  });
+
+  it('a4_boss starts a real battle with dreamsBeneath', () => {
+    const run = battleRun('a4_boss');
+    expect(run.battle!.enemies.map((e) => e.defId)).toEqual(['dreamsBeneath']);
+    expect(run.battle!.isBoss).toBe(true);
   });
 });
 
