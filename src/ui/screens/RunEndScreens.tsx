@@ -2,8 +2,9 @@
 
 import { Anchor, ArrowDown, Home, RotateCcw } from 'lucide-react';
 import { useGame } from '../../state/store';
-import { scoreRun } from '../../engine/run';
+import { loopScore, scoreRun } from '../../engine/run';
 import { CHARACTERS } from '../../content/characters';
+import { PRESSURES } from '../../content/pressures';
 import { Bubbles } from '../components/Bits';
 
 function ScorePanel() {
@@ -21,7 +22,7 @@ function ScorePanel() {
     ['Gold purse', Math.round(run.gold / 5)],
   ];
   if (run.ascension > 0) rows.push([`Depth ${run.ascension} bravery`, run.ascension * 15]);
-  if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, run.loop * 100]);
+  if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, loopScore(run.loop)]);
   if (run.result === 'win') rows.push(['Survived the Kraken', 150 + run.hp]);
   // an endless death pays out only what was earned since the banked victory
   const fathoms = run.result === 'loss' && run.loop > 0
@@ -85,6 +86,11 @@ export function GameOverScreen() {
       {run.loop > 0 && (
         <p className="text-xs font-bold -mt-1" style={{ color: 'var(--color-glow)' }}>
           Deepest dive: Loop {run.loop + 1} · Depth {run.floor}
+        </p>
+      )}
+      {run.pressures.length > 0 && (
+        <p className="text-[11px] text-(--color-dim) italic max-w-[340px] text-center -mt-1">
+          Pressures endured: {run.pressures.map((id) => PRESSURES[id]?.name).filter(Boolean).join(', ')}
         </p>
       )}
       <ScorePanel />

@@ -9,6 +9,7 @@ import { NewRunScreen } from './ui/screens/NewRunScreen';
 import { MapScreen } from './ui/screens/MapScreen';
 import { BattleScreen } from './ui/screens/BattleScreen';
 import { RewardScreen } from './ui/screens/RewardScreen';
+import { PressureChoiceScreen } from './ui/screens/PressureChoiceScreen';
 import { ShopScreen } from './ui/screens/ShopScreen';
 import { RestScreen } from './ui/screens/RestScreen';
 import { EventScreen } from './ui/screens/EventScreen';
@@ -16,6 +17,7 @@ import { GameOverScreen, VictoryScreen } from './ui/screens/RunEndScreens';
 import { AchievementsScreen, CreditsScreen, HowToPlayScreen, SettingsScreen, StatsScreen } from './ui/screens/MetaScreens';
 import { CompendiumScreen } from './ui/screens/CompendiumScreen';
 import { DeckOverlay } from './ui/components/DeckOverlay';
+import { HoldOverlay } from './ui/components/HoldOverlay';
 import { Toasts } from './ui/components/Bits';
 import { DebugPanel } from './ui/DebugPanel';
 
@@ -25,6 +27,7 @@ const SCREENS = {
   map: MapScreen,
   battle: BattleScreen,
   reward: RewardScreen,
+  pressureChoice: PressureChoiceScreen,
   shop: ShopScreen,
   rest: RestScreen,
   event: EventScreen,
@@ -71,7 +74,10 @@ export default function App() {
   return (
     <div className={motionClass} data-reduced={reduced}>
       <ScreenComponent />
-      <AnimatePresence>{overlay !== 'none' && overlay !== 'glossary' && <DeckOverlay key="deck-overlay" />}</AnimatePresence>
+      <AnimatePresence>
+        {overlay !== 'none' && overlay !== 'glossary' && overlay !== 'hold' && <DeckOverlay key="deck-overlay" />}
+        {overlay === 'hold' && <HoldOverlay key="hold-overlay" />}
+      </AnimatePresence>
       {screen !== 'battle' && <StatusChipsGlossary />}
       <Toasts />
       <DebugPanel />

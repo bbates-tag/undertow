@@ -15,9 +15,10 @@ import {
 } from '../engine/battle';
 import {
   addCardToDeck, addRelic, applyBoon, applyEventEffect, beginLoop, buyCrate, buyDefang, buyRemoval, buyShopItem,
-  buyWhetstone, completePick, descend, doRestHeal, enterNode, generateBattleReward, newRun, pawnRelic, scoreRun,
-  sellPrice, type PendingPick,
+  buyWhetstone, choosePressure, completePick, descend, doRestHeal, enterNode, generateBattleReward, newRun,
+  pawnRelic, scoreRun, sellPrice, type PendingPick,
 } from '../engine/run';
+import { PRESSURES } from '../content/pressures';
 import { EVENTS } from '../content/events';
 import { RELICS } from '../content/relics';
 import { ACHIEVEMENTS, DAILY_MODS, UNLOCK_PACKS } from '../content/meta';
@@ -30,9 +31,10 @@ import { withSeen } from './seen';
 
 export type Screen =
   | 'menu' | 'newRun' | 'map' | 'battle' | 'reward' | 'shop' | 'rest' | 'event'
-  | 'gameover' | 'victory' | 'stats' | 'achievements' | 'credits' | 'settings' | 'howToPlay' | 'compendium';
+  | 'gameover' | 'victory' | 'stats' | 'achievements' | 'credits' | 'settings' | 'howToPlay' | 'compendium'
+  | 'pressureChoice';
 
-export type Overlay = 'none' | 'deck' | 'drawPile' | 'discardPile' | 'exhaustPile' | 'glossary' | 'settings';
+export type Overlay = 'none' | 'deck' | 'drawPile' | 'discardPile' | 'exhaustPile' | 'glossary' | 'settings' | 'hold';
 
 export interface Toast {
   id: number;
@@ -118,6 +120,8 @@ interface GameStore {
   leaveReward(): void;
   /** endless: from the victory screen, dive past the Drowned God into loop 2 */
   continueEndless(): void;
+  /** endless: lock in the offered Pressure for this loop */
+  choosePressure(id: string): void;
 
   shopBuy(i: number): void;
   shopStartRemoval(): void;
@@ -329,6 +333,8 @@ export const useGame = create<GameStore>((set, get) => {
         } else if (run.shop) set({ screen: 'shop' });
         else if (run.eventId) set({ screen: 'event' });
         else if (run.reward) set({ screen: 'reward' });
+        // a pending Pressure pick must survive a refresh — it can't be skipped
+        else if (run.pressureOffer) set({ screen: 'pressureChoice' });
         else set({ screen: 'map' });
       }
       // seed discovery on load: covers fresh profiles (unlocked starters)
@@ -430,7 +436,7 @@ export const useGame = create<GameStore>((set, get) => {
       const run = get().run;
       if (!run?.battle || run.battle.phase !== 'player') return;
       if (uid !== null) {
-        const err = canPlay(run.battle, uid);
+        const err = canPlay(run, run.battle, uid);
         if (err === 'energy') {
           get().toast('Not enough Energy');
           playSfx('error');
@@ -438,6 +444,11 @@ export const useGame = create<GameStore>((set, get) => {
         }
         if (err === 'unplayable') {
           get().toast("This card can't be played");
+          playSfx('error');
+          return;
+        }
+        if (err === 'pressure') {
+          get().toast('The Deep Demands — no more cards this turn');
           playSfx('error');
           return;
         }
@@ -470,6 +481,7 @@ export const useGame = create<GameStore>((set, get) => {
       if (err) {
         if (err === 'energy') get().toast('Not enough Energy');
         if (err === 'hp') get().toast('Not enough HP — the cost would kill you');
+        if (err === 'pressure') get().toast('The Deep Demands — no more cards this turn');
         playSfx('error');
         return;
       }
@@ -593,7 +605,21 @@ export const useGame = create<GameStore>((set, get) => {
       award('noBottom');
       music.setMood('calm');
       playSfx('battleStart');
-      get().toast(`Loop ${run.loop + 1} — the sea has no bottom`);
+      if (run.pressureOffer) {
+        get().toast(`Loop ${run.loop + 1} — the sea has no bottom`);
+        set({ screen: 'pressureChoice' });
+      } else {
+        get().toast(`Loop ${run.loop + 1} — the deep takes its toll: −5 Max HP`);
+        set({ screen: 'map' });
+      }
+    },
+
+    choosePressure(id) {
+      const run = deepClone(get().run!);
+      if (!choosePressure(run, id)) return;
+      commit(run);
+      get().toast(PRESSURES[id].text);
+      playSfx('relicGet');
       set({ screen: 'map' });
     },
 
@@ -608,8 +634,13 @@ export const useGame = create<GameStore>((set, get) => {
           beginLoop(run, emit);
           commit(run, emit);
           if (run.loop >= 2) award('pressureHolds'); // entering the third full descent
-          get().toast(`Loop ${run.loop + 1} — The Sunlit Shallows, deeper than before`);
-          set({ screen: 'map' });
+          if (run.pressureOffer) {
+            get().toast(`Loop ${run.loop + 1} — The Sunlit Shallows, deeper than before`);
+            set({ screen: 'pressureChoice' });
+          } else {
+            get().toast(`Loop ${run.loop + 1} — the deep takes its toll: −5 Max HP`);
+            set({ screen: 'map' });
+          }
           return;
         }
         const next = descend(run, emit);

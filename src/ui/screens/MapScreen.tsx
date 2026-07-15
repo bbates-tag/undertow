@@ -100,7 +100,7 @@ export function MapScreen() {
           {run.loop > 0 && <span className="font-bold not-italic" style={{ color: 'var(--color-lure)' }}> · LOOP {run.loop + 1}</span>}
         </span>
       </div>
-      <RelicBar relics={run.relics} defanged={run.defanged} />
+      <RelicBar relics={run.relics} defanged={run.defanged} pressures={run.pressures} />
       {run.daily && (
         <div className="px-3 py-0.5 text-[10px] text-(--color-glow) tracking-wide">
           DAILY DIVE — {run.daily.mods.join(' · ')}

@@ -35,9 +35,9 @@ function authoredBudget(act: Act, pool: 'easy' | 'hard' | 'elite'): number {
   return totals.reduce((a, b) => a + b, 0) / totals.length;
 }
 
-/** stat scaling already compounds per loop — the budget adds count/mix pressure, gently */
+/** stat scaling already compounds per loop — the budget piles on count/mix pressure too */
 function loopBudget(base: number, loop: number): number {
-  return base * Math.min(2, 1 + 0.12 * loop);
+  return base * Math.min(3, 1 + 0.15 * loop);
 }
 
 /** roll `count` distinct affixes that make sense on this enemy */
@@ -64,7 +64,7 @@ export function generateBattleSpec(
   rng: Rng, act: Act, pool: 'easy' | 'hard', loop: number, id: string,
 ): EncounterSpec {
   const budget = loopBudget(authoredBudget(act, pool), loop);
-  const crossChance = loop >= 2 ? 0.5 : 0.3;
+  const crossChance = Math.min(1, 0.3 + 0.15 * loop);
   const sameAct = normals(act);
   const anyAct = normals();
   const enemies: EncounterSpec['enemies'] = [];
@@ -74,9 +74,12 @@ export function generateBattleSpec(
     const affordable = src.filter((e) => threatCost(e) <= budget - spent);
     if (!affordable.length) break;
     const def = rng.pick(affordable);
-    const affixes = rng.chance(affixChance(loop)) ? rollAffixes(rng, def, 1) : [];
+    // deep loops sometimes double up a normal's affixes too, not just elites/bosses
+    const affixes = rng.chance(affixChance(loop))
+      ? rollAffixes(rng, def, loop >= 4 && rng.chance(0.35) ? 2 : 1)
+      : [];
     enemies.push(affixes.length ? { defId: def.id, affixes } : { defId: def.id });
-    spent += threatCost(def) * (affixes.length ? 1.3 : 1); // affixes aren't free
+    spent += threatCost(def) * (affixes.length >= 2 ? 1.5 : affixes.length === 1 ? 1.3 : 1); // affixes aren't free
     // within tolerance of the budget, sometimes stop early — variety in group size
     if (spent >= budget * 0.75 && rng.chance(0.55)) break;
   }
@@ -91,8 +94,8 @@ export function generateEliteSpec(rng: Rng, act: Act, loop: number, id: string):
   );
   const anchor = rng.pick(elites);
   const budget = loopBudget(authoredBudget(act, 'elite'), loop);
-  // the anchor always spawns affixed — two affixes past loop 2
-  const anchorAffixes = rollAffixes(rng, anchor, loop >= 3 ? 2 : 1);
+  // the anchor always spawns affixed — two affixes from loop 2, three from loop 5
+  const anchorAffixes = rollAffixes(rng, anchor, loop >= 5 ? 3 : loop >= 2 ? 2 : 1);
   const enemies: EncounterSpec['enemies'] = [{ defId: anchor.id, affixes: anchorAffixes }];
   const remaining = budget - threatCost(anchor) * 1.3;
   const adjuncts = normals().filter((e) => threatCost(e) <= remaining);
@@ -103,7 +106,7 @@ export function generateEliteSpec(rng: Rng, act: Act, loop: number, id: string):
 /** loop boss: the authored encounter, but the boss-tier creature spawns affixed */
 export function generateBossSpec(rng: Rng, act: Act, loop: number, id: string): EncounterSpec {
   const enc = encounterPool(act, 'boss')[0];
-  const count = loop >= 3 ? 2 : 1;
+  const count = loop >= 5 ? 3 : loop >= 2 ? 2 : 1;
   return {
     id,
     pool: 'boss',

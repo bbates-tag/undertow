@@ -49,4 +49,11 @@ describe('save export/import', () => {
     expect(parsed!.run!.loop).toBe(0);
     expect(parsed!.run!.unlockedPacks).toEqual(['pack1']);
   });
+
+  it('migrates pre-Pressures saves on import', () => {
+    const old = JSON.parse(JSON.stringify(buildSaveBlob({ meta, settings, run: freshRun() })));
+    delete old.run.pressures;
+    const parsed = parseSaveBlob(JSON.stringify(old));
+    expect(parsed!.run!.pressures).toEqual([]);
+  });
 });

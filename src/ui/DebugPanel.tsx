@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useGame } from '../state/store';
 import { deepClone } from '../lib/util';
 import { newEmit, startBattle } from '../engine/battle';
+import { beginLoop } from '../engine/run';
 import { UNLOCK_PACKS } from '../content/meta';
 
 export function DebugPanel() {
@@ -38,6 +39,15 @@ export function DebugPanel() {
             })}
           >
             fight act boss
+          </button>
+          <button
+            className="btn !py-1"
+            onClick={() => mutate((r) => {
+              beginLoop(r, newEmit());
+              useGame.setState({ screen: r.pressureOffer ? 'pressureChoice' : 'map' });
+            })}
+          >
+            force loop++
           </button>
           <button
             className="btn !py-1"

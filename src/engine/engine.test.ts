@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
+  scaleEnemyAttack, calcAttack, canPlay, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
-import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount, descend } from './run';
+import {
+  generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone,
+  completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, loopScore, sellPrice, addRelic,
+  beginLoop, choosePressure, restHealAmount, descend,
+} from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard, previewDamageOp } from './describe';
-import { generateBossSpec, threatCost } from './endless';
+import { generateBossSpec, generateEliteSpec, threatCost } from './endless';
 import { ENEMIES, ENCOUNTERS, encounterPool } from '../content/enemies';
+import { PRESSURES } from '../content/pressures';
 import { makeRng, hashSeed } from '../lib/rng';
 import type { CharacterId, CreatureState, RunState } from './types';
 import { UNLOCK_PACKS } from '../content/meta';
@@ -175,17 +180,184 @@ describe('tide', () => {
     beginLoop(run2, newEmit());
     expect(JSON.stringify(run2.map)).toBe(JSON.stringify(run.map));
 
-    // loop 1: HP ×1.28, +2 enemy damage, +1 starting Might
+    // loop 1: HP ×1.28, compounding enemy damage, +1 starting Might
     startBattle(run, 'a1_crab', newEmit());
     const e = run.battle!.enemies[0];
     expect(getStatus(e, 'might')).toBe(1);
     expect(e.maxHp).toBeGreaterThanOrEqual(Math.round(26 * 1.28)); // crab floor, scaled
-    expect(ascEnemyDmgBonus(run)).toBe(2);
 
-    // each loop is worth 100 score
+    // loops pay out progressively more: loop 1 -> 2 is worth more than a flat 100
     const s1 = scoreRun(run);
     run.loop = 2;
-    expect(scoreRun(run) - s1).toBe(100);
+    expect(scoreRun(run) - s1).toBe(loopScore(2) - loopScore(1));
+    expect(scoreRun(run) - s1).toBe(150);
+  });
+
+  it('endless: loop score is triangular — deeper loops pay progressively more', () => {
+    expect(loopScore(0)).toBe(0);
+    expect(loopScore(1)).toBe(100);
+    expect(loopScore(2)).toBe(250);
+    expect(loopScore(3)).toBe(450);
+    expect(loopScore(2) - loopScore(1)).toBeLessThan(loopScore(3) - loopScore(2));
+  });
+
+  it('endless: enemy attack damage compounds per loop instead of a flat bonus', () => {
+    const run = testRun('endless-dmg');
+    // no ascension, no loop: base damage passes through untouched
+    expect(scaleEnemyAttack(run, 10)).toBe(10);
+    // ascension chip is flat and only applies at loop 0 in this run's config
+    run.ascension = 2;
+    expect(scaleEnemyAttack(run, 10)).toBe(11);
+    run.ascension = 9;
+    expect(scaleEnemyAttack(run, 10)).toBe(12);
+    // endless compounds: (base + loop) × 1.15^loop
+    run.ascension = 0;
+    run.loop = 1;
+    expect(scaleEnemyAttack(run, 10)).toBe(13);
+    run.loop = 3;
+    expect(scaleEnemyAttack(run, 10)).toBe(20);
+    run.loop = 5;
+    expect(scaleEnemyAttack(run, 10)).toBe(30);
+  });
+
+  it('endless pressures: offer is deterministic per seed and excludes already-held pressures', () => {
+    const run = testRun('endless-pressure-a');
+    run.act = 3;
+    run.result = 'win';
+    beginLoop(run, newEmit());
+    expect(run.pressureOffer?.length).toBe(2);
+    const offer1 = [...run.pressureOffer!];
+
+    const run2 = testRun('endless-pressure-a');
+    run2.act = 3;
+    run2.result = 'win';
+    beginLoop(run2, newEmit());
+    expect(run2.pressureOffer).toEqual(offer1);
+
+    // choosing one locks it in; the next loop's offer never includes it again
+    expect(choosePressure(run, offer1[0])).toBe(true);
+    expect(run.pressures).toEqual([offer1[0]]);
+    expect(run.pressureOffer).toBeUndefined();
+    run.act = 3;
+    run.result = 'win';
+    beginLoop(run, newEmit());
+    expect(run.pressureOffer).not.toContain(offer1[0]);
+  });
+
+  it('endless pressures: the Abyssal Toll fires once all seven are held, permanently costing Max HP', () => {
+    const run = testRun('endless-toll');
+    run.pressures = Object.keys(PRESSURES);
+    run.act = 3;
+    run.result = 'win';
+    const maxHpBefore = run.maxHp;
+    beginLoop(run, newEmit());
+    expect(run.pressureOffer).toBeUndefined();
+    // the toll (-5) stacks with crushingDepth's own -3, since it's already held
+    expect(run.maxHp).toBe(maxHpBefore - 8);
+  });
+
+  it('endless pressures: the Deep Demands caps cards played per turn', () => {
+    const run = testRun('endless-deepdemands');
+    run.loop = 1;
+    run.pressures = ['deepDemands'];
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    giveHand(run, ['tideStrike']);
+    bs.cardsPlayedThisTurn = 11;
+    expect(canPlay(run, bs, bs.hand[0].uid)).toBeNull();
+    bs.cardsPlayedThisTurn = 12;
+    expect(canPlay(run, bs, bs.hand[0].uid)).toBe('pressure');
+  });
+
+  it('endless pressures: Silt in the Lungs adds one Waterlogged to the battle draw pile only', () => {
+    const run = testRun('endless-siltlungs');
+    run.loop = 1;
+    run.pressures = ['siltLungs'];
+    const deckSizeBefore = run.deck.length;
+    startBattle(run, 'a1_crab', newEmit());
+    const bs = run.battle!;
+    const total = bs.hand.length + bs.drawPile.length + bs.discardPile.length + bs.exhaustPile.length;
+    expect(total).toBe(deckSizeBefore + 1);
+    expect([...bs.hand, ...bs.drawPile].some((c) => c.defId === 'waterlogged')).toBe(true);
+    expect(run.deck.length).toBe(deckSizeBefore); // run.deck itself never compounds
+  });
+
+  it('endless pressures: Dimming Light draws one fewer card on the first turn', () => {
+    const base = testRun('endless-dimminglight');
+    base.loop = 1;
+    startBattle(base, 'a1_crab', newEmit());
+    const baseHand = base.battle!.hand.length;
+
+    const run = testRun('endless-dimminglight');
+    run.loop = 1;
+    run.pressures = ['dimmingLight'];
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.hand.length).toBe(baseHand - 1);
+  });
+
+  it('endless pressures: Numbing Cold removes one Energy on the first turn', () => {
+    const base = testRun('endless-numbingcold');
+    base.loop = 1;
+    startBattle(base, 'a1_crab', newEmit());
+    const baseEnergy = base.battle!.energy;
+
+    const run = testRun('endless-numbingcold');
+    run.loop = 1;
+    run.pressures = ['numbingCold'];
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.energy).toBe(baseEnergy - 1);
+  });
+
+  it('endless pressures: Barnacled Hulls opens enemies with Block scaled to the loop', () => {
+    const run = testRun('endless-barnacled');
+    run.loop = 3;
+    run.pressures = ['barnacledHulls'];
+    startBattle(run, 'a1_crab', newEmit());
+    expect(run.battle!.enemies[0].block).toBe(12);
+  });
+
+  it('endless pressures: Crushing Depth costs Max HP on act descent and on the loop wrap', () => {
+    const run = testRun('endless-crushingdepth');
+    run.act = 1;
+    run.loop = 1;
+    run.pressures = ['crushingDepth'];
+    const maxHpBefore = run.maxHp;
+    descend(run, newEmit()); // act 1 -> 2
+    expect(run.maxHp).toBe(maxHpBefore - 3);
+
+    const run2 = testRun('endless-crushingdepth2');
+    run2.act = 3;
+    run2.result = 'win';
+    run2.loop = 1;
+    run2.pressures = ['crushingDepth'];
+    const maxHpBefore2 = run2.maxHp;
+    beginLoop(run2, newEmit()); // loop 1 -> 2
+    expect(run2.maxHp).toBe(maxHpBefore2 - 3);
+  });
+
+  it('endless pressures: the Hungering Dark reduces rest heal by 10%', () => {
+    const run = testRun('endless-hungeringdark');
+    run.loop = 1;
+    const fracBase = Math.min(0.5, 0.3 + 0.04 * run.loop);
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * fracBase));
+    run.pressures = ['hungeringDark'];
+    const fracReduced = Math.max(0.05, fracBase - 0.1);
+    expect(restHealAmount(run)).toBe(Math.round(run.maxHp * fracReduced));
+  });
+
+  it('endless: elite and boss affix counts escalate at loop 2 and loop 5', () => {
+    const rng = makeRng(hashSeed('affix-escalation'));
+    expect(generateEliteSpec(rng, 1, 1, 'e1').enemies[0].affixes?.length).toBe(1);
+    expect(generateEliteSpec(rng, 1, 2, 'e2').enemies[0].affixes?.length).toBe(2);
+    expect(generateEliteSpec(rng, 1, 4, 'e3').enemies[0].affixes?.length).toBe(2);
+    expect(generateEliteSpec(rng, 1, 5, 'e4').enemies[0].affixes?.length).toBe(3);
+
+    const bossRng = makeRng(hashSeed('boss-affix-escalation'));
+    const bossAffixes = (loop: number, id: string) =>
+      generateBossSpec(bossRng, 3, loop, id).enemies.find((e) => e.defId === 'krakenHead')!.affixes?.length;
+    expect(bossAffixes(1, 'b1')).toBe(1);
+    expect(bossAffixes(2, 'b2')).toBe(2);
+    expect(bossAffixes(5, 'b3')).toBe(3);
   });
 
   it('endless: every enemy has a sane derived threat cost', () => {
@@ -345,15 +517,17 @@ describe('tide', () => {
     expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.5)); // capped
   });
 
-  it('enemy intent previews include the ascension/endless damage bonus', () => {
+  it('enemy intent previews include the ascension/endless damage scaling', () => {
     const run = battleRun();
     const bs = run.battle!;
     const e = bs.enemies[0];
+    e.moveId = 'pinch'; // force an attack intent so the preview math actually runs
     const base = previewEnemyMove(run, bs, e);
-    run.loop = 2; // +4 enemy damage
+    expect(base?.dmg).toBe(7); // snapperCrab's Pinch, unmodified at loop 0
+    run.loop = 2;
     const scaled = previewEnemyMove(run, bs, e);
-    if (base && scaled) expect(scaled.dmg - base.dmg).toBe(4);
-    else expect(base).toBe(scaled); // non-attack intent for both
+    expect(scaled?.dmg).toBe(Math.round((7 + 2) * Math.pow(1.15, 2))); // 12
+    expect(scaled?.dmg).toBe(calcAttack(scaleEnemyAttack(run, 7), e, bs.player)); // telegraph = resolution
   });
 
   it('endless: loop bosses spawn affixed, their minions stay clean', () => {
