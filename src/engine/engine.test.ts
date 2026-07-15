@@ -10,7 +10,7 @@ import {
 } from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard, previewDamageOp } from './describe';
-import { generateBossSpec, threatCost } from './endless';
+import { generateBossSpec, generateEliteSpec, threatCost } from './endless';
 import { ENEMIES, ENCOUNTERS, encounterPool } from '../content/enemies';
 import { PRESSURES } from '../content/pressures';
 import { makeRng, hashSeed } from '../lib/rng';
@@ -334,6 +334,21 @@ describe('tide', () => {
     run.pressures = ['hungeringDark'];
     const fracReduced = Math.max(0.05, fracBase - 0.1);
     expect(restHealAmount(run)).toBe(Math.round(run.maxHp * fracReduced));
+  });
+
+  it('endless: elite and boss affix counts escalate at loop 2 and loop 5', () => {
+    const rng = makeRng(hashSeed('affix-escalation'));
+    expect(generateEliteSpec(rng, 1, 1, 'e1').enemies[0].affixes?.length).toBe(1);
+    expect(generateEliteSpec(rng, 1, 2, 'e2').enemies[0].affixes?.length).toBe(2);
+    expect(generateEliteSpec(rng, 1, 4, 'e3').enemies[0].affixes?.length).toBe(2);
+    expect(generateEliteSpec(rng, 1, 5, 'e4').enemies[0].affixes?.length).toBe(3);
+
+    const bossRng = makeRng(hashSeed('boss-affix-escalation'));
+    const bossAffixes = (loop: number, id: string) =>
+      generateBossSpec(bossRng, 3, loop, id).enemies.find((e) => e.defId === 'krakenHead')!.affixes?.length;
+    expect(bossAffixes(1, 'b1')).toBe(1);
+    expect(bossAffixes(2, 'b2')).toBe(2);
+    expect(bossAffixes(5, 'b3')).toBe(3);
   });
 
   it('endless: every enemy has a sane derived threat cost', () => {
