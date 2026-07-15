@@ -2,7 +2,7 @@
 
 import { Anchor, ArrowDown, Home, RotateCcw } from 'lucide-react';
 import { useGame } from '../../state/store';
-import { scoreRun } from '../../engine/run';
+import { loopScore, scoreRun } from '../../engine/run';
 import { CHARACTERS } from '../../content/characters';
 import { PRESSURES } from '../../content/pressures';
 import { Bubbles } from '../components/Bits';
@@ -22,7 +22,7 @@ function ScorePanel() {
     ['Gold purse', Math.round(run.gold / 5)],
   ];
   if (run.ascension > 0) rows.push([`Depth ${run.ascension} bravery`, run.ascension * 15]);
-  if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, run.loop * 100]);
+  if (run.loop > 0) rows.push([`Endless loops (${run.loop})`, loopScore(run.loop)]);
   if (run.result === 'win') rows.push(['Survived the Kraken', 150 + run.hp]);
   // an endless death pays out only what was earned since the banked victory
   const fathoms = run.result === 'loss' && run.loop > 0
