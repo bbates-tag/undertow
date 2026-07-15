@@ -157,9 +157,12 @@ export const WEAVER_CARDS: CardDef[] = [
     flavor: 'That one. There. Now.',
   },
   {
+    // charges, not a battle-long blanket — a permanent "all Reads true" deleted
+    // the archetype's whole decision layer (see PR: Perfect Read rework)
     id: 'perfectRead', name: 'Perfect Read', char: 'weaver', type: 'power', rarity: 'rare',
     cost: 2, costUp: 1, target: 'none', icon: 'GiBeastEye',
-    ops: [], powerHook: 'perfectRead',
+    ops: [{ op: 'status', status: 'perfectRead', amount: { base: 3 }, target: 'self' }],
+    flavor: 'She has already seen this fight. Three of the endings were wrong.',
   },
   {
     id: 'neverBitten', name: 'Never Bitten', char: 'weaver', type: 'attack', rarity: 'rare',

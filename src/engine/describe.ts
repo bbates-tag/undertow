@@ -2,7 +2,7 @@
 // consistently, and so in-battle text shows live, modifier-adjusted numbers.
 
 import type { Amount, BattleState, CardDef, Cond, EnemyState, Op, PowerHookId, StatusId } from './types';
-import { anyEnemyIntends, calcAttack, condMet, resolveAmount } from './battle';
+import { anyEnemyIntends, calcAttack, condMet, readForceActive, resolveAmount } from './battle';
 
 export interface DescribeCtx {
   bs: BattleState;
@@ -13,6 +13,7 @@ const STATUS_NAMES: Record<StatusId, string> = {
   toxin: 'Toxin', weakened: 'Weakened', exposed: 'Exposed', brittle: 'Brittle',
   might: 'Might', finesse: 'Finesse', spines: 'Spines', regen: 'Regen',
   anchor: 'Anchor', charge: 'Charge', descent: 'Descent', marked: 'Marked',
+  perfectRead: 'Perfect Read',
 };
 
 const HOOK_TEXT: Record<PowerHookId, string> = {
@@ -144,6 +145,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       if (op.target === 'self') {
         if (op.status === 'charge') return `Conduct ${n}.`;
         if (op.status === 'anchor') return 'Anchor.';
+        if (op.status === 'perfectRead') return `Your next ${n} Reads that would miss, hit instead.`;
         return `Gain ${n} ${name}.`;
       }
       const where = op.target === 'all' ? ' to ALL enemies' : op.target === 'random' ? ' to a random enemy' : '';
@@ -214,7 +216,7 @@ export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleS
         if (typeof c === 'object' && 'descentAtLeast' in c) return (bs.player.statuses.descent ?? 0) >= c.descentAtLeast;
         if (typeof c === 'object' && 'chargeAtLeast' in c) return (bs.player.statuses.charge ?? 0) >= c.chargeAtLeast;
         if (typeof c === 'object' && 'intends' in c) {
-          if (bs.powers.includes('perfectRead')) return true;
+          if (readForceActive(bs)) return true; // charges or legacy power
           const met = anyEnemyIntends(bs, c.intends);
           if (c.who === 'target') return met; // some enemy would trigger it
           return c.who === 'anyOnYou' ? met : !met;

@@ -2,7 +2,7 @@ import type { CreatureState, StatusId } from '../../engine/types';
 import { GameIcon, STATUS_META } from '../icons';
 import { KEYWORDS } from '../../content/keywords';
 
-const ORDER: StatusId[] = ['charge', 'descent', 'might', 'finesse', 'spines', 'regen', 'anchor', 'marked', 'toxin', 'weakened', 'exposed', 'brittle'];
+const ORDER: StatusId[] = ['charge', 'descent', 'perfectRead', 'might', 'finesse', 'spines', 'regen', 'anchor', 'marked', 'toxin', 'weakened', 'exposed', 'brittle'];
 
 export function StatusChips({ creature, onInfo }: { creature: CreatureState; onInfo?: (id: string) => void }) {
   const entries = ORDER.filter((s) => (creature.statuses[s] ?? 0) > 0);

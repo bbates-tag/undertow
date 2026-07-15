@@ -33,6 +33,7 @@ export const KEYWORDS: Record<string, KeywordDef> = {
   read: { id: 'read', name: 'Read', text: 'A bonus that triggers off what enemies telegraph: attack, Block, or scheming (buff / debuff / summon).' },
   foresight: { id: 'foresight', name: 'Foresight', text: 'The Wakeweaver sees each enemy’s move one turn further ahead — the small ghosted icon. A forecast, not a promise: wounds and summons can change a mind.' },
   marked: { id: 'marked', name: 'Marked', text: 'If a Marked enemy dies this turn, gain Energy and draw cards (1 + Marked of each). Marks fade at the start of your next turn.' },
+  perfectRead: { id: 'perfectRead', name: 'Perfect Read', text: 'Your next Reads that would miss, hit instead — one charge per rescued Read. Naturally true Reads cost nothing.' },
 };
 
 /** Order matters: longer names first so e.g. "Weakened" matches before "Weak". */
