@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Lock } from 'lucide-react';
+import { Heart, Lock, X } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { CHARACTERS } from '../../content/characters';
 import { ENEMIES } from '../../content/enemies';
@@ -140,7 +140,7 @@ function CharacterDossier({ charId, onClose }: { charId: CharacterId; onClose: (
   if (!ch) return null;
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, pointerEvents: 'none' }}
       className="fixed inset-0 z-[88] bg-black/75 backdrop-blur-md flex items-center justify-center"
       style={{ padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))' }}
       onClick={onClose} role="dialog" aria-modal="true" aria-label={`${ch.name} dossier`}
@@ -151,6 +151,15 @@ function CharacterDossier({ charId, onClose }: { charId: CharacterId; onClose: (
         className="panel relative w-[min(94vw,420px)] max-h-full overflow-y-auto overflow-x-hidden"
         onClick={(ev) => ev.stopPropagation()}
       >
+        <button
+          className="btn !p-2 absolute top-2 right-2 z-10"
+          style={{ background: 'rgba(8,17,32,0.8)' }}
+          onClick={onClose}
+          aria-label="Close dossier"
+          autoFocus
+        >
+          <X size={18} />
+        </button>
         {/* near-full portrait: clip only a sliver off the bottom (art is ~4:5) */}
         <div className="overflow-hidden">
           <ArtImage kind="characters" id={ch.id} icon={ch.icon} className="w-full block -mb-[4%]" iconSize={64} alt={ch.name} />
@@ -330,7 +339,7 @@ function RelicZoom({ relicId, onClose }: { relicId: string; onClose: () => void 
   const tierColor = r.tier === 'boss' ? 'var(--color-lure)' : r.tier === 'rare' || r.tier === 'treasure' ? 'var(--color-gold)' : 'var(--color-mist)';
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, pointerEvents: 'none' }}
       className="fixed inset-0 z-[88] bg-black/75 backdrop-blur-md flex items-center justify-center"
       style={{ padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))' }}
       onClick={onClose} role="dialog" aria-modal="true" aria-label={`${r.name} relic`}
@@ -341,6 +350,15 @@ function RelicZoom({ relicId, onClose }: { relicId: string; onClose: () => void 
         className="panel relative w-[min(94vw,360px)] p-5 flex flex-col items-center gap-3 text-center"
         onClick={(ev) => ev.stopPropagation()}
       >
+        <button
+          className="btn !p-2 absolute top-2 right-2 z-10"
+          style={{ background: 'rgba(8,17,32,0.8)' }}
+          onClick={onClose}
+          aria-label="Close relic view"
+          autoFocus
+        >
+          <X size={18} />
+        </button>
         <div className="w-20 h-20 rounded-full bg-(--color-abyss-800) flex items-center justify-center">
           <GameIcon id={r.icon} size={44} />
         </div>
@@ -375,11 +393,20 @@ function CardZoom({ defId, onClose }: { defId: string; onClose: () => void }) {
   )];
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, pointerEvents: 'none' }}
       className="fixed inset-0 z-[88] bg-black/75 backdrop-blur-md flex items-center justify-center"
       style={{ padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))' }}
       onClick={onClose} role="dialog" aria-modal="true" aria-label={`${def.name} card`}
     >
+      <button
+        className="btn !p-2 absolute z-10"
+        style={{ background: 'rgba(8,17,32,0.8)', top: 'max(12px, env(safe-area-inset-top))', right: 12 }}
+        onClick={onClose}
+        aria-label="Close card view"
+        autoFocus
+      >
+        <X size={18} />
+      </button>
       <motion.div
         initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 28 }}

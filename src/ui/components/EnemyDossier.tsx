@@ -40,7 +40,7 @@ export function EnemyDossier({ defId, affixes, onClose }: { defId: string; affix
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, pointerEvents: 'none' }}
       /* above the tutorial hints (85), below toasts (90) */
       className="fixed inset-0 z-[88] bg-black/75 backdrop-blur-md flex items-center justify-center"
       style={{ padding: 'max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))' }}

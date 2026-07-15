@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useGame } from './state/store';
 import { useReducedMotion, StatusChipsGlossary } from './ui/hooks';
-import { ensureAudio } from './audio/zzfx';
+import { ensureAudio, installAudioVisibilityHandler } from './audio/zzfx';
 import { music } from './audio/music';
 import { MenuScreen } from './ui/screens/MenuScreen';
 import { NewRunScreen } from './ui/screens/NewRunScreen';
@@ -46,6 +46,7 @@ export default function App() {
 
   // audio unlock on first gesture (browser autoplay policy)
   useEffect(() => {
+    installAudioVisibilityHandler();
     const unlock = () => {
       try {
         ensureAudio();
