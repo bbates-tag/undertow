@@ -339,3 +339,30 @@ Even the character that gets there mostly dies within 1–2 loops of entering en
 target. Re-run after each phase and watch whether Tidecaller's endless-reach rate and deepest
 loop shift, and whether other characters start reaching endless at all (a sign Act 1-4
 itself got harder would be a red flag — Phases 1-4 only touch `run.loop > 0` code paths).
+
+## Appendix: after Phases 1–4 (same command, on `feat/endless-ramp`)
+
+```
+TIDECALLER — 60 runs: reached endless 7/60, deepest loop 3 (was 5)
+  died at loop: L0=53 L1=3 L2=3 L3=1
+  L1 killers: Toxin×3 | L2: Chorus Echo×1, The Kraken×1, Toxin×1 | L3: The Kraken×1
+VOLTAIC — 0/60 reach endless (unchanged — dies A1-A3 every run)
+DROWNED — 0/60 reach endless (unchanged)
+WEAVER  — 0/60 reach endless (unchanged)
+```
+
+The endless-reach rate (7/60) and every non-endless death distribution (act, killer, deck
+size) are byte-for-byte identical to the Phase 0 baseline — confirming Phases 1–4 only
+affect `run.loop > 0` code paths, exactly as scoped. What changed is entirely inside endless:
+deepest loop dropped from 5 to 3, and deaths pulled forward from L2–L5 to L1–L3 — the bot
+that used to coast for 2 extra loops before the stat wall caught up now meets real pressure
+immediately on entering the Deep. That's the intended effect of layering a compounding
+damage curve (Phase 1) under stacking Pressures (Phase 2) and a faster encounter escalation
+(Phase 3) — no single phase should get credit alone; each sim re-run after Phase 1/2/3
+individually showed the loop ceiling stepping down by one (5 → 4 → 3), i.e. the phases
+genuinely compound rather than one dominating.
+
+This lines up with the plan's target band (median death loop 3–4) for the one character the
+bot can reach endless with at all; a skilled human deck should go deeper than this mediocre
+greedy bot, so the real ceiling for strong human play is untested here — worth a manual
+playtest pass before calling the tuning final.
