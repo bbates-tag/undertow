@@ -10,7 +10,7 @@ import { ArtImage } from './Art';
 import { GameIcon } from '../icons';
 
 /** minions that reuse another enemy's art masters (also used by the compendium) */
-export const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal', chorusEcho: 'chorus' };
+export const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal' };
 
 const ACT_NAME: Record<number, string> = {
   0: 'Summoned',
