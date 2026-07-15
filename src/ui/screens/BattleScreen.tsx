@@ -18,6 +18,7 @@ import { EnemyDossier } from '../components/EnemyDossier';
 import { EnemyView } from '../components/EnemyView';
 import { FxLayer } from '../components/FxLayer';
 import { RelicBar } from '../components/RelicBar';
+import { PressureBar } from '../components/PressureBar';
 import { StatusChips } from '../components/StatusChips';
 import { TideDial } from '../components/TideDial';
 import { GoldChip } from '../components/Bits';
@@ -233,6 +234,7 @@ export function BattleScreen() {
         </button>
       </div>
       <RelicBar relics={run.relics} defanged={run.defanged} />
+      <PressureBar pressures={run.pressures} />
 
       {/* boss banner */}
       <AnimatePresence>
@@ -398,7 +400,9 @@ export function BattleScreen() {
           >
             <AnimatePresence mode="popLayout" custom={lastPlay}>
               {bs.hand.map((c, i) => {
-                const affordable = cardCost(c) <= bs.energy && !cardDef(c).unplayable;
+                // Pressure: the Deep Demands caps cards played per turn
+                const pressureCapped = (run?.loop ?? 0) > 0 && !!run?.pressures.includes('deepDemands') && bs.cardsPlayedThisTurn >= 12;
+                const affordable = cardCost(c) <= bs.energy && !cardDef(c).unplayable && !pressureCapped;
                 return (
                   <HandCard
                     key={c.uid}

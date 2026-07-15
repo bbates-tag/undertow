@@ -9,6 +9,7 @@ import { NewRunScreen } from './ui/screens/NewRunScreen';
 import { MapScreen } from './ui/screens/MapScreen';
 import { BattleScreen } from './ui/screens/BattleScreen';
 import { RewardScreen } from './ui/screens/RewardScreen';
+import { PressureChoiceScreen } from './ui/screens/PressureChoiceScreen';
 import { ShopScreen } from './ui/screens/ShopScreen';
 import { RestScreen } from './ui/screens/RestScreen';
 import { EventScreen } from './ui/screens/EventScreen';
@@ -25,6 +26,7 @@ const SCREENS = {
   map: MapScreen,
   battle: BattleScreen,
   reward: RewardScreen,
+  pressureChoice: PressureChoiceScreen,
   shop: ShopScreen,
   rest: RestScreen,
   event: EventScreen,

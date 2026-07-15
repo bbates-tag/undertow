@@ -4,6 +4,7 @@ import { Anchor, ArrowDown, Home, RotateCcw } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { scoreRun } from '../../engine/run';
 import { CHARACTERS } from '../../content/characters';
+import { PRESSURES } from '../../content/pressures';
 import { Bubbles } from '../components/Bits';
 
 function ScorePanel() {
@@ -85,6 +86,11 @@ export function GameOverScreen() {
       {run.loop > 0 && (
         <p className="text-xs font-bold -mt-1" style={{ color: 'var(--color-glow)' }}>
           Deepest dive: Loop {run.loop + 1} · Depth {run.floor}
+        </p>
+      )}
+      {run.pressures.length > 0 && (
+        <p className="text-[11px] text-(--color-dim) italic max-w-[340px] text-center -mt-1">
+          Pressures endured: {run.pressures.map((id) => PRESSURES[id]?.name).filter(Boolean).join(', ')}
         </p>
       )}
       <ScorePanel />

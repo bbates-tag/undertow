@@ -53,6 +53,7 @@ export function parseSaveBlob(raw: string): SaveBlob | null {
     if (blob.run) {
       if (blob.run.loop === undefined) blob.run.loop = 0; // pre-endless saves
       if (!blob.run.unlockedPacks) blob.run.unlockedPacks = blob.meta.unlockedPacks ?? []; // pre-snapshot saves
+      if (!blob.run.pressures) blob.run.pressures = []; // pre-Pressures saves
     }
     return blob;
   } catch {

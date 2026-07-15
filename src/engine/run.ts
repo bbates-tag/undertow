@@ -9,6 +9,7 @@ import { CARDS, RARITY_WEIGHTS, rewardableCards } from '../content/cards';
 import { CHARACTERS } from '../content/characters';
 import { DEFANGABLE, RELICS, relicPool } from '../content/relics';
 import { BOONS } from '../content/boons';
+import { PRESSURES } from '../content/pressures';
 import { generateBattleSpec, generateBossSpec, generateEliteSpec } from './endless';
 import { EVENTS } from '../content/events';
 import { encounterPool } from '../content/enemies';
@@ -180,6 +181,7 @@ export function newRun(opts: {
     daily: opts.daily ?? null,
     act: 1,
     loop: 0,
+    pressures: [],
     map: { act: 1, rows: [] },
     pos: null,
     floor: 0,
@@ -567,11 +569,17 @@ export function buyRemoval(run: RunState, cardUid: number): ShopError | null {
   return null;
 }
 
+/** endless: is this per-loop debuff active? (see content/pressures.ts) */
+function hasPressure(run: RunState, id: string): boolean {
+  return run.loop > 0 && run.pressures.includes(id);
+}
+
 // ── Rest ─────────────────────────────────────────────────────────────────────
 
 export function restHealAmount(run: RunState): number {
   // endless: fights hit harder and run longer each loop — vents warm up too
-  const frac = Math.min(0.5, (run.ascension >= 3 ? 0.25 : 0.3) + 0.04 * run.loop);
+  let frac = Math.min(0.5, (run.ascension >= 3 ? 0.25 : 0.3) + 0.04 * run.loop);
+  if (hasPressure(run, 'hungeringDark')) frac = Math.max(0.05, frac - 0.1);
   let heal = Math.round(run.maxHp * frac);
   if (run.relics.includes('whaleOilFlask')) heal += 15;
   return heal;
@@ -729,6 +737,10 @@ export function descend(run: RunState, emit: Emit): 'nextAct' | 'victory' {
   run.map = generateMap(r, run.act, run.loop);
   done();
   run.pos = null;
+  if (hasPressure(run, 'crushingDepth')) {
+    run.maxHp = Math.max(15, run.maxHp - 3);
+    run.hp = Math.min(run.hp, run.maxHp);
+  }
   healPlayer(run, null, Math.round(run.maxHp * 0.25), emit);
   return 'nextAct';
 }
@@ -740,9 +752,29 @@ export function beginLoop(run: RunState, emit: Emit) {
   run.result = null;
   const { r, done } = runRng(run);
   run.map = generateMap(r, 1, run.loop);
+  // offer the next Pressure; once all seven are held, the Abyssal Toll fires
+  // instead — every further descent permanently costs Max HP
+  const remaining = Object.keys(PRESSURES).filter((p) => !run.pressures.includes(p));
+  if (remaining.length) run.pressureOffer = r.shuffle(remaining).slice(0, 2);
+  else {
+    run.maxHp = Math.max(15, run.maxHp - 5);
+    run.hp = Math.min(run.hp, run.maxHp);
+  }
   done();
   run.pos = null;
+  if (hasPressure(run, 'crushingDepth')) {
+    run.maxHp = Math.max(15, run.maxHp - 3);
+    run.hp = Math.min(run.hp, run.maxHp);
+  }
   healPlayer(run, null, Math.round(run.maxHp * 0.25), emit);
+}
+
+/** endless: lock in this loop's Pressure pick — offered once, permanent for the run */
+export function choosePressure(run: RunState, id: string): boolean {
+  if (!run.pressureOffer?.includes(id)) return false;
+  run.pressures.push(id);
+  run.pressureOffer = undefined;
+  return true;
 }
 
 export function scoreRun(run: RunState): number {

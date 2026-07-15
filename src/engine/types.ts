@@ -353,6 +353,10 @@ export interface RunState {
   act: Act;
   /** endless descents completed: 0 = the normal four acts, 1+ = loops past What Dreams Beneath */
   loop: number;
+  /** endless: accumulated per-loop debuffs (see content/pressures.ts), stacking and permanent */
+  pressures: string[];
+  /** endless: the 1-of-2 choice pending for the loop just entered; absent once resolved */
+  pressureOffer?: string[];
   map: GameMap;
   /** current position; null until the first node of the act is chosen */
   pos: { row: number; col: number } | null;
