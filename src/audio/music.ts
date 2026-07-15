@@ -84,6 +84,9 @@ class MusicEngine {
     if (this.drumTimer != null || !this.ctx || !this.out) return;
     const beat = () => {
       if (!this.running || !this.ctx || !this.out) return;
+      // suspended (hidden tab): currentTime is frozen, so scheduled thumps
+      // would stack on one instant and blast together on resume — skip
+      if (this.ctx.state !== 'running') return;
       const t = this.ctx.currentTime + 0.04;
       this.thump(t, true);
       this.thump(t + 0.32, false);
@@ -210,6 +213,11 @@ class MusicEngine {
     const droplet = () => {
       if (!this.running) return;
       const p = MOODS[this.mood];
+      if (ctx.state !== 'running') {
+        // hidden tab: keep the timer chain alive but don't stack frozen notes
+        this.dropletTimer = window.setTimeout(droplet, p.dropletMin + Math.random() * p.dropletVar);
+        return;
+      }
       const o = ctx.createOscillator();
       o.type = 'triangle';
       const base = pentatonic[Math.floor(Math.random() * pentatonic.length)];

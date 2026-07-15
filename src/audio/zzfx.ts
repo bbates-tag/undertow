@@ -20,8 +20,23 @@ export function ensureAudio(): AudioContext {
     master.gain.value = 0.8;
     master.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') void ctx.resume();
+  // never auto-resume while the page is hidden — the visibility handler
+  // suspended it on purpose (backgrounded tab / app-switched phone)
+  if (ctx.state === 'suspended' && !document.hidden) void ctx.resume();
   return ctx;
+}
+
+/** Silence everything when the tab is hidden (phone home screen, tab switch),
+    pick up where we left off when it returns. Install once at app boot. */
+export function installAudioVisibilityHandler() {
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) {
+      if (ctx.state === 'running') void ctx.suspend();
+    } else if (ctx.state === 'suspended') {
+      void ctx.resume();
+    }
+  });
 }
 
 export function masterGain(): GainNode | null {
