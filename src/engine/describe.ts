@@ -2,7 +2,7 @@
 // consistently, and so in-battle text shows live, modifier-adjusted numbers.
 
 import type { Amount, BattleState, CardDef, Cond, EnemyState, Op, PowerHookId, StatusId } from './types';
-import { anyEnemyIntends, calcAttack, resolveAmount } from './battle';
+import { anyEnemyIntends, calcAttack, condMet, readForceActive, resolveAmount } from './battle';
 
 export interface DescribeCtx {
   bs: BattleState;
@@ -13,6 +13,7 @@ const STATUS_NAMES: Record<StatusId, string> = {
   toxin: 'Toxin', weakened: 'Weakened', exposed: 'Exposed', brittle: 'Brittle',
   might: 'Might', finesse: 'Finesse', spines: 'Spines', regen: 'Regen',
   anchor: 'Anchor', charge: 'Charge', descent: 'Descent', marked: 'Marked',
+  perfectRead: 'Perfect Read',
 };
 
 const HOOK_TEXT: Record<PowerHookId, string> = {
@@ -98,7 +99,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       const equalBlock = a.base === 0 && a.perBlock === 1;
       if (a.perTelegraph && !ctx?.target) {
         const mult = a.perTelegraph === 1 ? '' : `${a.perTelegraph}× `;
-        return `Deal damage equal to ${mult}the target's telegraphed attack (max 40).`;
+        return `Deal ${mult}the target's telegraphed attack (max 40).`;
       }
       const n = dmgNumber(a, ctx);
       // when the tide bonus is live, the number already contains it — fold the
@@ -144,6 +145,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       if (op.target === 'self') {
         if (op.status === 'charge') return `Conduct ${n}.`;
         if (op.status === 'anchor') return 'Anchor.';
+        if (op.status === 'perfectRead') return `Your next ${n} Reads that would miss, hit instead.`;
         return `Gain ${n} ${name}.`;
       }
       const where = op.target === 'all' ? ' to ALL enemies' : op.target === 'random' ? ' to a random enemy' : '';
@@ -194,9 +196,11 @@ function opText(op: Op, ctx?: DescribeCtx): string {
 
 /**
  * True when a globally-checkable condition on this card (Flood/Ebb tide
- * bonuses, Charge/Descent thresholds) is currently met — the UI glows the
- * card. Target-dependent conditions (targetToxined, targetBelowHalf) can't
- * be judged without a chosen target and never glow.
+ * bonuses, Charge/Descent thresholds, Read riders) is currently met — the UI
+ * glows the card. Target-scoped Reads glow when ANY living enemy would
+ * trigger them (a matching target is available to pick). Other target
+ * conditions (targetToxined, targetBelowHalf) can't be judged without a
+ * chosen target and never glow.
  */
 export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleState): boolean {
   const amountLive = (a: Amount) => (!!a.flood && bs.tide === 2) || (!!a.ebb && bs.tide === 0);
@@ -211,9 +215,10 @@ export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleS
         if (c === 'ebbSoon') return bs.tide === 0 || bs.tide === 3;
         if (typeof c === 'object' && 'descentAtLeast' in c) return (bs.player.statuses.descent ?? 0) >= c.descentAtLeast;
         if (typeof c === 'object' && 'chargeAtLeast' in c) return (bs.player.statuses.charge ?? 0) >= c.chargeAtLeast;
-        // Read riders that don't depend on a chosen target can glow
-        if (typeof c === 'object' && 'intends' in c && c.who !== 'target') {
+        if (typeof c === 'object' && 'intends' in c) {
+          if (readForceActive(bs)) return true; // charges or legacy power
           const met = anyEnemyIntends(bs, c.intends);
+          if (c.who === 'target') return met; // some enemy would trigger it
           return c.who === 'anyOnYou' ? met : !met;
         }
         return false;
@@ -221,6 +226,24 @@ export function cardConditionActive(def: CardDef, upgraded: boolean, bs: BattleS
       return false;
     });
   return check(upgraded ? (def.opsUp ?? def.ops) : def.ops);
+}
+
+/**
+ * The single-target damage op this card would actually execute against this
+ * specific enemy right now — `if` branches resolved with the engine's real
+ * condMet, so the floating preview never shows a branch that won't fire.
+ */
+export function previewDamageOp(bs: BattleState, ops: Op[], target: EnemyState): { amount: Amount; times: number } | null {
+  for (const op of ops) {
+    if (op.op === 'damage' && op.target !== 'all' && op.target !== 'random') {
+      return { amount: op.amount, times: op.times === 'charge' ? 1 : (op.times ?? 1) };
+    }
+    if (op.op === 'if') {
+      const inner = previewDamageOp(bs, condMet(bs, op.cond, target) ? op.then : (op.else ?? []), target);
+      if (inner) return inner;
+    }
+  }
+  return null;
 }
 
 export function describeCard(def: CardDef, upgraded: boolean, ctx?: DescribeCtx): string {

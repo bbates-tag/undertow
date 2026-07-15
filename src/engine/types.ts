@@ -25,7 +25,8 @@ export type StatusId =
   | 'anchor' // block is not removed at the start of your next turn (consumed)
   | 'charge' // Voltaic resource; spent by Discharge cards
   | 'descent' // Drowned resource; grows when the player loses HP on their own turn
-  | 'marked'; // Weaver's Called Shot: if the bearer dies this turn, the player profits
+  | 'marked' // Weaver's Called Shot: if the bearer dies this turn, the player profits
+  | 'perfectRead'; // Weaver: next N Reads that would miss, hit instead (one charge per rescue)
 
 export const DEBUFFS: StatusId[] = ['toxin', 'weakened', 'exposed', 'brittle'];
 
@@ -117,6 +118,9 @@ export interface CardDef {
   text?: string; // override auto-generated rules text
   textUp?: string;
   flavor?: string;
+  /** CSS object-position for the art crop — for arts whose subject isn't
+      centered (e.g. 'center 30%' keeps a high face in frame) */
+  artFocus?: string;
 }
 
 /** Persistent effects installed by Power cards; interpreted by the engine. */
@@ -142,7 +146,7 @@ export type PowerHookId =
   | 'weatherEye3' | 'weatherEye4' // turn start: if any enemy intends an attack, gain N block
   | 'apexEscort4' | 'apexEscort5' // turn start: deal N to every enemy intending an attack
   | 'grace3' | 'grace4' // the first enemy attack hit each turn deals N less
-  | 'perfectRead'; // Read riders always count as met
+  | 'perfectRead'; // LEGACY (pre-charge saves): Read riders always count as met
 
 export interface CardInstance {
   uid: number;

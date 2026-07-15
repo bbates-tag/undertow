@@ -51,12 +51,14 @@ interface ArtImageProps {
   /** fallback icon id from the registry */
   icon: string;
   className?: string;
+  /** inline style for the <img> (e.g. a per-art objectPosition crop) */
+  style?: React.CSSProperties;
   iconSize?: number | string;
   iconClassName?: string;
   alt?: string;
 }
 
-export function ArtImage({ kind, id, icon, className, iconSize, iconClassName, alt }: ArtImageProps) {
+export function ArtImage({ kind, id, icon, className, style, iconSize, iconClassName, alt }: ArtImageProps) {
   const key = `${kind}/${id}`;
   const url = artUrl(kind, id);
   const [, bump] = useState(0);
@@ -76,7 +78,7 @@ export function ArtImage({ kind, id, icon, className, iconSize, iconClassName, a
   }, [key, url]);
 
   if (loaded.has(key)) {
-    return <img src={url} alt={alt ?? ''} className={className} draggable={false} />;
+    return <img src={url} alt={alt ?? ''} className={className} style={style} draggable={false} />;
   }
   return <GameIcon id={icon} size={iconSize} className={iconClassName} />;
 }

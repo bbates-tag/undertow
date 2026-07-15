@@ -92,4 +92,5 @@ export const STATUS_META: Record<string, { icon: string; color: string; name: st
   charge: { icon: 'GiElectric', color: 'var(--color-volt)', name: 'Charge' },
   descent: { icon: 'GiDrowning', color: 'var(--color-drowned)', name: 'Descent' },
   marked: { icon: 'GiCrosshair', color: 'var(--color-weaver)', name: 'Marked' },
+  perfectRead: { icon: 'GiBeastEye', color: 'var(--color-weaver)', name: 'Perfect Read' },
 };

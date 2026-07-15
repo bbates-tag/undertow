@@ -386,7 +386,16 @@ function tideSoon(bs: BattleState, phase: Tide): boolean {
   return bs.tide === phase || ((bs.tide + 1) % 4) === phase;
 }
 
-function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
+/** Perfect Read is forcing Reads true — via charges (status) or the
+    battle-long power on legacy saves. */
+export function readForceActive(bs: BattleState): boolean {
+  return getStatus(bs.player, 'perfectRead') > 0 || bs.powers.includes('perfectRead');
+}
+
+/** `naturalRead` evaluates the Read as the telegraphs actually stand,
+    ignoring Perfect Read — the charge-consumption site needs to know
+    whether a Read missed on its own merits. */
+export function condMet(bs: BattleState, cond: Cond, target?: EnemyState, naturalRead = false): boolean {
   // Gyre Charts relic: Flood/Ebb also count when the phase is next
   const charts = !!bs.counters.gyreCharts;
   if (cond === 'flood') return charts ? tideSoon(bs, 2) : bs.tide === 2;
@@ -396,7 +405,7 @@ function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
   if (cond === 'targetToxined') return !!target && getStatus(target, 'toxin') > 0;
   if (cond === 'targetBelowHalf') return !!target && target.hp <= target.maxHp / 2;
   if ('intends' in cond) {
-    if (bs.powers.includes('perfectRead')) return true;
+    if (!naturalRead && readForceActive(bs)) return true;
     const set = Array.isArray(cond.intends) ? cond.intends : [cond.intends];
     if (cond.who === 'target') return !!target && set.includes(enemyReadClass(target));
     if (cond.who === 'anyOnYou') return anyEnemyIntends(bs, set);
@@ -558,8 +567,19 @@ export function runOps(
         break;
       }
       case 'if': {
-        const met = condMet(bs, op.cond, target);
-        // Weaver's Instinct: the first Read that comes true each turn draws a card
+        let met = condMet(bs, op.cond, target, true); // as the telegraphs stand
+        // Perfect Read rescues a missed Read; a charge is spent only on the
+        // rescue — naturally true Reads cost nothing. (The legacy battle-long
+        // power from old saves forces for free.)
+        if (!met && typeof op.cond === 'object' && 'intends' in op.cond && readForceActive(bs)) {
+          met = true;
+          if (getStatus(bs.player, 'perfectRead') > 0 && !bs.powers.includes('perfectRead')) {
+            addStatus(bs.player, 'perfectRead', -1);
+            fx(emit, { kind: 'status', target: 'player', status: 'perfectRead', amount: -1 });
+          }
+        }
+        // Weaver's Instinct: the first Read that comes true each turn draws a
+        // card — rescued Reads count, they did come true
         if (met && typeof op.cond === 'object' && 'intends' in op.cond && bs.phase === 'player'
             && run.relics.includes('weaversInstinct') && !bs.counters.instinctUsed) {
           bs.counters.instinctUsed = 1;

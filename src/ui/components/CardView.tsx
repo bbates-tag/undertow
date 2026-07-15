@@ -83,6 +83,7 @@ export const CardView = memo(function CardView({
           id={def.id}
           icon={def.icon}
           className="card-art-img"
+          style={def.artFocus ? { objectPosition: def.artFocus } : undefined}
           iconClassName="relative z-[1] opacity-90"
           iconSize="52%"
         />
