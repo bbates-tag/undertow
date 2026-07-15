@@ -118,8 +118,8 @@ export function previewPlayerAttack(run: RunState, bs: BattleState, amount: Amou
 export function previewEnemyMove(run: RunState, bs: BattleState, e: EnemyState): { dmg: number; times: number } | null {
   const mv = ENEMIES[e.defId].moves[e.moveId];
   if (!mv?.attack) return null;
-  // include the ascension/endless damage bonus — telegraphs must not undersell
-  return { dmg: calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player), times: mv.attack.times ?? 1 };
+  // include the ascension/endless damage scaling — telegraphs must not undersell
+  return { dmg: calcAttack(scaleEnemyAttack(run, mv.attack.amount), e, bs.player), times: mv.attack.times ?? 1 };
 }
 
 export function blockGain(c: CreatureState, base: number): number {
@@ -836,11 +836,12 @@ function ascHpScale(run: RunState): number {
   return s;
 }
 
-export function ascEnemyDmgBonus(run: RunState): number {
-  let b = 0;
+/** ascension adds flat chip; endless compounds — the deep always wins eventually */
+export function scaleEnemyAttack(run: RunState, base: number): number {
+  let b = base;
   if (run.ascension >= 2) b += 1;
   if (run.ascension >= 9) b += 1;
-  b += 2 * run.loop; // endless
+  if (run.loop > 0) b = Math.round((b + run.loop) * Math.pow(1.15, run.loop));
   return b;
 }
 
@@ -1118,7 +1119,7 @@ function executeMove(run: RunState, bs: BattleState, e: EnemyState, emit: Emit) 
   if (mv.attack) {
     const times = mv.attack.times ?? 1;
     for (let i = 0; i < times; i++) {
-      let dmg = calcAttack(mv.attack.amount + ascEnemyDmgBonus(run), e, bs.player);
+      let dmg = calcAttack(scaleEnemyAttack(run, mv.attack.amount), e, bs.player);
       // Weaver's Grace: the first blow each turn lands on the woven veil
       const grace = bs.powers.includes('grace4') ? 4 : bs.powers.includes('grace3') ? 3 : 0;
       if (grace > 0 && !bs.counters.graceUsed) {

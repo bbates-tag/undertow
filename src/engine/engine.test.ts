@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ascEnemyDmgBonus, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
+  scaleEnemyAttack, calcAttack, endPlayerTurn, getStatus, newEmit, playCard, previewEnemyMove,
   startBattle, stepEnemy,
 } from './battle';
 import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount, descend } from './run';
@@ -175,17 +175,35 @@ describe('tide', () => {
     beginLoop(run2, newEmit());
     expect(JSON.stringify(run2.map)).toBe(JSON.stringify(run.map));
 
-    // loop 1: HP ×1.28, +2 enemy damage, +1 starting Might
+    // loop 1: HP ×1.28, compounding enemy damage, +1 starting Might
     startBattle(run, 'a1_crab', newEmit());
     const e = run.battle!.enemies[0];
     expect(getStatus(e, 'might')).toBe(1);
     expect(e.maxHp).toBeGreaterThanOrEqual(Math.round(26 * 1.28)); // crab floor, scaled
-    expect(ascEnemyDmgBonus(run)).toBe(2);
 
     // each loop is worth 100 score
     const s1 = scoreRun(run);
     run.loop = 2;
     expect(scoreRun(run) - s1).toBe(100);
+  });
+
+  it('endless: enemy attack damage compounds per loop instead of a flat bonus', () => {
+    const run = testRun('endless-dmg');
+    // no ascension, no loop: base damage passes through untouched
+    expect(scaleEnemyAttack(run, 10)).toBe(10);
+    // ascension chip is flat and only applies at loop 0 in this run's config
+    run.ascension = 2;
+    expect(scaleEnemyAttack(run, 10)).toBe(11);
+    run.ascension = 9;
+    expect(scaleEnemyAttack(run, 10)).toBe(12);
+    // endless compounds: (base + loop) × 1.15^loop
+    run.ascension = 0;
+    run.loop = 1;
+    expect(scaleEnemyAttack(run, 10)).toBe(13);
+    run.loop = 3;
+    expect(scaleEnemyAttack(run, 10)).toBe(20);
+    run.loop = 5;
+    expect(scaleEnemyAttack(run, 10)).toBe(30);
   });
 
   it('endless: every enemy has a sane derived threat cost', () => {
