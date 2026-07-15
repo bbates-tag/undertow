@@ -333,6 +333,8 @@ export const useGame = create<GameStore>((set, get) => {
         } else if (run.shop) set({ screen: 'shop' });
         else if (run.eventId) set({ screen: 'event' });
         else if (run.reward) set({ screen: 'reward' });
+        // a pending Pressure pick must survive a refresh — it can't be skipped
+        else if (run.pressureOffer) set({ screen: 'pressureChoice' });
         else set({ screen: 'map' });
       }
       // seed discovery on load: covers fresh profiles (unlocked starters)

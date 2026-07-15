@@ -517,15 +517,17 @@ describe('tide', () => {
     expect(restHealAmount(run)).toBe(Math.round(run.maxHp * 0.5)); // capped
   });
 
-  it('enemy intent previews include the ascension/endless damage bonus', () => {
+  it('enemy intent previews include the ascension/endless damage scaling', () => {
     const run = battleRun();
     const bs = run.battle!;
     const e = bs.enemies[0];
+    e.moveId = 'pinch'; // force an attack intent so the preview math actually runs
     const base = previewEnemyMove(run, bs, e);
-    run.loop = 2; // +4 enemy damage
+    expect(base?.dmg).toBe(7); // snapperCrab's Pinch, unmodified at loop 0
+    run.loop = 2;
     const scaled = previewEnemyMove(run, bs, e);
-    if (base && scaled) expect(scaled.dmg - base.dmg).toBe(4);
-    else expect(base).toBe(scaled); // non-attack intent for both
+    expect(scaled?.dmg).toBe(Math.round((7 + 2) * Math.pow(1.15, 2))); // 12
+    expect(scaled?.dmg).toBe(calcAttack(scaleEnemyAttack(run, 7), e, bs.player)); // telegraph = resolution
   });
 
   it('endless: loop bosses spawn affixed, their minions stay clean', () => {

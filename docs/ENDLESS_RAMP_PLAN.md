@@ -344,12 +344,17 @@ itself got harder would be a red flag — Phases 1-4 only touch `run.loop > 0` c
 
 ```
 TIDECALLER — 60 runs: reached endless 7/60, deepest loop 3 (was 5)
-  died at loop: L0=53 L1=3 L2=3 L3=1
-  L1 killers: Toxin×3 | L2: Chorus Echo×1, The Kraken×1, Toxin×1 | L3: The Kraken×1
+  died at loop: L0=53 L1=2 L2=4 L3=1
+  L2 killers: Abyssal Warden×1, Chorus Echo×1, The Kraken×1 | L3: The Kraken×1
 VOLTAIC — 0/60 reach endless (unchanged — dies A1-A3 every run)
 DROWNED — 0/60 reach endless (unchanged)
 WEAVER  — 0/60 reach endless (unchanged)
 ```
+
+(Numbers above are with the bot's incoming-damage estimate corrected to include the
+endless scaling — review follow-up. The pre-fix bot under-blocked in deep loops, but the
+corrected run lands within noise of the blind one (deepest loop 3 either way), so the
+measured ramp is real difficulty, not estimator error.)
 
 The endless-reach rate (7/60) and every non-endless death distribution (act, killer, deck
 size) are byte-for-byte identical to the Phase 0 baseline — confirming Phases 1–4 only

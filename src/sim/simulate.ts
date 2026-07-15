@@ -5,7 +5,7 @@
 // The policy is deliberately mediocre (no tide timing, no synergy planning),
 // so target winrates here are LOW: a skilled human should roughly double it.
 
-import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, readClassOf, startBattle } from '../engine/battle';
+import { newEmit, playCard, endPlayerTurn, stepEnemy, canPlay, cardCost, cardDef, living, readClassOf, scaleEnemyAttack, startBattle } from '../engine/battle';
 import type { BattleState, CardInstance, EnemyState, Op } from '../engine/types';
 import {
   addRelic, applyBoon, applyEventEffect, beginLoop, buyCrate, buyDefang, buyRemoval, buyShopItem, buyWhetstone,
@@ -52,7 +52,8 @@ function playBattle(run: RunState, rng: () => number): void {
       if (!enemyDef?.attack) return sum;
       const might = e.statuses.might ?? 0;
       const weak = (e.statuses.weakened ?? 0) > 0 ? 0.75 : 1;
-      return sum + Math.floor((enemyDef.attack.amount + might) * weak) * (enemyDef.attack.times ?? 1);
+      // ascension/endless scaling included — otherwise the bot under-blocks in deep loops
+      return sum + Math.floor((scaleEnemyAttack(run, enemyDef.attack.amount) + might) * weak) * (enemyDef.attack.times ?? 1);
     }, 0);
 
     const playable = bs.hand.filter((c) => canPlay(run, bs, c.uid) === null && cardCost(c) <= bs.energy);
