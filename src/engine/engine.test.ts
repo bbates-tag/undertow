@@ -5,7 +5,7 @@ import {
 } from './battle';
 import { generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone, completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop, restHealAmount } from './run';
 import { RELICS, relicPool } from '../content/relics';
-import { cardConditionActive, describeCard } from './describe';
+import { cardConditionActive, describeCard, previewDamageOp } from './describe';
 import { generateBossSpec, threatCost } from './endless';
 import { ENEMIES } from '../content/enemies';
 import { makeRng, hashSeed } from '../lib/rng';
@@ -461,6 +461,33 @@ describe('tide', () => {
     const blk0 = bs.player.block;
     playCard(run, 9002, e.uid, newEmit()); // riptide: damage + Shift +1
     expect(bs.player.block - blk0).toBe(2);
+  });
+
+  it('Read cards: damage preview and glow resolve per target intent', () => {
+    const run = battleRun('a1_jelly_urchin');
+    const bs = run.battle!;
+    const jelly = bs.enemies.find((e) => e.defId === 'jellyDrifter')!;
+    const urchin = bs.enemies.find((e) => e.defId === 'barbUrchin')!;
+    jelly.moveId = 'sting'; // attackDebuff → attacker
+    urchin.moveId = 'bristle'; // buff → schemer
+
+    // Undertow Feint: 10 vs schemers, else 4
+    const feint = CARDS.undertowFeint;
+    expect(previewDamageOp(bs, feint.ops, urchin)!.amount.base).toBe(10);
+    expect(previewDamageOp(bs, feint.ops, jelly)!.amount.base).toBe(4);
+
+    // Needle Jab: 8 vs attackers, else 5
+    const jab = CARDS.needleJab;
+    expect(previewDamageOp(bs, jab.ops, jelly)!.amount.base).toBe(8);
+    expect(previewDamageOp(bs, jab.ops, urchin)!.amount.base).toBe(5);
+
+    // glow: a matching target exists → the Read rider is live
+    expect(cardConditionActive(jab, false, bs)).toBe(true); // jelly attacks
+    expect(cardConditionActive(feint, false, bs)).toBe(true); // urchin schemes
+    jelly.hp = 0;
+    jelly.dead = true; // the only attacker dies…
+    expect(cardConditionActive(jab, false, bs)).toBe(false); // …Jab stops glowing
+    expect(cardConditionActive(feint, false, bs)).toBe(true);
   });
 
   it('Tidepool exhausts instead of discarding', () => {

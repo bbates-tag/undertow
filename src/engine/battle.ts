@@ -386,7 +386,7 @@ function tideSoon(bs: BattleState, phase: Tide): boolean {
   return bs.tide === phase || ((bs.tide + 1) % 4) === phase;
 }
 
-function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
+export function condMet(bs: BattleState, cond: Cond, target?: EnemyState): boolean {
   // Gyre Charts relic: Flood/Ebb also count when the phase is next
   const charts = !!bs.counters.gyreCharts;
   if (cond === 'flood') return charts ? tideSoon(bs, 2) : bs.tide === 2;

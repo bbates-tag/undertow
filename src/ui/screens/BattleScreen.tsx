@@ -11,7 +11,7 @@ import { CHARACTERS } from '../../content/characters';
 import { ENEMIES } from '../../content/enemies';
 import { KEYWORDS, KEYWORD_PATTERN } from '../../content/keywords';
 import { cardCost, cardDef, living } from '../../engine/battle';
-import { describeCard } from '../../engine/describe';
+import { describeCard, previewDamageOp } from '../../engine/describe';
 import type { Amount, BattleState, CardInstance, Op } from '../../engine/types';
 import { CardView, highlightText } from '../components/CardView';
 import { EnemyDossier } from '../components/EnemyDossier';
@@ -41,18 +41,6 @@ interface DragState {
   hoverUid: number | null;
 }
 
-function firstDamageOp(ops: Op[]): { amount: Amount; times: number } | null {
-  for (const op of ops) {
-    if (op.op === 'damage' && op.target !== 'all' && op.target !== 'random') {
-      return { amount: op.amount, times: op.times === 'charge' ? 1 : (op.times ?? 1) };
-    }
-    if (op.op === 'if') {
-      const inner = firstDamageOp(op.then);
-      if (inner) return inner;
-    }
-  }
-  return null;
-}
 
 const TUTORIAL_STEPS = [
   { text: 'This is your hand. Tap a card to select it, then play it — or drag a card out of your hand to play it (drop attacks right onto an enemy).', pos: 'bottom' },
@@ -115,12 +103,13 @@ export function BattleScreen() {
   const needsTarget = selectedDef?.target === 'enemy';
   const enemies = bs ? living(bs) : [];
 
-  // damage preview follows whichever card is active — tap-selected or mid-drag
+  // damage preview follows whichever card is active — tap-selected or mid-drag.
+  // resolved per enemy below, so conditional branches show each target's truth
   const previewCard = selected ?? (drag && bs ? bs.hand.find((c) => c.uid === drag.uid) ?? null : null);
   const previewDef = previewCard ? CARDS[previewCard.defId] : null;
   const previewNeedsTarget = previewDef?.target === 'enemy';
-  const previewDmg = previewCard && previewNeedsTarget
-    ? firstDamageOp(previewCard.upgraded ? (previewDef!.opsUp ?? previewDef!.ops) : previewDef!.ops)
+  const previewOps = previewCard && previewNeedsTarget
+    ? (previewCard.upgraded ? (previewDef!.opsUp ?? previewDef!.ops) : previewDef!.ops)
     : null;
   const targetingActive = (!!selected && needsTarget) || (drag?.needsTarget ?? false);
 
@@ -273,21 +262,24 @@ export function BattleScreen() {
         }}
       >
         <AnimatePresence mode="popLayout">
-          {enemies.map((e) => (
+          {enemies.map((e) => {
+            const pd = targetingActive && previewOps ? previewDamageOp(bs, previewOps, e) : null;
+            return (
             <EnemyView
               key={e.uid}
               bs={bs}
               e={e}
               targeting={targetingActive}
               hovered={drag?.hoverUid === e.uid}
-              previewAmount={targetingActive ? previewDmg?.amount ?? null : null}
-              previewTimes={previewDmg?.times ?? 1}
+              previewAmount={pd?.amount ?? null}
+              previewTimes={pd?.times ?? 1}
               onPick={() => playSelected(e.uid)}
               /* with a card selected, taps keep their play semantics — no dossier */
               onInspect={selected || drag ? undefined : () => setDossier({ defId: e.defId, affixes: e.affixes })}
               reduced={reduced}
             />
-          ))}
+            );
+          })}
         </AnimatePresence>
       </div>
 
