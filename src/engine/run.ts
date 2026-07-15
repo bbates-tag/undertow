@@ -777,6 +777,11 @@ export function choosePressure(run: RunState, id: string): boolean {
   return true;
 }
 
+/** loop k pays 100 + 50(k−1) — deeper descents are worth more, since they're harder to reach */
+export function loopScore(loop: number): number {
+  return 100 * loop + 25 * loop * (loop - 1);
+}
+
 export function scoreRun(run: RunState): number {
   const s = run.stats;
   let score =
@@ -787,7 +792,7 @@ export function scoreRun(run: RunState): number {
     Math.round(run.gold / 5) +
     s.battlesFlawless * 10 +
     run.ascension * 15 +
-    run.loop * 100;
+    loopScore(run.loop);
   if (run.result === 'win') score += 150 + run.hp;
   return Math.max(0, score);
 }

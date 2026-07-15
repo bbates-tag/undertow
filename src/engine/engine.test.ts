@@ -5,8 +5,8 @@ import {
 } from './battle';
 import {
   generateMap, newRun, generateBattleReward, applyEventEffect, applyBoon, buyCrate, buyDefang, buyWhetstone,
-  completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, sellPrice, addRelic, beginLoop,
-  choosePressure, restHealAmount, descend,
+  completePick, buyShopItem, defangEligible, generateShop, pawnRelic, scoreRun, loopScore, sellPrice, addRelic,
+  beginLoop, choosePressure, restHealAmount, descend,
 } from './run';
 import { RELICS, relicPool } from '../content/relics';
 import { cardConditionActive, describeCard, previewDamageOp } from './describe';
@@ -186,10 +186,19 @@ describe('tide', () => {
     expect(getStatus(e, 'might')).toBe(1);
     expect(e.maxHp).toBeGreaterThanOrEqual(Math.round(26 * 1.28)); // crab floor, scaled
 
-    // each loop is worth 100 score
+    // loops pay out progressively more: loop 1 -> 2 is worth more than a flat 100
     const s1 = scoreRun(run);
     run.loop = 2;
-    expect(scoreRun(run) - s1).toBe(100);
+    expect(scoreRun(run) - s1).toBe(loopScore(2) - loopScore(1));
+    expect(scoreRun(run) - s1).toBe(150);
+  });
+
+  it('endless: loop score is triangular — deeper loops pay progressively more', () => {
+    expect(loopScore(0)).toBe(0);
+    expect(loopScore(1)).toBe(100);
+    expect(loopScore(2)).toBe(250);
+    expect(loopScore(3)).toBe(450);
+    expect(loopScore(2) - loopScore(1)).toBeLessThan(loopScore(3) - loopScore(2));
   });
 
   it('endless: enemy attack damage compounds per loop instead of a flat bonus', () => {
