@@ -3,13 +3,14 @@
 // (strip a treasure relic's downside), Pawn (sell relics back).
 
 import { useState } from 'react';
-import { ArrowLeft, Coins, Hammer, Scale, Scissors } from 'lucide-react';
+import { ArrowLeft, Coins, Hammer, Layers, Scale, Scissors } from 'lucide-react';
 import { useGame } from '../../state/store';
 import { RELICS, relicText } from '../../content/relics';
 import { defangEligible, sellPrice } from '../../engine/run';
 import { CardView } from '../components/CardView';
 import { GameIcon } from '../icons';
 import { GoldChip, HpChip } from '../components/Bits';
+import { RelicBar } from '../components/RelicBar';
 
 export function ShopScreen() {
   const run = useGame((s) => s.run);
@@ -19,6 +20,7 @@ export function ShopScreen() {
   const shopDefang = useGame((s) => s.shopDefang);
   const shopBuyCrate = useGame((s) => s.shopBuyCrate);
   const shopPawn = useGame((s) => s.shopPawn);
+  const setOverlay = useGame((s) => s.setOverlay);
   const leaveNode = useGame((s) => s.leaveNode);
   const [defangOpen, setDefangOpen] = useState(false);
   const [pawnOpen, setPawnOpen] = useState(false);
@@ -28,7 +30,7 @@ export function ShopScreen() {
 
   return (
     <div className="min-h-dvh app-bg flex flex-col items-center p-4 gap-4 overflow-y-auto" data-act={run.act}>
-      <div className="w-full max-w-2xl flex items-center gap-2 pt-[env(safe-area-inset-top)]">
+      <div className="w-full max-w-2xl flex items-center gap-2 flex-wrap pt-[env(safe-area-inset-top)]">
         <button className="btn !p-2" onClick={leaveNode} aria-label="Leave shop">
           <ArrowLeft size={16} />
         </button>
@@ -38,8 +40,18 @@ export function ShopScreen() {
         <div className="flex-1" />
         <HpChip hp={run.hp} maxHp={run.maxHp} />
         <GoldChip gold={run.gold} />
+        <button className="chip" onClick={() => setOverlay('deck')} aria-label={`view deck, ${run.deck.length} cards`}>
+          <Layers size={11} /> {run.deck.length}
+        </button>
       </div>
       <p className="text-xs text-(--color-dim) italic -mt-2">"Everything sinks eventually. I just get to it first." — the proprietor</p>
+
+      {/* current relics — tap any for details (same as the map/battle bar) */}
+      {run.relics.length > 0 && (
+        <div className="w-full max-w-2xl -mt-1">
+          <RelicBar relics={run.relics} defanged={run.defanged} />
+        </div>
+      )}
 
       {/* cards */}
       <div className="flex flex-wrap gap-4 justify-center max-w-2xl">
