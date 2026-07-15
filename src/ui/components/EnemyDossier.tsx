@@ -10,13 +10,14 @@ import { ArtImage } from './Art';
 import { GameIcon } from '../icons';
 
 /** minions that reuse another enemy's art masters (also used by the compendium) */
-export const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal' };
+export const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal', chorusEcho: 'chorus' };
 
 const ACT_NAME: Record<number, string> = {
   0: 'Summoned',
   1: 'The Sunlit Shallows',
   2: 'The Twilight Trench',
   3: 'The Hadal Deep',
+  4: 'The Dreaming Dark',
 };
 
 const TIER_LABEL: Record<string, string> = { normal: 'Denizen', elite: 'Elite', boss: 'Boss', minion: 'Minion' };

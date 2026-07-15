@@ -28,6 +28,8 @@ interface SimResult {
   killedBy?: string;
   deckSize: number;
   turns: number;
+  /** escort mode only: deaths forgiven before the target act */
+  revives?: number;
 }
 
 function playBattle(run: RunState, rng: () => number): void {
@@ -165,11 +167,12 @@ function pickNodeHeuristic(run: RunState, nodes: MapNode[], rng: () => number): 
   return nodes[Math.floor(rng() * nodes.length)];
 }
 
-export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?: boolean }): SimResult {
+export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?: boolean; escortToAct?: number }): SimResult {
   const run = newRun({ charId, ascension: 0, seed, unlockedPacks: ALL_PACKS });
   const r = makeRng(hashSeed(seed + '-policy'));
   const rng = () => r.next();
   let guard = 0;
+  let revives = 0;
 
   while (!run.result) {
     if (++guard > (opts?.endless ? 2000 : 200)) throw new Error('run stalled');
@@ -182,6 +185,20 @@ export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?
       playBattle(run, rng);
       const bs = run.battle!;
       if (bs.phase === 'lost') {
+        // escort mode: deaths before the target act revive the bot so its deck
+        // keeps drafting organically — used to get late-act data for characters
+        // the bot can't reliably pilot that far. No loot from the lost fight.
+        if (opts?.escortToAct && run.act < opts.escortToAct) {
+          revives += 1;
+          run.hp = Math.round(run.maxHp * 0.75);
+          run.killedBy = undefined;
+          const lostToBoss = bs.isBoss;
+          run.battle = null;
+          // a lost boss fight still descends (no reward) — the escort's job is
+          // to deliver the deck to the target act, not to farm the boss node
+          if (lostToBoss) descend(run, newEmit());
+          continue;
+        }
         run.result = 'loss';
         break;
       }
@@ -199,7 +216,7 @@ export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?
       const wasBoss = bs.isBoss;
       run.battle = null;
       if (wasBoss) {
-        if (opts?.endless && run.act >= 3) {
+        if (opts?.endless && run.act >= 4) {
           beginLoop(run, newEmit()); // the bot always descends deeper
           continue;
         }
@@ -262,6 +279,7 @@ export function simulateRun(charId: CharacterId, seed: string, opts?: { endless?
     killedBy: run.killedBy,
     deckSize: run.deck.length,
     turns: run.stats.turnsPlayed,
+    ...(opts?.escortToAct ? { revives } : {}),
   };
 }
 
@@ -306,7 +324,7 @@ if (isMain) {
     }
     const wins = results.filter((r) => r.win).length;
     const avgFloor = results.reduce((a, b) => a + b.floor, 0) / results.length;
-    const acts = [1, 2, 3].map((a) => results.filter((r) => !r.win && r.act === a).length);
+    const acts = [1, 2, 3, 4].map((a) => results.filter((r) => !r.win && r.act === a).length);
     console.log(`\n═══ ${charId.toUpperCase()} — ${results.length} greedy-bot runs${endless ? ' (ENDLESS)' : ''} ═══`);
     if (endless) {
       const loopers = results.filter((r) => r.loop > 0);
@@ -326,8 +344,8 @@ if (isMain) {
     } else {
       console.log(`  winrate: ${((wins / results.length) * 100).toFixed(1)}%  (bot is weak; human target ~2-3x)`);
     }
-    console.log(`  avg floor reached: ${avgFloor.toFixed(1)}${endless ? '' : ' / 36'}`);
-    console.log(`  deaths by act: A1=${acts[0]} A2=${acts[1]} A3=${acts[2]} | wins=${wins}`);
+    console.log(`  avg floor reached: ${avgFloor.toFixed(1)}${endless ? '' : ' / 48'}`);
+    console.log(`  deaths by act: A1=${acts[0]} A2=${acts[1]} A3=${acts[2]} A4=${acts[3]} | wins=${wins}`);
     const topDeaths = Object.entries(deaths).sort((a, b) => b[1] - a[1]).slice(0, 6);
     console.log(`  top killers: ${topDeaths.map(([k, v]) => `${k}×${v}`).join(', ') || '—'}`);
     console.log(`  avg deck: ${(results.reduce((a, b) => a + b.deckSize, 0) / results.length).toFixed(1)} cards, avg turns: ${(results.reduce((a, b) => a + b.turns, 0) / results.length).toFixed(0)}`);

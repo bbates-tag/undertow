@@ -528,9 +528,10 @@ export const useGame = create<GameStore>((set, get) => {
       commit(clone);
       playSfxList(['victory', 'gold']);
       if (reward.relics.length) playSfx('relicGet');
-      // boss achievements (the Kraken is the act-3 finale; the Drowned God holds act 2)
+      // boss achievements (What Dreams Beneath is the act-4 finale; the Drowned God holds act 2)
       if (groupId === 'a1_boss') award('kingslayer');
       if (groupId === 'a3_boss') award('krakenslayer');
+      if (groupId === 'a4_boss') award('dreamSlayer');
       if (wasBoss && get().run!.battle === null && get().run!.stats.battlesFlawless > 0) {
         // flawless tracked per battle below
       }
@@ -602,8 +603,8 @@ export const useGame = create<GameStore>((set, get) => {
       run.reward = null;
       if (wasBoss) {
         const emit = newEmit();
-        // already looping: repeat Drowned God kills descend again without ceremony
-        if (run.act >= 3 && run.loop > 0) {
+        // already looping: repeat What Dreams Beneath kills descend again without ceremony
+        if (run.act >= 4 && run.loop > 0) {
           beginLoop(run, emit);
           commit(run, emit);
           if (run.loop >= 2) award('pressureHolds'); // entering the third full descent
@@ -616,7 +617,8 @@ export const useGame = create<GameStore>((set, get) => {
         if (next === 'victory') {
           finishRun('win');
         } else {
-          get().toast(run.act === 2 ? 'Act II — The Twilight Trench' : 'Act III — The Hadal Deep');
+          const toasts = { 2: 'Act II — The Twilight Trench', 3: 'Act III — The Hadal Deep', 4: 'Act IV — The Dreaming Dark' };
+          get().toast(toasts[run.act as 2 | 3 | 4]);
           set({ screen: 'map' });
         }
         return;

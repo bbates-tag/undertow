@@ -36,8 +36,8 @@ const NODE_COLOR: Record<string, string> = {
   boss: 'var(--color-lure)',
 };
 
-const ACT_NAMES = ['', 'Act I — The Sunlit Shallows', 'Act II — The Twilight Trench', 'Act III — The Hadal Deep'];
-const ACT_BASE_DEPTH = [0, 0, 180, 420];
+const ACT_NAMES = ['', 'Act I — The Sunlit Shallows', 'Act II — The Twilight Trench', 'Act III — The Hadal Deep', 'Act IV — The Dreaming Dark'];
+const ACT_BASE_DEPTH = [0, 0, 180, 420, 660];
 
 function nodePos(seed: string, n: MapNode) {
   const h = hashSeed(`${seed}:${n.row}:${n.col}`);

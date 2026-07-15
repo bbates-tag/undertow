@@ -51,6 +51,7 @@ export const ACHIEVEMENTS: Record<string, AchievementDef> = Object.fromEntries(
       { id: 'kingslayer', name: 'Kingslayer', text: 'Defeat the Sunken King.', icon: 'GiCrownedSkull' },
       { id: 'krakenslayer', name: 'Unclencher', text: 'Defeat the Kraken.', icon: 'GiGiantSquid' },
       { id: 'godDrowner', name: 'Drown the Drowned', text: 'Defeat the Drowned God and win a run.', icon: 'GiSeaDragon' },
+      { id: 'dreamSlayer', name: 'No More Dreaming', text: 'Defeat What Dreams Beneath.', icon: 'GiThirdEye' },
       { id: 'voltVictor', name: 'Storm Warning', text: 'Win a run as the Voltaic.', icon: 'GiElectric' },
       { id: 'drownedVictor', name: 'Twice Drowned', text: 'Win a run as The Drowned.', icon: 'GiDrowning' },
       { id: 'deepDescent', name: 'Terminal Velocity', text: 'Reach 25 Descent in one battle.', icon: 'GiFalling' },
@@ -65,7 +66,7 @@ export const ACHIEVEMENTS: Record<string, AchievementDef> = Object.fromEntries(
       { id: 'depth10', name: 'Hadal Certified', text: 'Win a run at Depth 10.', icon: 'GiSeaSerpent' },
       { id: 'dailyDiver', name: 'Creature of Habit', text: 'Complete a Daily Dive.', icon: 'GiSolarTime' },
       { id: 'mightyOne', name: 'Leviathan Diet', text: 'Reach 10 Might in one battle.', icon: 'GiFist' },
-      { id: 'noBottom', name: 'No Bottom', text: 'Descend deeper after defeating the Drowned God.', icon: 'GiSinkingShip' },
+      { id: 'noBottom', name: 'No Bottom', text: 'Descend deeper after defeating What Dreams Beneath.', icon: 'GiSinkingShip' },
       { id: 'pressureHolds', name: 'The Pressure Holds', text: 'Reach Loop 3 of an endless dive.', icon: 'GiVortex' },
     ] as AchievementDef[]
   ).map((a) => [a.id, a]),

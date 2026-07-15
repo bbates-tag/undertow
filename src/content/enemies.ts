@@ -1,8 +1,8 @@
-// Enemies, move sets, AI patterns, and encounter pools for all three acts.
+// Enemies, move sets, AI patterns, and encounter pools for all four acts.
 // AI functions are pure: (ctx) -> moveId, with ctx.roll as the only randomness,
 // so battles replay identically from a saved state.
 
-import type { EnemyAiCtx, EnemyDef } from '../engine/types';
+import type { Act, EnemyAiCtx, EnemyDef } from '../engine/types';
 
 const last = (h: string[]) => h[h.length - 1];
 const twiceInARow = (h: string[], id: string) => h.length >= 2 && h[h.length - 1] === id && h[h.length - 2] === id;
@@ -376,6 +376,152 @@ export const ENEMIES: Record<string, EnemyDef> = {
       return c.roll < 0.25 ? 'abyssCall' : c.roll < 0.7 ? 'doubleSlam' : 'murmur';
     },
   },
+
+  // ═══ ACT 4 — THE DREAMING DARK ══════════════════════════════════════════════
+  drownedMemory: {
+    id: 'drownedMemory', name: 'Drowned Memory', icon: 'GiEchoRipples', hp: [34, 40], tier: 'normal', act: 4, size: 'sm',
+    lore: 'A shred of someone who drowned centuries before the God ever dreamed of you, still swimming the current it died in. Alone it only Flickers — weak, half-formed — but memories cluster the way grief does, and each one that gathers murmurs Might into the rest. Scatter the school before the murmur becomes a chorus.',
+    moves: {
+      flicker: { id: 'flicker', name: 'Flicker', intent: 'attack', attack: { amount: 8 } },
+      echo: { id: 'echo', name: 'Echo', intent: 'buff', toAllies: [['might', 1]] },
+    },
+    ai: (c) => (c.roll < 0.75 || c.allyCount <= 1 ? 'flicker' : 'echo'),
+  },
+  falseLantern: {
+    id: 'falseLantern', name: 'False Lantern', icon: 'GiOldLantern', hp: [58, 66], tier: 'normal', act: 4, size: 'md',
+    lore: "Somewhere below even the anglerfish's reach, the dark learned to fake the lure without the fish attached. Its false glow leaves you Exposed, and where the true anglerfish only Weakens, this one shows you exactly where it means to bite next — you just won't believe it until Devour lands. Trust the telegraph, not the light.",
+    moves: {
+      lure: { id: 'lure', name: 'False Glow', intent: 'debuff', toPlayer: [['exposed', 2]] },
+      glare: { id: 'glare', name: 'Hollow Glare', intent: 'debuff', toPlayer: [['weakened', 2]] },
+      devour: { id: 'devour', name: 'Devour', intent: 'attack', attack: { amount: 19 } },
+    },
+    ai: (c) => {
+      if (c.history.length === 0) return 'lure';
+      if (last(c.history) === 'lure') return 'glare';
+      if (last(c.history) === 'glare') return 'devour';
+      return c.roll < 0.4 ? 'lure' : c.roll < 0.7 ? 'glare' : 'devour';
+    },
+  },
+  sleepwalker: {
+    id: 'sleepwalker', name: 'Sleepwalker', icon: 'GiNightSleep', hp: [64, 72], tier: 'normal', act: 4, size: 'lg',
+    lore: 'A drowned sailor who never stopped walking his last watch, eyes open, lungs full of water, utterly convinced he is still aboard. It Drifts through its rounds behind a wall of Block, then Lashes out at whatever disturbed its dream — larger and slower than the moray it echoes, but the blow lands twice as hard. Time your guard to the drift, same as always, and mind the bigger number.',
+    moves: {
+      drift: { id: 'drift', name: 'Drift', intent: 'block', block: 14 },
+      lash: { id: 'lash', name: 'Lash Out', intent: 'attack', attack: { amount: 22 } },
+    },
+    ai: (c) => (last(c.history) === 'drift' ? 'lash' : 'drift'),
+  },
+  dreamLeech: {
+    id: 'dreamLeech', name: 'Dream Leech', icon: 'GiLeechingWorm', hp: [30, 36], tier: 'normal', act: 4, size: 'sm',
+    lore: 'It feeds on the part of you that remembers being awake, and every bite it takes leaves a little Toxin behind where the memory used to be. Drain heals it as it hurts you, so a slow fight only fattens it — and its bites stack the same Toxin already dosing you every enemy phase. Burst it down before the accounting catches up.',
+    moves: {
+      drain: { id: 'drain', name: 'Drain', intent: 'attackDebuff', attack: { amount: 6 }, heal: 4, toPlayer: [['toxin', 2]] },
+      pulse: { id: 'pulse', name: 'Pulse', intent: 'attack', attack: { amount: 9 } },
+    },
+    ai: (c) => (twiceInARow(c.history, 'drain') ? 'pulse' : c.roll < 0.6 ? 'drain' : 'pulse'),
+  },
+  unremembered: {
+    id: 'unremembered', name: 'The Unremembered', icon: 'GiShamblingZombie', hp: [42, 48], tier: 'normal', act: 4, size: 'md',
+    lore: "Whatever this drowned thing used to be, the dream doesn't remember either — it just knows how to gnaw. Cut it down and it Rises again within the same fight, angrier for having died once, its Might stacking with every return. Bring enough damage to kill it twice, or it will simply keep waking up.",
+    reanimates: true,
+    moves: {
+      gnaw: { id: 'gnaw', name: 'Gnaw', intent: 'attack', attack: { amount: 6, times: 2 } },
+      rise: { id: 'rise', name: 'Rise Angrier', intent: 'buff', block: 6, toSelf: [['might', 2]] },
+    },
+    ai: (c) => (c.hpFrac <= 0.55 && c.roll < 0.6 ? 'rise' : 'gnaw'),
+  },
+  sleepTide: {
+    id: 'sleepTide', name: 'Sleep-Tide', icon: 'GiMoonOrbit', hp: [46, 52], tier: 'normal', act: 4, size: 'md',
+    lore: 'Even the Tide dreams down here, and its dreaming pulls the dial wherever it likes. The Sleep-Tide drags the cycle forward with every Undertow and cashes in with a vicious Surge the instant High tide arrives, same trick as its shallower cousins but heavier-handed about it. Watch the dial as closely as the intent — this one is playing both.',
+    tideTouched: 1,
+    moves: {
+      drift: { id: 'drift', name: 'Drift', intent: 'attack', attack: { amount: 9 } },
+      undertow: { id: 'undertow', name: 'Undertow', intent: 'attackDebuff', attack: { amount: 6 }, shift: 1 },
+      surge: { id: 'surge', name: 'Surge', intent: 'attack', attack: { amount: 16 } },
+    },
+    ai: (c) => (c.tide === 2 ? 'surge' : c.roll < 0.3 && last(c.history) !== 'undertow' ? 'undertow' : 'drift'),
+  },
+  nightmareKing: {
+    id: 'nightmareKing', name: 'Nightmare of the Sunken King', title: 'An Echo Wearing a Crown', icon: 'GiKingJuMask',
+    hp: [128, 144], tier: 'elite', act: 4, size: 'xl',
+    lore: "The Sunken King's crown remembers being worn even after the God dreamed the man who wore it away — so it dreams itself a new head to sit on, again and again. This Echo of the Decree skips half the pageantry the real King bothered with, compressing court ritual into a faster, meaner cycle straight into Sceptre Crush. You won't get the breathing room the original court allowed.",
+    moves: {
+      echo: { id: 'echo', name: 'Echo of the Decree', intent: 'buff', block: 5, toSelf: [['might', 1]] },
+      clawSweep: { id: 'clawSweep', name: 'Claw Sweep', intent: 'attack', attack: { amount: 8, times: 2 } },
+      royalGuard: { id: 'royalGuard', name: 'Royal Guard', intent: 'block', block: 14, toSelf: [['spines', 2]] },
+      crush: { id: 'crush', name: 'Sceptre Crush', intent: 'attack', attack: { amount: 22 } },
+    },
+    ai: (c) => {
+      if (c.history.length === 0) return 'echo';
+      const cycle = ['clawSweep', 'crush', 'royalGuard'];
+      const step = c.history.filter((m) => m !== 'echo').length % 3;
+      if (c.history.length % 3 === 2 && last(c.history) !== 'echo') return 'echo';
+      if (c.hpFrac < 0.5 && c.roll < 0.4) return 'crush';
+      return cycle[step];
+    },
+  },
+  chorus: {
+    id: 'chorus', name: 'The Chorus', icon: 'GiScreaming', hp: [118, 132], tier: 'elite', act: 4, size: 'lg',
+    lore: 'Drowned throats that sang themselves under now sing for something else entirely, and the something else likes company. The Chorus calls up Echoes to swell its numbers and raises a Hymn of Might over whichever ones are still singing, wailing between verses. Silence the choir before the congregation outnumbers you — same lesson as the cult above, sung lower.',
+    moves: {
+      call: { id: 'call', name: 'Call the Chorus', intent: 'summon', summon: ['chorusEcho'] },
+      hymn: { id: 'hymn', name: 'Hymn of Might', intent: 'buff', toAllies: [['might', 2]] },
+      wail: { id: 'wail', name: 'Wail', intent: 'attack', attack: { amount: 9, times: 2 } },
+    },
+    ai: (c) => {
+      if (c.allyCount < 3 && c.roll < 0.5 && last(c.history) !== 'call') return 'call';
+      if (c.roll < 0.3 && last(c.history) !== 'hymn') return 'hymn';
+      return 'wail';
+    },
+  },
+  chorusEcho: {
+    id: 'chorusEcho', name: 'Chorus Echo', icon: 'GiEchoRipples', hp: [20, 24], tier: 'minion', act: 0, size: 'sm',
+    lore: 'A voice pulled loose from the choir, barely a shape, only a Whisper with teeth. On its own it is nothing — the Chorus that keeps calling more of them is the actual problem.',
+    moves: {
+      whisper: { id: 'whisper', name: 'Whisper', intent: 'attack', attack: { amount: 7 } },
+    },
+    ai: () => 'whisper',
+  },
+  thePressure: {
+    id: 'thePressure', name: 'The Pressure', icon: 'GiWeightCrush', hp: [130, 146], tier: 'elite', act: 4, size: 'xl',
+    lore: 'This deep, the water itself has opinions, and The Pressure is the sea deciding to lean on you personally. It Hones its own Spines between crushing Bears that leave you Brittle, so your Block thins exactly when the water pushes hardest — a multi-hit deck drowns here fastest of all. Bring heavy, infrequent blows, same lesson the Warden taught in the Trench, except now the water is trying too.',
+    startStatuses: { spines: 5 },
+    moves: {
+      bear: { id: 'bear', name: 'Bear Down', intent: 'attackDebuff', attack: { amount: 10 }, toPlayer: [['brittle', 2]] },
+      hone: { id: 'hone', name: 'Hone', intent: 'buff', block: 8, toSelf: [['spines', 3]] },
+      crush: { id: 'crush', name: 'Crush', intent: 'attack', attack: { amount: 18 } },
+    },
+    ai: (c) => {
+      const cycle = ['hone', 'bear', 'crush', 'bear'];
+      return cycle[c.history.length % 4];
+    },
+  },
+  dreamsBeneath: {
+    id: 'dreamsBeneath', name: 'What Dreams Beneath', title: 'It Was Never Only Sleeping', icon: 'GiThirdEye',
+    hp: [265, 280], tier: 'boss', act: 4, size: 'xl',
+    lore: "It Dreams Beneath the Trench, the old lore said — and everything below the Trench, including you, has been inside that dream since you first went under. While it sleeps it Murmurs Toxin and drifts the Tide at its own pace, occasionally forcing Dread of the Deep into your hands like a bad thought you can't put down; at High tide the dream Surges without warning. Wound it past half and it doesn't wake so much as become Lucid — Might, armor, and a clarity that hits twice a turn, aware of you for the first time and unhappy about it. There is no waking it gently a second time.",
+    moves: {
+      murmur: { id: 'murmur', name: 'Murmured Dread', intent: 'attackDebuff', attack: { amount: 9 }, toPlayer: [['toxin', 3]] },
+      dreamCall: { id: 'dreamCall', name: 'A Bad Thought', intent: 'debuff', addCardToPlayer: { card: 'dreadOfTheDeep', pile: 'discardPile', count: 2 } },
+      driftTide: { id: 'driftTide', name: 'The Dream Drifts', intent: 'block', block: 10, shift: 1 },
+      summonEcho: { id: 'summonEcho', name: 'Dredge an Echo', intent: 'summon', summon: ['chorusEcho'] },
+      nightmareSurge: { id: 'nightmareSurge', name: 'Nightmare Surge', intent: 'attack', attack: { amount: 21 } },
+      wake: { id: 'wake', name: 'IT IS LUCID', intent: 'buff', block: 16, toSelf: [['might', 3]] },
+      crushingLucidity: { id: 'crushingLucidity', name: 'Crushing Lucidity', intent: 'attack', attack: { amount: 12, times: 2 } },
+    },
+    ai: (c) => {
+      const awake = c.history.includes('wake');
+      if (!awake && c.hpFrac <= 0.5) return 'wake';
+      if (c.tide === 2) return 'nightmareSurge';
+      if (!awake) {
+        if (last(c.history) === 'driftTide') return 'murmur';
+        if (c.allyCount < 2 && c.roll < 0.3 && last(c.history) !== 'summonEcho') return 'summonEcho';
+        return c.roll < 0.3 ? 'dreamCall' : c.roll < 0.6 ? 'murmur' : 'driftTide';
+      }
+      if (last(c.history) === 'wake') return 'crushingLucidity';
+      return c.roll < 0.25 ? 'dreamCall' : c.roll < 0.7 ? 'crushingLucidity' : 'murmur';
+    },
+  },
 };
 
 // ── Encounter pools ──────────────────────────────────────────────────────────
@@ -384,7 +530,7 @@ export interface EncounterDef {
   id: string;
   enemies: string[];
   pool: 'easy' | 'hard' | 'elite' | 'boss';
-  act: 1 | 2 | 3;
+  act: Act;
 }
 
 export const ENCOUNTERS: Record<string, EncounterDef> = Object.fromEntries(
@@ -425,10 +571,24 @@ export const ENCOUNTERS: Record<string, EncounterDef> = Object.fromEntries(
       { id: 'a3_elite_colossus', enemies: ['trenchColossus'], pool: 'elite', act: 3 },
       { id: 'a3_elite_herald', enemies: ['heraldOfDeep'], pool: 'elite', act: 3 },
       { id: 'a3_boss', enemies: ['krakenArm', 'krakenHead', 'krakenArm'], pool: 'boss', act: 3 },
+      // Act 4
+      { id: 'a4_memory_trio', enemies: ['drownedMemory', 'drownedMemory', 'drownedMemory'], pool: 'easy', act: 4 },
+      { id: 'a4_leech', enemies: ['dreamLeech'], pool: 'easy', act: 4 },
+      { id: 'a4_leech_memory', enemies: ['dreamLeech', 'drownedMemory'], pool: 'easy', act: 4 },
+      { id: 'a4_unremembered', enemies: ['unremembered'], pool: 'easy', act: 4 },
+      { id: 'a4_lantern', enemies: ['falseLantern'], pool: 'hard', act: 4 },
+      { id: 'a4_sleepwalker', enemies: ['sleepwalker'], pool: 'hard', act: 4 },
+      { id: 'a4_tide', enemies: ['sleepTide'], pool: 'hard', act: 4 },
+      { id: 'a4_lantern_memory', enemies: ['falseLantern', 'drownedMemory'], pool: 'hard', act: 4 },
+      { id: 'a4_tide_leech', enemies: ['sleepTide', 'dreamLeech'], pool: 'hard', act: 4 },
+      { id: 'a4_elite_nightmareking', enemies: ['nightmareKing'], pool: 'elite', act: 4 },
+      { id: 'a4_elite_chorus', enemies: ['chorus'], pool: 'elite', act: 4 },
+      { id: 'a4_elite_pressure', enemies: ['thePressure'], pool: 'elite', act: 4 },
+      { id: 'a4_boss', enemies: ['dreamsBeneath'], pool: 'boss', act: 4 },
     ] as EncounterDef[]
   ).map((e) => [e.id, e]),
 );
 
-export function encounterPool(act: 1 | 2 | 3, pool: EncounterDef['pool']): EncounterDef[] {
+export function encounterPool(act: Act, pool: EncounterDef['pool']): EncounterDef[] {
   return Object.values(ENCOUNTERS).filter((e) => e.act === act && e.pool === pool);
 }

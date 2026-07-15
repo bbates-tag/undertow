@@ -1,15 +1,15 @@
 // Endless-loop procedural encounters. Threat costs are derived from enemy
 // data (never hand-maintained), budgets are calibrated against the authored
 // encounter pools, and generation runs on the seeded map rng so loops replay
-// identically per seed. Loop 0 — the authored three acts — never touches this.
+// identically per seed. Loop 0 — the authored four acts — never touches this.
 
-import type { EncounterSpec, EnemyDef } from './types';
+import type { Act, EncounterSpec, EnemyDef } from './types';
 import type { Rng } from '../lib/rng';
 import { ENEMIES, encounterPool } from '../content/enemies';
 import { AFFIXES } from '../content/affixes';
 
 /** summon-only creatures never spawn on their own */
-const MINIONS = new Set(['tentacleSpawn', 'krakenArm', 'boneShoalMinion']);
+const MINIONS = new Set(['tentacleSpawn', 'krakenArm', 'boneShoalMinion', 'chorusEcho']);
 
 /**
  * How dangerous one enemy is, derived from its data: staying power (avg HP)
@@ -29,7 +29,7 @@ export function threatCost(def: EnemyDef): number {
 }
 
 /** average total threat of the authored encounters in (act, pool) — the budget baseline */
-function authoredBudget(act: 1 | 2 | 3, pool: 'easy' | 'hard' | 'elite'): number {
+function authoredBudget(act: Act, pool: 'easy' | 'hard' | 'elite'): number {
   const encs = encounterPool(act, pool);
   const totals = encs.map((e) => e.enemies.reduce((a, id) => a + threatCost(ENEMIES[id]), 0));
   return totals.reduce((a, b) => a + b, 0) / totals.length;
@@ -54,14 +54,14 @@ function rollAffixes(rng: Rng, def: EnemyDef, count: number): string[] {
 /** odds a normal enemy spawns affixed — climbs with depth */
 const affixChance = (loop: number) => Math.min(0.9, 0.25 + 0.15 * loop);
 
-const normals = (act?: 1 | 2 | 3): EnemyDef[] =>
+const normals = (act?: Act): EnemyDef[] =>
   Object.values(ENEMIES).filter(
     (e) => e.tier === 'normal' && !MINIONS.has(e.id) && e.act > 0 && (act === undefined || e.act === act),
   );
 
 /** ordinary battle node: fill a threat budget, mixing across acts at deeper loops */
 export function generateBattleSpec(
-  rng: Rng, act: 1 | 2 | 3, pool: 'easy' | 'hard', loop: number, id: string,
+  rng: Rng, act: Act, pool: 'easy' | 'hard', loop: number, id: string,
 ): EncounterSpec {
   const budget = loopBudget(authoredBudget(act, pool), loop);
   const crossChance = loop >= 2 ? 0.5 : 0.3;
@@ -85,7 +85,7 @@ export function generateBattleSpec(
 }
 
 /** elite node: an authored elite anchors it; deeper loops pull elites from any act */
-export function generateEliteSpec(rng: Rng, act: 1 | 2 | 3, loop: number, id: string): EncounterSpec {
+export function generateEliteSpec(rng: Rng, act: Act, loop: number, id: string): EncounterSpec {
   const elites = Object.values(ENEMIES).filter(
     (e) => e.tier === 'elite' && (loop >= 2 || e.act === act),
   );
@@ -101,7 +101,7 @@ export function generateEliteSpec(rng: Rng, act: 1 | 2 | 3, loop: number, id: st
 }
 
 /** loop boss: the authored encounter, but the boss-tier creature spawns affixed */
-export function generateBossSpec(rng: Rng, act: 1 | 2 | 3, loop: number, id: string): EncounterSpec {
+export function generateBossSpec(rng: Rng, act: Act, loop: number, id: string): EncounterSpec {
   const enc = encounterPool(act, 'boss')[0];
   const count = loop >= 3 ? 2 : 1;
   return {

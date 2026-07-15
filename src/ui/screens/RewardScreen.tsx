@@ -116,7 +116,7 @@ export function RewardScreen() {
 
       {!cardsPending && !bossPending && !boonPending && (
         <button className="btn btn-primary text-base !px-7 !py-3" onClick={leaveReward} autoFocus>
-          {r.source === 'boss' ? (run.act >= 3 ? 'Surface victorious' : 'Descend deeper') : 'Back to the trench'}
+          {r.source === 'boss' ? (run.act >= 4 ? 'Surface victorious' : 'Descend deeper') : 'Back to the trench'}
           <ChevronRight size={16} />
         </button>
       )}

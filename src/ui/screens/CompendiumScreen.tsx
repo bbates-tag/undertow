@@ -36,6 +36,7 @@ const ACT_LABEL: Record<number, string> = {
   1: 'Act I — The Sunlit Shallows',
   2: 'Act II — The Twilight Trench',
   3: 'Act III — The Hadal Deep',
+  4: 'Act IV — The Dreaming Dark',
   0: 'Summoned',
 };
 const TIER_ORDER: Record<string, number> = { normal: 0, elite: 1, boss: 2, minion: 3 };
@@ -193,7 +194,7 @@ function CharacterDossier({ charId, onClose }: { charId: CharacterId; onClose: (
 
 function EnemiesTab({ onOpen }: { onOpen: (id: string) => void }) {
   const meta = useGame((s) => s.meta);
-  const groups = [1, 2, 3, 0]
+  const groups = [1, 2, 3, 4, 0]
     .map((act) => ({
       act,
       defs: Object.values(ENEMIES)
