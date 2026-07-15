@@ -16,7 +16,7 @@ Prompts for the Act IV enemy set, the act backdrop, and the boss arena. Same wor
 
 > text, watermark, signature, card frame, border, UI, logo, blurry, low detail, flat colors, cartoon, cel shading, photograph, 3d render
 
-**4. Sizes.** Enemy portraits **1:1 square** (creature centered on dark water, vignette edges); boss **4:5 portrait** at 2× resolution; backgrounds **16:9 landscape** at ≥1920px wide (the optimizer caps backgrounds at 1920).
+**4. Sizes.** Enemy portraits **1:1 square** (creature centered on dark water, vignette edges); boss **4:5 portrait** at 2× resolution; backgrounds **portrait** (9:16–4:5) at ≥1920px tall — the game is portrait-first mobile and the shipped act1–3 backdrops are 1072×1920; `object-cover` crops the sides on wider screens, so keep the focal point on the vertical centerline.
 
 **5. The act's visual grammar** — the throughline that keeps ten images reading as one place: every Act IV creature is a *dream-echo* of something from the descent. Where its Act I–III counterpart was flesh, the echo is half-remembered — translucent in patches, trailing after-images, lit from inside by violet dream-light. If a prompt says "echo of X," pull up X's prompt from `ART_PROMPTS.md` and keep one unmistakable visual quote from it (the moray's cadence, the King's crown) while making everything else wrong.
 
@@ -65,7 +65,7 @@ The dream's owner, seen from inside the dream: a god-scale presence filling the 
 
 ---
 
-## Backgrounds (16:9, ≥1920px — full-bleed battle backdrops, subjects must stay out of the center where enemies render)
+## Backgrounds (portrait, ≥1920px tall — full-bleed battle backdrops, subjects must stay out of the center where enemies render)
 
 **Act IV depth backdrop — `act4`**
 The Dreaming Dark itself: an impossible open water-scape below the seafloor — above, the cracked underside of the Hadal trench floor glowing faintly where the waking world leaks through; below and beyond, violet-black dream-water where enormous soft silhouettes of remembered creatures (a crab, an eel, a kraken arm) drift half-formed and dissolve like thoughts. Ruins from every earlier act float unanchored — a shard of sunlit reef, a piece of shipwreck, a cultist shrine — each lit by its own wrong little memory of light. Composition: darkest and emptiest in the center-band where enemies stand; detail and glow pushed to the edges and upper third. Vast, silent, asleep.
