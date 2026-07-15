@@ -316,3 +316,26 @@ above the banked victory (`store.ts:206`) — no change needed there.
 - No change to the player economy (gold/heals/boons stay as-is — the asymmetry is the wall).
 - No online leaderboard; `meta.bestScore` and the loop line on GameOverScreen remain the
   scoreboard.
+
+---
+
+## Appendix: Phase 0 baseline (`npm run sim -- --endless`, pre-change, on `main`)
+
+The greedy sim bot is a floor, not a proxy for a strong human deck — most characters never
+even win Act 4 with it. Tidecaller is the only one that reliably reaches endless, so it's the
+only character this baseline (and later comparisons) can speak to directly.
+
+```
+TIDECALLER — 60 runs: reached endless 7/60, deepest loop 5
+  died at loop: L0=53 L1=0 L2=1 L3=4 L4=1 L5=1
+  L3 killers: The Kraken×2, Kraken Arm×1, Toxin×1 | L4: What Dreams Beneath×1 | L5: The Kraken×1
+VOLTAIC — 0/60 reach endless (dies A1-A3 every run)
+DROWNED — 0/60 reach endless
+WEAVER  — 0/60 reach endless
+```
+
+Even the character that gets there mostly dies within 1–2 loops of entering endless already
+(L1=0, L2=1, L3=4) — the sample is small (7 runs), so treat this as directional, not a hard
+target. Re-run after each phase and watch whether Tidecaller's endless-reach rate and deepest
+loop shift, and whether other characters start reaching endless at all (a sign Act 1-4
+itself got harder would be a red flag — Phases 1-4 only touch `run.loop > 0` code paths).
