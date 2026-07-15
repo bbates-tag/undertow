@@ -12,6 +12,7 @@ import { CHARACTERS } from '../../content/characters';
 import { GameIcon } from '../icons';
 import { GoldChip, HpChip, Bubbles } from '../components/Bits';
 import { RelicBar } from '../components/RelicBar';
+import { PressureBar } from '../components/PressureBar';
 
 const COL_W = 62;
 const ROW_H = 96;
@@ -101,6 +102,7 @@ export function MapScreen() {
         </span>
       </div>
       <RelicBar relics={run.relics} defanged={run.defanged} />
+      <PressureBar pressures={run.pressures} />
       {run.daily && (
         <div className="px-3 py-0.5 text-[10px] text-(--color-glow) tracking-wide">
           DAILY DIVE — {run.daily.mods.join(' · ')}

@@ -40,6 +40,8 @@ import {
   // Act 4 — The Dreaming Dark
   GiEchoRipples, GiNightSleep, GiLeechingWorm, GiShamblingZombie, GiKingJuMask, GiScreaming,
   GiWeightCrush, GiThirdEye,
+  // Endless — Pressures
+  GiThermometerCold, GiBottledShadow,
 } from 'react-icons/gi';
 
 const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number | string }>> = {
@@ -76,6 +78,7 @@ const REGISTRY: Record<string, ComponentType<{ className?: string; size?: number
   GiSewingNeedle, GiCrosshair, GiSpyglass,
   GiEchoRipples, GiNightSleep, GiLeechingWorm, GiShamblingZombie, GiKingJuMask, GiScreaming,
   GiWeightCrush, GiThirdEye,
+  GiThermometerCold, GiBottledShadow,
 };
 
 export function GameIcon({ id, className, size }: { id: string; className?: string; size?: number | string }) {

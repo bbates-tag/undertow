@@ -740,6 +740,8 @@ function drawCountFor(run: RunState, bs: BattleState): number {
     if (p === 'predatorsEye1') n += 1;
     if (p === 'predatorsEye2') n += 2;
   }
+  // Pressure: Dimming Light — one fewer card, first turn only
+  if (bs.turn === 1 && hasPressure(run, 'dimmingLight')) n -= 1;
   return n;
 }
 
@@ -805,6 +807,12 @@ export function startBattle(run: RunState, encounter: string | EncounterSpec, em
   // shuffled copy of the run deck
   const { r: br, done } = battleRng(bs);
   bs.drawPile = br.shuffle(run.deck.map((c) => ({ ...c })));
+  // Pressure: Silt in the Lungs shuffles a Waterlogged into the draw pile —
+  // the battle's copy only, so run.deck itself never compounds
+  if (hasPressure(run, 'siltLungs')) {
+    const pos = br.int(0, bs.drawPile.length);
+    bs.drawPile.splice(pos, 0, { uid: run.nextUid++, defId: 'waterlogged', upgraded: false });
+  }
   done();
 
   run.battle = bs;
@@ -814,6 +822,8 @@ export function startBattle(run: RunState, encounter: string | EncounterSpec, em
   // endless: +1 Might per loop on top of everything else
   if (run.loop > 0) for (const e of living(bs)) addStatus(e, 'might', run.loop);
   if (run.daily?.mods.includes('toxicWaters')) for (const e of living(bs)) addStatus(e, 'toxin', 4);
+  // Pressure: Barnacled Hulls opens every enemy with Block scaled to the loop
+  if (hasPressure(run, 'barnacledHulls')) for (const e of living(bs)) e.block += 4 * run.loop;
 
   if (run.relics.includes('gyreCharts')) bs.counters.gyreCharts = 1;
   relicsBattleStart(run, bs, emit);
@@ -834,6 +844,11 @@ function ascHpScale(run: RunState): number {
   // endless: the deep compounds
   if (run.loop > 0) s *= Math.pow(1.28, run.loop);
   return s;
+}
+
+/** endless: is this per-loop debuff active? (see content/pressures.ts) */
+function hasPressure(run: RunState, id: string): boolean {
+  return run.loop > 0 && run.pressures.includes(id);
 }
 
 /** ascension adds flat chip; endless compounds — the deep always wins eventually */
@@ -917,13 +932,15 @@ export function startPlayerTurn(run: RunState, bs: BattleState, emit: Emit) {
   }
 
   bs.energy = bs.maxEnergy;
+  // Pressure: Numbing Cold — one less Energy, first turn only
+  if (bs.turn === 1 && hasPressure(run, 'numbingCold')) bs.energy = Math.max(0, bs.energy - 1);
   drawCards(run, bs, drawCountFor(run, bs), emit);
   relicsTurnStart(run, bs, emit);
   powersTurnStart(run, bs, emit);
   run.stats.turnsPlayed += 1;
 }
 
-export type PlayError = 'notFound' | 'energy' | 'unplayable' | 'needsTarget' | 'phase' | 'hp';
+export type PlayError = 'notFound' | 'energy' | 'unplayable' | 'needsTarget' | 'phase' | 'hp' | 'pressure';
 
 /** Total flat HP a card demands up front (loseHp ops, unconditional only). */
 function hpCostOf(ops: Op[]): number {
@@ -932,12 +949,14 @@ function hpCostOf(ops: Op[]): number {
   return n;
 }
 
-export function canPlay(bs: BattleState, uid: number): PlayError | null {
+export function canPlay(run: RunState, bs: BattleState, uid: number): PlayError | null {
   if (bs.phase !== 'player') return 'phase';
   const c = bs.hand.find((h) => h.uid === uid);
   if (!c) return 'notFound';
   const def = cardDef(c);
   if (def.unplayable) return 'unplayable';
+  // Pressure: the Deep Demands — a hard cap on cards played per turn
+  if (hasPressure(run, 'deepDemands') && bs.cardsPlayedThisTurn >= 12) return 'pressure';
   if (cardCost(c) > bs.energy) return 'energy';
   // blood costs never let you kill yourself — the sea decides when you're done
   if (hpCostOf(cardOps(c)) >= bs.player.hp) return 'hp';
@@ -946,7 +965,7 @@ export function canPlay(bs: BattleState, uid: number): PlayError | null {
 
 export function playCard(run: RunState, uid: number, targetUid: number | undefined, emit: Emit): PlayError | null {
   const bs = run.battle!;
-  const err = canPlay(bs, uid);
+  const err = canPlay(run, bs, uid);
   if (err) return err;
   const c = bs.hand.find((h) => h.uid === uid)!;
   const def = cardDef(c);
