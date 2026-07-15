@@ -167,6 +167,8 @@ export const WEAVER_CARDS: CardDef[] = [
   {
     id: 'neverBitten', name: 'Never Bitten', char: 'weaver', type: 'attack', rarity: 'rare',
     cost: 3, costUp: 2, target: 'enemy', icon: 'GiFangs',
+    artFocus: 'center 30%', // her face — the wordy text crushes the art window
+
     ops: [{ op: 'if', cond: { intends: 'attacker', who: 'target' }, then: [{ op: 'damage', amount: { base: 0, perTelegraph: 2 } }], else: [{ op: 'damage', amount: { base: 10 } }] }],
     opsUp: [{ op: 'if', cond: { intends: 'attacker', who: 'target' }, then: [{ op: 'damage', amount: { base: 0, perTelegraph: 2 } }], else: [{ op: 'damage', amount: { base: 12 } }] }],
     flavor: 'It cannot close. It knows it cannot close.',

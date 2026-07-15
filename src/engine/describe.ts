@@ -99,7 +99,7 @@ function opText(op: Op, ctx?: DescribeCtx): string {
       const equalBlock = a.base === 0 && a.perBlock === 1;
       if (a.perTelegraph && !ctx?.target) {
         const mult = a.perTelegraph === 1 ? '' : `${a.perTelegraph}× `;
-        return `Deal damage equal to ${mult}the target's telegraphed attack (max 40).`;
+        return `Deal ${mult}the target's telegraphed attack (max 40).`;
       }
       const n = dmgNumber(a, ctx);
       // when the tide bonus is live, the number already contains it — fold the

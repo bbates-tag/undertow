@@ -410,10 +410,14 @@ function CardZoom({ defId, onClose }: { defId: string; onClose: () => void }) {
       <motion.div
         initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-        className="flex flex-col items-center gap-3 max-h-full overflow-y-auto"
+        /* pt-6/px-6 keep the cost orb (which pops above the frame) inside the
+           scroll container's clip box */
+        className="flex flex-col items-center gap-3 max-h-full overflow-y-auto pt-6 px-6 pb-2"
         onClick={(ev) => ev.stopPropagation()}
       >
-        <CardView card={{ uid: 0, defId, upgraded }} scale="lg" />
+        <div className="card-zoom-stage">
+          <CardView card={{ uid: 0, defId, upgraded }} />
+        </div>
         {upgradable(def) && (
           <div className="flex gap-2">
             <button className={`btn text-xs ${!upgraded ? 'btn-primary' : ''}`} onClick={() => setUpgraded(false)}>Base</button>

@@ -118,6 +118,9 @@ export interface CardDef {
   text?: string; // override auto-generated rules text
   textUp?: string;
   flavor?: string;
+  /** CSS object-position for the art crop — for arts whose subject isn't
+      centered (e.g. 'center 30%' keeps a high face in frame) */
+  artFocus?: string;
 }
 
 /** Persistent effects installed by Power cards; interpreted by the engine. */

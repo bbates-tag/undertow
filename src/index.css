@@ -225,6 +225,11 @@ body {
   z-index: 30;
 }
 .card-frame.unaffordable { filter: grayscale(0.45) brightness(0.75); }
+
+/* compendium card viewer: scale the whole card (layout, fonts, art, cost orb)
+   uniformly — zoom keeps text crisp where transform-scale leaves layout gaps */
+.card-zoom-stage { zoom: 2.4; }
+@media (max-width: 420px) { .card-zoom-stage { zoom: 2.1; } }
 .card-frame:focus-visible { outline-offset: 0; }
 
 /* a conditional effect (Flood/Ebb/Charge/Descent/Read) is live right now —
