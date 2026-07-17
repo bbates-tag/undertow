@@ -42,6 +42,22 @@ interface DragState {
 }
 
 
+// The engine appends summons to the end of the enemy array, which would pile
+// them all on one side of their summoner. Display-only reordering: the
+// heaviest creature holds center stage and the rest fan out around it.
+const TIER_RANK = { boss: 3, elite: 2, normal: 1, minion: 0 } as const;
+const SIZE_RANK = { xl: 3, lg: 2, md: 1, sm: 0 } as const;
+function stageOrder<T extends { defId: string }>(list: T[]): T[] {
+  const weight = (e: T) => {
+    const d = ENEMIES[e.defId];
+    return TIER_RANK[d.tier] * 10 + SIZE_RANK[d.size ?? 'md'];
+  };
+  const sorted = [...list].sort((a, b) => weight(b) - weight(a));
+  const out: T[] = [];
+  sorted.forEach((e, i) => (i % 2 ? out.push(e) : out.unshift(e)));
+  return out;
+}
+
 const TUTORIAL_STEPS = [
   { text: 'This is your hand. Tap a card to select it, then play it — or drag a card out of your hand to play it (drop attacks right onto an enemy).', pos: 'bottom' },
   { text: 'Enemies telegraph their next move above their heads. Red numbers are damage you will take — Block absorbs it.', pos: 'top' },
@@ -262,13 +278,14 @@ export function BattleScreen() {
         }}
       >
         <AnimatePresence mode="popLayout">
-          {enemies.map((e) => {
+          {stageOrder(enemies).map((e) => {
             const pd = targetingActive && previewOps ? previewDamageOp(bs, previewOps, e) : null;
             return (
             <EnemyView
               key={e.uid}
               bs={bs}
               e={e}
+              crowd={enemies.length}
               targeting={targetingActive}
               hovered={drag?.hoverUid === e.uid}
               previewAmount={pd?.amount ?? null}

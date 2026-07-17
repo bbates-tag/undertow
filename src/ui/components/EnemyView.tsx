@@ -14,12 +14,23 @@ import type { Amount } from '../../engine/types';
 
 // min(vw, vh) keeps creatures proportional in landscape phones, where width
 // is plentiful but height is scarce
-const SIZE: Record<string, string> = {
-  sm: 'clamp(40px, min(12vw, 12vh), 72px)',
-  md: 'clamp(50px, min(15vw, 15vh), 92px)',
-  lg: 'clamp(62px, min(19vw, 18vh), 118px)',
-  xl: 'clamp(80px, min(24vw, 21vh), 150px)',
+const SIZE: Record<string, [minPx: number, vw: number, vh: number, maxPx: number]> = {
+  sm: [40, 12, 12, 72],
+  md: [50, 15, 15, 92],
+  lg: [62, 19, 18, 118],
+  xl: [80, 24, 21, 150],
 };
+
+// crowded fields (endless mode builds 4, summons cap at 5) shrink every
+// column so all five fit one row on a phone instead of clipping
+const crowdScale = (crowd: number) => (crowd >= 5 ? 0.72 : crowd === 4 ? 0.85 : 1);
+
+function artSize(size: string, crowd: number): string {
+  const [minPx, vw, vh, maxPx] = SIZE[size] ?? SIZE.md;
+  const k = crowdScale(crowd);
+  const r = (n: number) => Math.round(n * k);
+  return `clamp(${r(minPx)}px, min(${r(vw)}vw, ${r(vh)}vh), ${r(maxPx)}px)`;
+}
 
 function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
   const run = useGame((s) => s.run);
@@ -79,6 +90,8 @@ function IntentBadge({ bs, e }: { bs: BattleState; e: EnemyState }) {
 interface EnemyViewProps {
   bs: BattleState;
   e: EnemyState;
+  /** living enemies on the field — 4+ shrinks the column (see crowdScale) */
+  crowd?: number;
   targeting: boolean;
   /** a dragged card is currently hovering this enemy */
   hovered?: boolean;
@@ -90,10 +103,13 @@ interface EnemyViewProps {
   reduced: boolean;
 }
 
-export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTimes = 1, onPick, onInspect, reduced }: EnemyViewProps) {
+export function EnemyView({ bs, e, crowd = 1, targeting, hovered, previewAmount, previewTimes = 1, onPick, onInspect, reduced }: EnemyViewProps) {
   const def = ENEMIES[e.defId];
   const run = useGame((s) => s.run);
   const hpFrac = e.hp / e.maxHp;
+  // the info bar sets the column's footprint; when crowded it also caps the
+  // content-sized children (name, status chips) that would widen the column
+  const infoW = crowd >= 5 ? 'min(62px, 16vw)' : crowd === 4 ? 'min(76px, 19vw)' : undefined;
   const preview = previewAmount && run ? previewPlayerAttack(run, bs, previewAmount, e) : null;
   // Hearthstone-style kill marker while drag-hovering: block soaks before HP
   const lethal = hovered && preview !== null && preview * previewTimes >= e.hp + e.block;
@@ -110,6 +126,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
         'relative flex flex-col items-center gap-1 px-1 select-none',
         targeting || onInspect ? 'cursor-pointer' : '',
       ].join(' ')}
+      style={infoW ? { maxWidth: `calc(${infoW} + 8px)` } : undefined}
       onClick={(ev) => {
         if (targeting) {
           onPick();
@@ -139,7 +156,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
       <div
         ref={fxTargetRef(enemyKey(e))}
         className="relative flex items-center justify-center"
-        style={{ width: SIZE[def.size ?? 'md'], height: SIZE[def.size ?? 'md'] }}
+        style={{ width: artSize(def.size ?? 'md', crowd), height: artSize(def.size ?? 'md', crowd) }}
       >
         {(targeting || hovered) && (
           <div
@@ -159,7 +176,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
         >
           <ArtImage
             kind="enemies"
-            id={e.defId}
+            id={def.art ?? e.defId}
             icon={def.icon}
             className="w-full h-full object-cover rounded-full border border-white/10 shadow-[0_8px_24px_rgba(2,6,14,0.6)]"
             iconSize="100%"
@@ -194,7 +211,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
           </div>
         )}
       </div>
-      <div className="w-[92px] max-w-[24vw]">
+      <div className="max-w-[24vw]" style={{ width: infoW ?? 92 }}>
         <div className="bar" aria-hidden>
           <div
             className={['fill', hpFrac < 0.3 ? 'hp-low' : hpFrac < 0.65 ? 'hp-mid' : ''].join(' ')}
@@ -228,7 +245,7 @@ export function EnemyView({ bs, e, targeting, hovered, previewAmount, previewTim
           })}
         </div>
       )}
-      <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-mist) font-semibold on-art">{def.name}</div>
+      <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-mist) font-semibold on-art text-center max-w-full leading-tight">{def.name}</div>
     </motion.div>
   );
 }

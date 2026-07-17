@@ -17,7 +17,7 @@ import { describeCard } from '../../engine/describe';
 import type { CardDef, CharacterId } from '../../engine/types';
 import { ArtImage } from '../components/Art';
 import { CardView } from '../components/CardView';
-import { EnemyDossier, ART_ALIAS } from '../components/EnemyDossier';
+import { EnemyDossier } from '../components/EnemyDossier';
 import { GameIcon } from '../icons';
 import { Shell } from './MetaScreens';
 
@@ -221,7 +221,7 @@ function EnemiesTab({ onOpen }: { onOpen: (id: string) => void }) {
                 >
                   <div className="w-full aspect-square rounded-lg overflow-hidden bg-(--color-abyss-800) flex items-center justify-center">
                     <ArtImage
-                      kind="enemies" id={ART_ALIAS[def.id] ?? def.id} icon={def.icon}
+                      kind="enemies" id={def.art ?? def.id} icon={def.icon}
                       className={`w-full h-full object-cover ${seen ? '' : 'grayscale brightness-[0.22]'}`}
                       iconSize={30} iconClassName={seen ? '' : 'opacity-25'} alt=""
                     />

@@ -1228,6 +1228,18 @@ function finishEnemyPhase(run: RunState, bs: BattleState, emit: Emit) {
 
 function checkVictory(run: RunState, bs: BattleState, emit: Emit) {
   if (bs.phase === 'won' || bs.phase === 'lost') return;
+  // summons cannot hold the field alone: when the last real enemy falls its
+  // minions dissolve with it — killing the Kraken's head wins the fight.
+  // Deliberately not killEnemy(): dissolving procs no on-kill rewards.
+  const alive = living(bs);
+  if (alive.length > 0 && alive.every((e) => ENEMIES[e.defId].tier === 'minion')) {
+    for (const e of alive) {
+      e.dead = true;
+      e.hp = 0;
+      fx(emit, { kind: 'burst', target: enemyKey(e), color: 'ink', n: 18, shape: 'bubble' });
+    }
+    sfx(emit, 'enemyDie');
+  }
   if (living(bs).length === 0) {
     bs.phase = 'won';
     run.hp = bs.player.hp;
