@@ -331,7 +331,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   },
   heraldOfDeep: {
     id: 'heraldOfDeep', name: 'Herald of the Deep', icon: 'GiBrainTentacle', hp: [96, 106], tier: 'elite', act: 3, size: 'lg',
-    lore: 'It swims ahead of the Drowned God the way a bow-wave runs ahead of a ship. It Calls drowned Bone Shoals to its side, pronounces a Black Benediction of Might over them, and Smites with Toxin between sermons. Kill the preacher or the congregation quickly — there will not be time for both.',
+    lore: 'It swims ahead of the Drowned God the way a bow-wave runs ahead of a ship. It Calls drowned Bone Shoals to its side, pronounces a Black Benediction of Might over them, and Smites with Toxin between sermons. Kill the preacher and the congregation returns to the sediment with him.',
     moves: {
       benediction: { id: 'benediction', name: 'Black Benediction', intent: 'buff', toAllies: [['might', 3]] },
       call: { id: 'call', name: 'Call the Drowned', intent: 'summon', summon: ['boneShoalMinion'] },
@@ -344,7 +344,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     },
   },
   boneShoalMinion: {
-    id: 'boneShoalMinion', name: 'Bone Shoal', icon: 'GiFishbone', hp: [18, 22], tier: 'minion', act: 0, size: 'sm',
+    id: 'boneShoalMinion', name: 'Bone Shoal', icon: 'GiFishbone', hp: [18, 22], tier: 'minion', act: 0, size: 'sm', art: 'boneShoal',
     lore: "Drowned bones rattled up from the sediment by the Herald's sermon. It gnaws with the swarm's many small teeth, weaker than a wild shoal. Unlike its wild kin, these stay dead.",
     moves: {
       gnaw: { id: 'gnaw', name: 'Gnawing Swarm', intent: 'attack', attack: { amount: 3, times: 2 } },

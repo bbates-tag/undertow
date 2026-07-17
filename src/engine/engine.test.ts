@@ -102,6 +102,32 @@ describe('battle basics', () => {
     expect(bs.phase).toBe('won');
     expect(run.hp).toBe(bs.player.hp);
   });
+
+  it('minions dissolve when the last real enemy falls — killing the head wins', () => {
+    const run = battleRun('a3_boss');
+    const bs = run.battle!;
+    const head = bs.enemies.find((e) => e.defId === 'krakenHead')!;
+    const arms = bs.enemies.filter((e) => e.defId === 'krakenArm');
+    expect(arms.length).toBe(2);
+    giveHand(run, ['tideStrike']);
+    head.hp = 3;
+    playCard(run, 9000, head.uid, newEmit());
+    expect(bs.phase).toBe('won');
+    expect(arms.every((a) => a.dead)).toBe(true);
+    // dissolving is not a kill: no on-kill rewards, no kill-stat inflation
+    expect(run.stats.kills).toBe(1);
+  });
+
+  it('killing a minion alone does not end the fight', () => {
+    const run = battleRun('a3_boss');
+    const bs = run.battle!;
+    const arm = bs.enemies.find((e) => e.defId === 'krakenArm')!;
+    giveHand(run, ['tideStrike']);
+    arm.hp = 3;
+    playCard(run, 9000, arm.uid, newEmit());
+    expect(bs.phase).toBe('player');
+    expect(bs.enemies.find((e) => e.defId === 'krakenHead')!.dead).toBeFalsy();
+  });
 });
 
 describe('tide', () => {

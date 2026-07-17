@@ -202,6 +202,8 @@ export interface EnemyDef {
   /** gains might when the tide turns High */
   tideTouched?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** render another enemy's art masters (summoned variants share the original's) */
+  art?: string;
   /** 3-4 sentences for the tap-to-open dossier: origin + how it fights */
   lore?: string;
 }

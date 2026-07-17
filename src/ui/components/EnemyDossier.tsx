@@ -9,9 +9,6 @@ import { AFFIXES } from '../../content/affixes';
 import { ArtImage } from './Art';
 import { GameIcon } from '../icons';
 
-/** minions that reuse another enemy's art masters (also used by the compendium) */
-export const ART_ALIAS: Record<string, string> = { boneShoalMinion: 'boneShoal' };
-
 const ACT_NAME: Record<number, string> = {
   0: 'Summoned',
   1: 'The Sunlit Shallows',
@@ -65,7 +62,7 @@ export function EnemyDossier({ defId, affixes, onClose }: { defId: string; affix
           >
             <ArtImage
               kind="enemies"
-              id={ART_ALIAS[defId] ?? defId}
+              id={def.art ?? defId}
               icon={def.icon}
               className="w-full h-full object-cover"
               iconSize="55%"
@@ -99,6 +96,11 @@ export function EnemyDossier({ defId, affixes, onClose }: { defId: string; affix
             </span>
             <span className="chip text-(--color-dim)">{ACT_NAME[def.act]}</span>
           </div>
+          {def.tier === 'minion' && (
+            <p className="text-xs italic text-(--color-mist) mt-2">
+              Minion — dissolves when the last true enemy falls. You need not kill it to win.
+            </p>
+          )}
           {def.lore && <p className="text-sm leading-relaxed text-(--color-foam) mt-3">{def.lore}</p>}
           {affixes && affixes.length > 0 && (
             <div className="mt-3 border-t border-white/10 pt-2">
