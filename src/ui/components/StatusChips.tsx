@@ -35,87 +35,63 @@ export function StatusChips({ creature, onInfo }: { creature: CreatureState; onI
   );
 }
 
-type Bubble = { key: string; icon?: string; label?: string; color: string; count?: number; title: string; aria: string };
+type Entry = { key: string; icon?: string; label?: string; color: string; count?: number; title: string; aria: string };
 
-// Enemies wear their statuses as small round bubbles pinned to the avatar's
-// rim — a single column down the right edge, spilling to the left only when
-// crowded — so the name below stays uncrowded and legible. Affixes (rarer,
-// permanent) live on the left. Render this INSIDE the `relative` avatar box;
-// it's purely informational (pointer-events pass through to the drop target).
-export function StatusBubbles({ creature, crowd = 1 }: { creature: EnemyState; crowd?: number }) {
-  const statusBubbles: Bubble[] = ORDER.filter((s) => (creature.statuses[s] ?? 0) > 0).map((s) => {
+// Enemies show their statuses as a compact pill under the HP bar: a single pill
+// grows to hold several icon+count pairs, wrapping to a second pill row once it
+// passes `perRow` (tighter when the field is crowded), then collapses the rest
+// into a +N marker. The enemy name is tap-to-reveal (the dossier), so nothing
+// competes with the statuses for space here. Affixes get their own pink pill.
+export function StatusRow({ creature, crowd = 1 }: { creature: EnemyState; crowd?: number }) {
+  const statuses: Entry[] = ORDER.filter((s) => (creature.statuses[s] ?? 0) > 0).map((s) => {
     const meta = STATUS_META[s];
     const n = creature.statuses[s]!;
     return { key: s, icon: meta.icon, color: meta.color, count: n, title: `${meta.name} ${n} — ${KEYWORDS[s]?.text ?? ''}`, aria: `${meta.name} ${n}` };
   });
-  const affixBubbles: Bubble[] = (creature.affixes ?? [])
-    .map((a): Bubble | null => {
+  const affixes: Entry[] = (creature.affixes ?? [])
+    .map((a): Entry | null => {
       const d = AFFIXES[a];
       return d ? { key: `af-${a}`, icon: d.icon, color: 'var(--color-lure)', title: `${d.name} — ${d.text}`, aria: d.name } : null;
     })
-    .filter((b): b is Bubble => b !== null);
+    .filter((e): e is Entry => e !== null);
 
-  if (!statusBubbles.length && !affixBubbles.length) return null;
+  if (!statuses.length && !affixes.length) return null;
 
-  // per-column cap keeps a heavily-stacked enemy from sprouting an endless
-  // ladder of bubbles; the tightest fields (4-5 columns) hold fewer + shrink
-  const cap = crowd >= 4 ? 3 : 4;
-  const rightCol = statusBubbles.slice(0, cap);
-  const overflow = statusBubbles.slice(cap);
-  const leftRaw = [...affixBubbles, ...overflow];
-  const leftCol = leftRaw.length > cap ? [...leftRaw.slice(0, cap - 1), overflowBubble(leftRaw.length - (cap - 1))] : leftRaw;
+  // one pill holds up to `perRow`; allow a second row, then fold the remainder
+  // into a +N marker so a heavily-stacked enemy never grows a tall ladder
+  const perRow = crowd >= 4 ? 3 : 4;
+  const cap = perRow * 2;
+  let shown = statuses;
+  if (statuses.length > cap) {
+    const extra = statuses.length - (cap - 1);
+    shown = [...statuses.slice(0, cap - 1), { key: 'more', label: `+${extra}`, color: 'var(--color-mist)', title: `+${extra} more status effects`, aria: `${extra} more status effects` }];
+  }
+  const rows: Entry[][] = [];
+  for (let i = 0; i < shown.length; i += perRow) rows.push(shown.slice(i, i + perRow));
 
-  const k = crowd >= 5 ? 0.8 : crowd >= 4 ? 0.9 : 1;
-  const bw = Math.round(25 * k);
-  const bh = Math.round(20 * k);
-  const iconPx = Math.round(11 * k);
+  const iconPx = crowd >= 5 ? 9 : crowd >= 4 ? 10 : 11;
   const fontPx = crowd >= 5 ? 9 : 10;
-  const pull = crowd >= 4 ? 10 : 7; // overlap onto the rim; tighter when crowded
+  const innerGap = crowd >= 4 ? 4 : 5;
 
-  const render = (b: Bubble) => (
-    <span
-      key={b.key}
-      className="flex items-center justify-center rounded-full font-bold on-art"
-      style={{
-        width: bw,
-        height: bh,
-        gap: 1,
-        fontSize: fontPx,
-        color: b.color,
-        background: 'rgba(10,18,30,0.92)',
-        border: `1px solid color-mix(in srgb, ${b.color} 60%, transparent)`,
-      }}
-      title={b.title}
-      aria-label={b.aria}
+  const pill = (entries: Entry[], key: string, border: string) => (
+    <div
+      key={key}
+      className="inline-flex items-center rounded-full on-art"
+      style={{ gap: innerGap, padding: '1px 6px', background: 'rgba(8,17,32,0.9)', border: `1px solid ${border}`, fontSize: fontPx, fontWeight: 700, lineHeight: 1 }}
     >
-      {b.icon && <GameIcon id={b.icon} size={iconPx} />}
-      {b.label ?? (b.count != null && b.count)}
-    </span>
+      {entries.map((e) => (
+        <span key={e.key} className="inline-flex items-center" style={{ gap: 1, color: e.color }} title={e.title} aria-label={e.aria}>
+          {e.icon && <GameIcon id={e.icon} size={iconPx} />}
+          {e.label ?? e.count}
+        </span>
+      ))}
+    </div>
   );
 
   return (
-    <>
-      {rightCol.length > 0 && (
-        <div
-          className="absolute top-1 left-full flex flex-col gap-1 z-10 pointer-events-none"
-          style={{ marginLeft: -pull }}
-          aria-label="status effects"
-        >
-          {rightCol.map(render)}
-        </div>
-      )}
-      {leftCol.length > 0 && (
-        <div
-          className="absolute top-1 right-full flex flex-col gap-1 z-10 items-end pointer-events-none"
-          style={{ marginRight: -pull }}
-        >
-          {leftCol.map(render)}
-        </div>
-      )}
-    </>
+    <div className="flex flex-col items-center gap-1 mt-0.5" aria-label="status effects">
+      {rows.map((row, i) => pill(row, `s${i}`, 'rgba(95,185,255,0.28)'))}
+      {affixes.length > 0 && pill(affixes, 'affix', 'rgba(255,93,162,0.45)')}
+    </div>
   );
-}
-
-function overflowBubble(n: number): Bubble {
-  return { key: 'more', label: `+${n}`, color: 'var(--color-mist)', title: `+${n} more status effects`, aria: `${n} more status effects` };
 }
