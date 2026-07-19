@@ -5,9 +5,7 @@ import { ENEMIES } from '../../content/enemies';
 import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../../engine/battle';
 import { useGame } from '../../state/store';
 import { ArtImage } from './Art';
-import { StatusChips } from './StatusChips';
-import { AFFIXES } from '../../content/affixes';
-import { GameIcon } from '../icons';
+import { StatusBubbles } from './StatusChips';
 import { fxTargetRef } from '../fxRegistry';
 // (root registers as `hit:e<uid>` so drag-to-play can hit-test drop points)
 import type { Amount } from '../../engine/types';
@@ -210,6 +208,8 @@ export function EnemyView({ bs, e, crowd = 1, targeting, hovered, previewAmount,
             −{preview}{previewTimes > 1 ? `×${previewTimes}` : ''}
           </div>
         )}
+        {/* statuses + affixes orbit the rim so the name below stays legible */}
+        <StatusBubbles creature={e} crowd={crowd} />
       </div>
       <div className="max-w-[24vw]" style={{ width: infoW ?? 92 }}>
         <div className="bar" aria-hidden>
@@ -227,25 +227,12 @@ export function EnemyView({ bs, e, crowd = 1, targeting, hovered, previewAmount,
           )}
         </div>
       </div>
-      <StatusChips creature={e} />
-      {e.affixes && e.affixes.length > 0 && (
-        <div className="flex gap-1" aria-label={`affixes: ${e.affixes.map((a) => AFFIXES[a]?.name).filter(Boolean).join(', ')}`}>
-          {e.affixes.map((a) => {
-            const d = AFFIXES[a];
-            return d ? (
-              <span
-                key={a}
-                className="chip !px-1.5"
-                style={{ color: 'var(--color-lure)', borderColor: 'rgba(255,93,162,0.4)' }}
-                title={`${d.name} — ${d.text}`}
-              >
-                <GameIcon id={d.icon} size={10} />
-              </span>
-            ) : null;
-          })}
-        </div>
-      )}
-      <div className="text-[10px] uppercase tracking-[0.14em] text-(--color-mist) font-semibold on-art text-center max-w-full leading-tight">{def.name}</div>
+      <div
+        className="text-[10px] uppercase tracking-[0.14em] text-(--color-foam) font-semibold on-art text-center leading-tight max-w-full rounded-md px-1.5 py-px"
+        style={{ background: 'rgba(6,12,24,0.55)' }}
+      >
+        {def.name}
+      </div>
     </motion.div>
   );
 }
