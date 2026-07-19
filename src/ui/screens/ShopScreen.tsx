@@ -60,10 +60,10 @@ export function ShopScreen() {
           const sold = !!item.sold;
           const afford = run.gold >= item.price;
           return (
-            <div key={idx} className={`flex flex-col items-center gap-1.5 ${sold ? 'opacity-30 pointer-events-none' : ''}`}>
+            <div key={idx} className={`flex flex-col items-center gap-1.5 ${sold ? 'opacity-30 pointer-events-none' : afford ? '' : 'opacity-45'}`}>
               {item.kind === 'card' && <CardView card={item.card} onClick={() => !sold && shopBuy(idx)} />}
               <button
-                className={`chip !text-sm font-bold ${afford ? '' : 'opacity-50'}`}
+                className="chip !text-sm font-bold"
                 style={{ color: 'var(--color-gold)' }}
                 onClick={() => shopBuy(idx)}
                 disabled={sold}
@@ -86,7 +86,7 @@ export function ShopScreen() {
           return (
             <button
               key={idx}
-              className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${sold ? 'opacity-30 pointer-events-none' : ''}`}
+              className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${sold ? 'opacity-30 pointer-events-none' : afford ? '' : 'opacity-45'}`}
               onClick={() => shopBuy(idx)}
               disabled={sold}
             >
@@ -96,7 +96,7 @@ export function ShopScreen() {
               <span>
                 <span className="font-bold text-sm block">{def.name}</span>
                 <span className="text-[11px] text-(--color-mist) block mb-1">{def.text}</span>
-                <span className={`font-bold text-sm inline-flex items-center gap-1 ${afford ? 'text-(--color-gold)' : 'text-(--color-dim)'}`}>
+                <span className="font-bold text-sm inline-flex items-center gap-1 text-(--color-gold)">
                   {sold ? 'SOLD' : <><Coins size={13} /> {item.price}</>}
                 </span>
               </span>
@@ -107,7 +107,7 @@ export function ShopScreen() {
         {/* salvage crate — a mystery relic, absent when the pool is dry or on pre-rework saves */}
         {shop.crateRelicId && shop.cratePrice != null && (
           <button
-            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${shop.crateSold ? 'opacity-30 pointer-events-none' : ''}`}
+            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${shop.crateSold ? 'opacity-30 pointer-events-none' : run.gold >= shop.cratePrice ? '' : 'opacity-45'}`}
             onClick={shopBuyCrate}
             disabled={!!shop.crateSold}
           >
@@ -130,7 +130,7 @@ export function ShopScreen() {
 
         {/* removal service */}
         <button
-          className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${shop.removalsLeft <= 0 ? 'opacity-30 pointer-events-none' : ''}`}
+          className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${shop.removalsLeft <= 0 ? 'opacity-30 pointer-events-none' : run.gold >= shop.removalPrice ? '' : 'opacity-45'}`}
           onClick={shopStartRemoval}
           disabled={shop.removalsLeft <= 0}
         >
@@ -149,7 +149,7 @@ export function ShopScreen() {
         {/* whetstone service — absent on pre-rework saves */}
         {shop.whetstonePrice != null && (
           <button
-            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${(shop.whetstonesLeft ?? 0) <= 0 ? 'opacity-30 pointer-events-none' : ''}`}
+            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${(shop.whetstonesLeft ?? 0) <= 0 ? 'opacity-30 pointer-events-none' : run.gold >= shop.whetstonePrice ? '' : 'opacity-45'}`}
             onClick={shopStartWhetstone}
             disabled={(shop.whetstonesLeft ?? 0) <= 0}
           >
@@ -169,7 +169,7 @@ export function ShopScreen() {
         {/* defang service — absent on pre-rework saves */}
         {shop.defangPrice != null && (
           <button
-            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${(shop.defangsLeft ?? 0) <= 0 || !eligible.length ? 'opacity-40' : ''} ${(shop.defangsLeft ?? 0) <= 0 ? 'pointer-events-none' : ''}`}
+            className={`panel p-3 w-[200px] text-left flex gap-2.5 items-start transition-transform hover:scale-[1.02] ${(shop.defangsLeft ?? 0) <= 0 || !eligible.length || run.gold < shop.defangPrice ? 'opacity-40' : ''} ${(shop.defangsLeft ?? 0) <= 0 ? 'pointer-events-none' : ''}`}
             onClick={() => eligible.length && setDefangOpen((o) => !o)}
             disabled={(shop.defangsLeft ?? 0) <= 0}
           >
