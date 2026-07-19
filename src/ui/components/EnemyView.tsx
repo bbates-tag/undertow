@@ -5,7 +5,7 @@ import { ENEMIES } from '../../content/enemies';
 import { enemyKey, previewEnemyMove, previewPlayerAttack, getStatus } from '../../engine/battle';
 import { useGame } from '../../state/store';
 import { ArtImage } from './Art';
-import { StatusBubbles } from './StatusChips';
+import { StatusRow } from './StatusChips';
 import { fxTargetRef } from '../fxRegistry';
 // (root registers as `hit:e<uid>` so drag-to-play can hit-test drop points)
 import type { Amount } from '../../engine/types';
@@ -208,8 +208,6 @@ export function EnemyView({ bs, e, crowd = 1, targeting, hovered, previewAmount,
             −{preview}{previewTimes > 1 ? `×${previewTimes}` : ''}
           </div>
         )}
-        {/* statuses + affixes orbit the rim so the name below stays legible */}
-        <StatusBubbles creature={e} crowd={crowd} />
       </div>
       <div className="max-w-[24vw]" style={{ width: infoW ?? 92 }}>
         <div className="bar" aria-hidden>
@@ -227,12 +225,8 @@ export function EnemyView({ bs, e, crowd = 1, targeting, hovered, previewAmount,
           )}
         </div>
       </div>
-      <div
-        className="text-[10px] uppercase tracking-[0.14em] text-(--color-foam) font-semibold on-art text-center leading-tight max-w-full rounded-md px-1.5 py-px"
-        style={{ background: 'rgba(6,12,24,0.55)' }}
-      >
-        {def.name}
-      </div>
+      {/* statuses sit under the HP bar; the name is tap-to-reveal (the dossier) */}
+      <StatusRow creature={e} crowd={crowd} />
     </motion.div>
   );
 }
